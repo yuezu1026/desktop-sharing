@@ -9,6 +9,7 @@
   <body>
     <nav class="topbar">
       <a href="index.html" aria-current="page">索引</a>
+      <a href="proto-流程原型.html">▶ 可点击原型</a>
       <a href="w1-控制端-连接与额度.html">W1 控制端·连接与额度</a>
       <a href="w2-被控端.html">W2 被控端</a>
       <a href="w3-账号与设备管理.html">W3 账号与设备</a>
@@ -70,7 +71,9 @@
             >
           </td>
           <td>
-            9<br /><span class="tiny muted">共 12 张图<br />（W1-05 拆 4 态）</span>
+            9<br /><span class="tiny muted"
+              >共 12 张图<br />（W1-05 拆 4 态）</span
+            >
           </td>
           <td>6（含最关键的「转直连引导页」）</td>
         </tr>
@@ -79,11 +82,15 @@
           <td>
             <b>被控端</b><br /><span class="tiny muted"
               >主界面 / 首次被控确认+反诈 / 会话中·一键断开 / 仅查看中性提示 /
-              资源档位 / 设置总览</span
+              资源档位 / 设置总览 / 请求恢复操作</span
             >
           </td>
-          <td>6</td>
-          <td>5（反诈位、无金额、无挽留）</td>
+          <td>
+            7<br /><span class="tiny muted"
+              >共 7 张图<br />（W2-07 为原型补帧）</span
+            >
+          </td>
+          <td>6（反诈位、无金额、无挽留、恢复控制需应答）</td>
         </tr>
         <tr>
           <td><a href="w3-账号与设备管理.html">W3</a></td>
@@ -133,8 +140,8 @@
     </table>
 
     <p class="lede" style="margin-top: 14px">
-      合计 <b>39 个界面条目 ⇒ 42 张线框图</b>（P0 31 / P1 8；多出的 3 张 =
-      W1-05「降级链」四态各出一张）· 另有
+      合计 <b>40 个界面条目 ⇒ 43 张线框图</b>（P0 32 / P1 8；多出的 3 张 =
+      W1-05「降级链」四态各出一张，另 1 张 = W2-07 为原型跑出的补帧）· 另有
       <b>5 项"明确不做"</b>的界面写在红线里（见 README §2.8）。
     </p>
 
@@ -247,6 +254,15 @@
           <td><a href="w2-被控端.html#w2-06">W2-06</a></td>
           <td>设置总览（自启 / 无人值守 / 权限 / 更新）</td>
           <td>③</td>
+          <td>P0</td>
+        </tr>
+        <tr>
+          <td><a href="w2-被控端.html#w2-07">W2-07</a></td>
+          <td>
+            🔴
+            对方请求恢复操作（<b>原型补帧</b>：缺它则控制端「请求控制」是死按钮）
+          </td>
+          <td>①</td>
           <td>P0</td>
         </tr>
       </tbody>
@@ -428,7 +444,35 @@
       </tbody>
     </table>
 
-    <h2>3. 评审建议顺序</h2>
+    <h2>3. 可点击原型（跨 W1 + W2）</h2>
+
+    <table class="tbl" style="max-width: 1000px; background: #fff">
+      <tbody>
+        <tr>
+          <td style="width: 70px">
+            <a href="proto-流程原型.html">原型</a>
+          </td>
+          <td>
+            <b>可点击流程原型</b>（左右双端同步）<br /><span class="tiny muted"
+              >把静帧接成能走通的流程：连接中 → 首次确认 → 会话中·中继 →
+              升级直连 → 仅查看 → 请求恢复操作 → 允许/拒绝 → 断开</span
+            >
+          </td>
+          <td style="width: 60px">浮 1~3</td>
+          <td style="width: 60px">P0</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p class="lede" style="margin-top: 10px">
+      内置两条自动断言：<b>被控端金额词告警</b> +
+      <b>控制端禁用词告警</b>（任一时刻命中就在页顶报警）。 实测：10
+      步全可达、红线告警 0 次、溢出 0、控件重叠 0。<br />
+      这条流程跑出 8 个断点（其中第 8 个 ⇒ 已补 W2-07），完整清单见
+      <a href="README.md#9-可点击原型2026-09-14-新增">README §9.1</a>。
+    </p>
+
+    <h2>4. 评审建议顺序</h2>
     <p class="lede">
       不要按屏评审，<b>按流程评审</b>（README §4 有 5 条流）：
       <b>流 1 首次连接</b> → <b>流 2 降级四态</b> → <b>流 3 被控端授权</b> →
@@ -437,9 +481,11 @@
     </p>
 
     <div class="legend">
-      <b>下一步可选：</b>
-      ① 先定 README §8 的 6 个问题 → ② 把 W1/W2 做成可点击 HTML 原型跑一遍流 1~3
-      → ③ 进入高保真（视觉）阶段。
+      <b>进度：</b>
+      ① README §8 的 6 个问题已定案 ✅ → ② W1/W2 可点击原型已完成 ✅ （<a
+        href="proto-流程原型.html"
+        >proto-流程原型.html</a
+      >）→ ③ 下一个可选动作：进入高保真（视觉）阶段。
     </div>
 
     <p class="pager">

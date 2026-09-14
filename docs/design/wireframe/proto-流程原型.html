@@ -1,0 +1,948 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>可点击原型 · 流 1~3（控制端 × 被控端，双端同步）</title>
+    <link rel="stylesheet" href="wireframe.css" />
+    <style>
+      /* 原型专用样式：只加"可点"和"双栏/日志"，不改线框视觉语言 */
+      .btn {
+        cursor: pointer;
+      }
+      .btn:hover {
+        border-color: var(--ink);
+      }
+      .proto-tools {
+        position: sticky;
+        top: 46px;
+        z-index: 50;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        padding: 9px 12px;
+        background: #fff;
+        border: 1px solid var(--line);
+        margin: 0 0 18px;
+        max-width: 1080px;
+      }
+      .proto-tools .sep {
+        width: 1px;
+        height: 20px;
+        background: var(--line2);
+      }
+      .proto-grid {
+        display: flex;
+        gap: 24px;
+        align-items: flex-start;
+        flex-wrap: wrap;
+      }
+      .proto-col {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .proto-h {
+        font-size: 12px;
+        color: var(--ink2);
+      }
+      .proto-h b {
+        color: var(--ink);
+      }
+      .pane {
+        position: relative;
+        background: #fff;
+        border: 1px solid var(--line);
+        width: 620px;
+        height: 424px;
+        font-size: 11.5px;
+        line-height: 1.5;
+        color: var(--ink);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+      .pane--host {
+        width: 412px;
+      }
+      .pane-slot {
+        position: relative;
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .proto-strip {
+        display: flex;
+        gap: 0;
+        height: 214px;
+        align-items: stretch;
+      }
+      .side-gap {
+        width: 44px;
+        border: 1px solid var(--line2);
+      }
+      .log-list {
+        font:
+          11px/1.65 Consolas,
+          "Courier New",
+          monospace;
+        background: #fff;
+        border: 1px solid var(--line);
+        padding: 9px 11px;
+        max-height: 250px;
+        overflow: auto;
+        max-width: 1060px;
+      }
+      .log-list div {
+        border-bottom: 1px dotted var(--line2);
+        white-space: pre-wrap;
+      }
+      .log-list div:last-child {
+        border-bottom: 0;
+      }
+      .log-list .mk {
+        color: var(--anno);
+      }
+      .alarm {
+        display: none;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border: 1px solid var(--anno);
+        background: var(--anno-bg);
+        color: var(--anno);
+        font-size: 11.5px;
+        max-width: 1060px;
+        margin: 0 0 14px;
+      }
+      .alarm.on {
+        display: flex;
+      }
+      .bp {
+        border-left: 3px solid var(--ink3);
+        background: #fff;
+        padding: 8px 12px;
+        font-size: 11.5px;
+        color: var(--ink2);
+        margin: 0 0 8px;
+        max-width: 1060px;
+      }
+      .bp b {
+        color: var(--ink);
+      }
+      .bp-hard {
+        border-left-color: var(--anno);
+        background: var(--anno-bg);
+      }
+      .bp-hard b {
+        color: var(--anno);
+      }
+      .count {
+        font:
+          600 13px/1 Consolas,
+          monospace;
+        border: 1px solid var(--ink2);
+        padding: 2px 6px;
+        border-radius: 3px;
+        background: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="topbar">
+      <a href="index.html">索引</a>
+      <a href="proto-流程原型.html" aria-current="page">▶ 可点击原型</a>
+      <a href="w1-控制端-连接与额度.html">W1 控制端·连接与额度</a>
+      <a href="w2-被控端.html">W2 被控端</a>
+      <a href="w3-账号与设备管理.html">W3 账号与设备</a>
+      <a href="w4-计费与个人中心.html">W4 计费与个人中心</a>
+      <a href="w5-合规实名与运营台.html">W5 合规·实名·运营台</a>
+      <a href="w6-移动端手持.html">W6 移动端手持</a>
+    </nav>
+
+    <h1>可点击原型 · 流 1（首次连接）～ 流 3（被控端授权）</h1>
+    <p class="lede">
+      这不是新稿，是把
+      <b>W1 + W2</b> 的静态帧接成<b>一条能走通的流程</b>，用来回答一个问题：
+      <b>"按键点下去之后，下一步在哪儿？"</b>
+      <br />左右两个面板<b>同时状态同步</b>：左边你操作控制端，右边被控端会跟着变
+      ——
+      这样能一眼看出"<b>这一端降级的时候，那一端看到了什么</b>"（这正是静态帧看不出来的东西）。
+      <br />🔴
+      全程运行<b>被控端红线自动断言</b>：被控端面板任何时刻出现金额/催费/推销字样，页面顶部立刻报警。
+      <br />说明：所有数值为示意，<b>实际必须后端下发</b>；本页不引入任何视觉设计（仍是低保真灰阶）。
+    </p>
+
+    <div id="alarm" class="alarm" role="alert" aria-live="assertive">
+      <b>🔴 红线违规：</b><span id="alarm-msg"></span>
+    </div>
+
+    <div class="proto-tools">
+      <b>驱动流程：</b>
+      <span class="btn sm solid" onclick="go('connect')">① 点「连接」</span>
+      <span class="btn sm" onclick="go('allow')">② 被控端「允许」</span>
+      <span class="btn sm" onclick="go('upgrade')">③ 后台打洞成功 → 直连</span>
+      <span class="btn sm" onclick="go('fallback')">④ 模拟：直连又不可用</span>
+      <span class="btn sm" onclick="useTime()">⑤ 消耗时长（×4 走完阈值）</span>
+      <span class="btn sm" onclick="go('guide')"
+        >⑥ 模拟：直连失败 → 引导页</span
+      >
+      <span class="btn sm" onclick="go('back')">⑦ 返回会话 → 降码率</span>
+      <span class="btn sm" onclick="go('final')">⑧ 终止前倒计时</span>
+      <span class="btn sm" onclick="go('viewonly')">⑨ 转「仅查看」</span>
+      <span class="btn sm" onclick="go('disconnect')">⑩ 断开</span>
+      <span class="sep"></span>
+      <span class="btn sm ghost" onclick="auto()">▶ 自动跑一遍</span>
+      <span class="btn sm ghost" onclick="reset()">↻ 重新开始</span>
+      <span class="tiny muted" id="hint"
+        >提示：也可以直接点面板里的按钮（设备卡「连接」/ 被控端「允许」/
+        工具栏「断开」）。</span
+      >
+    </div>
+
+    <div class="proto-grid">
+      <div class="proto-col">
+        <div class="proto-h">
+          <b>控制端</b>（我 · Windows）· 当前：<span id="m-state">未连接</span>
+        </div>
+        <div class="pane" id="pane-main"></div>
+      </div>
+      <div class="proto-col">
+        <div class="proto-h">
+          <b>被控端</b>（爸爸的笔记本）· 当前：<span id="h-state"
+            >未被连接</span
+          >
+        </div>
+        <div class="pane pane--host" id="pane-host"></div>
+      </div>
+    </div>
+
+    <h2>流程日志（含本条流程暴露的断点标记）</h2>
+    <div class="log-list" id="log"></div>
+
+    <h2>这条流程跑出来的 8 个断点</h2>
+    <p class="lede">
+      静态帧评审看不出来的东西，跑一遍就浮出来了。前 7 条是"设计里没写清"，
+      <b class="no">第 8 条是 W2 的真实缺口，必须补稿</b>。
+    </p>
+
+    <div class="bp">
+      <b>断点 1 · 余量耗尽不等于要打扰用户。</b>
+      原型验证：若直连可用，用户全程<b>只看到一条横幅消失</b>，不该弹任何引导页。
+      引导页<b>只能在"直连也失败"时出现</b>（否则就是借降级做推销，撞红线①）。
+    </div>
+    <div class="bp">
+      <b>断点 2 · 「已切换为直连」后又回退，两句话自相矛盾。</b>
+      同一行先后说"直连成功"和"退回中继"，用户会怀疑前一句是假消息。
+      建议：宣布直连前先稳定 ~10
+      秒，或文案改为"<b>当前为直连</b>（网络变化时会自动回退）"。
+    </div>
+    <div class="bp">
+      <b>断点 3 · 引导页打开时，画面必须是"冻结的最后一帧"。</b>
+      中继已停、画面不再刷新：既不能黑屏（用户以为坏了），也不能继续动（误导）。
+      需要后端明确支持"冻结帧 + 文案告知"，这条目前只在 W1-06 隐含。
+    </div>
+    <div class="bp">
+      <b>断点 4 · 首连提示行：常驻还是淡出？</b>
+      常驻要长期占一条工具栏；淡出则主主张只被看到一次。 建议落法：<b
+        >首连后常驻 ~15 秒淡出，底部指示器常驻</b
+      >
+      —— 即"技术状态常驻、商业说明不必常驻"。
+    </div>
+    <div class="bp">
+      <b>断点 5 · 降码率时，被控端要不要知道？</b>
+      倾向<b>不告知</b>：画质是控制端的事，让被帮助的一方读"1080p/30"只会造成困惑（且容易联想到"是不是要花钱"）。
+      被控端只在<b>操作权变化（仅查看）</b>时提示。<b>此结论需回写 W2。</b>
+    </div>
+    <div class="bp">
+      <b>断点 6 · 「总是允许此设备」与"90 天未连接"的信任降级耦合。</b>
+      记住设备后，若该设备 90 天没连过，是否重新弹确认页？ 与 D12-2
+      的设备信任策略强耦合，<b>需一次定案</b>（否则会出现"以为记得，其实又弹了"）。
+    </div>
+    <div class="bp">
+      <b>断点 7 · 对方先断开时，控制端不得模态拦人。</b>
+      只允许一条非阻塞提示 + 一个"重新连接"按钮；
+      <b>不做</b>"确定要离开吗？"式二次确认（撞体验红线 C3 同类精神）。
+    </div>
+    <div class="bp bp-hard">
+      <b>🔴 断点 8 · W2 缺"允许恢复控制"。</b>
+      进入「仅查看」是<b>自动的</b>，但恢复控制需要<b>双方同意</b>：
+      控制端有"请求控制"按钮，<b>被控端当前只有"断开"，没有"允许恢复控制"</b>
+      —— 于是"请求控制"会成为一个永远没有应答的死按钮。
+      <b>W2 必须补一帧：被控端收到"对方请求恢复控制"→ 允许 / 拒绝。</b>
+    </div>
+
+    <p class="pager">
+      返回 <a href="index.html">索引</a>　·　静态帧
+      <a href="w1-控制端-连接与额度.html">W1</a>　
+      <a href="w2-被控端.html">W2</a>　·　清单与红线自检表见
+      <a href="README.md">README.md</a>
+    </p>
+
+    <script>
+      /* =========================================================
+         状态机
+         main: idle | connecting | session | ended
+         link: relay | direct
+         host: idle | confirm | connected | viewonly | ended
+         q   : 免费中继余量百分比（界面只显示"约 xx 分钟"，不显示百分比）
+         注意：MIN_TOTAL 是示意值，真实值由后端下发（商业化 §13.5）
+         ========================================================= */
+      var MIN_TOTAL = 62;
+      var st = {
+        main: "idle",
+        link: "relay",
+        host: "idle",
+        q: 100,
+        cd: 0,
+        tick: null,
+        attempt: 0,
+        log: [],
+        breaks: {},
+        alarm: "",
+      };
+
+      var BAD_HOST = [
+        "余额",
+        "充值",
+        "会员",
+        "购买",
+        "开通",
+        "套餐",
+        "额度",
+        "付费",
+        "订阅",
+        "续费",
+        "价格",
+        "免费",
+        "时长",
+        "计费",
+        "元",
+      ];
+      var BAD_MAIN = ["余额", "充值", "开通会员", "升级可", "购买", "额度"];
+
+      function mins() {
+        return Math.round((MIN_TOTAL * st.q) / 100);
+      }
+      function log(who, text, mk) {
+        st.log.push(
+          (mk ? "⚠️ 断点#" + mk + "  " : "") + "[" + who + "] " + text,
+        );
+        paintLog();
+      }
+      function paintLog() {
+        document.getElementById("log").innerHTML = st.log
+          .map(function (l) {
+            return (
+              "<div" +
+              (l.indexOf("⚠️") === 0 ? ' class="mk"' : "") +
+              ">" +
+              esc(l) +
+              "</div>"
+            );
+          })
+          .join("");
+      }
+      function esc(s) {
+        return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+      }
+      function tag(t, on) {
+        return '<span class="tag' + (on ? " on" : "") + '">' + t + "</span>";
+      }
+
+      /* ---------- 被控端红线自动断言（每次渲染都跑） ---------- */
+      function checkRedlines() {
+        var h = document.getElementById("pane-host");
+        var m = document.getElementById("pane-main");
+        var hit = [];
+        /* 说明性禁放区（.no-zone）里的字样是"反面示例"，不计入断言 */
+        function texts(node) {
+          if (!node) return "";
+          var c = node.cloneNode(true);
+          var z = c.querySelectorAll(".no-zone");
+          for (var i = 0; i < z.length; i++) z[i].textContent = "";
+          return c.textContent;
+        }
+        var ht = texts(h);
+        BAD_HOST.forEach(function (w) {
+          if (ht.indexOf(w) >= 0) hit.push("被控端出现「" + w + "」");
+        });
+        if (m && st.main !== "idle") {
+          var mt = texts(m);
+          BAD_MAIN.forEach(function (w) {
+            if (mt.indexOf(w) >= 0) hit.push("控制端出现「" + w + "」");
+          });
+        }
+        var a = document.getElementById("alarm");
+        var s = document.getElementById("alarm-msg");
+        if (hit.length) {
+          st.alarm = hit.join(" · ");
+          s.textContent =
+            st.alarm +
+            "（违反 商业化 §13.4 红线②：被控端不得出现金额/催费字样）";
+          a.classList.add("on");
+        } else {
+          st.alarm = "";
+          a.classList.remove("on");
+        }
+      }
+
+      /* ---------- 控制端 ---------- */
+      function indicator() {
+        if (st.link === "direct") return tag("● 直连", true);
+        if (st.q > 80)
+          return '<span class="muted">' + tag("● 中继") + "</span>";
+        if (st.q > 0)
+          return (
+            tag("● 中继", true) +
+            '<span class="tiny">免费中继时长剩余约 ' +
+            mins() +
+            " 分钟</span>" +
+            '<span class="tiny">▾</span>'
+          );
+        return tag("● 中继", true) + '<span class="tiny muted">已暂停</span>';
+      }
+      function banner() {
+        if (st.link === "direct")
+          return (
+            '<div class="banner">' +
+            tag("● 已切换为直连", true) +
+            '<span class="tiny">直连不再消耗免费中继时长</span>' +
+            '<span class="grow"></span><span class="btn sm">查看明细</span></div>'
+          );
+        if (st.q <= 0)
+          return (
+            '<div class="banner">' +
+            "<b>中继已暂停 · 正在尝试直连…</b>" +
+            '<span class="grow"></span><span class="tiny muted">画面可能短暂停顿</span></div>'
+          );
+        if (st.q <= 20)
+          return (
+            '<div class="banner">' +
+            "<b>免费中继时长剩余约 " +
+            mins() +
+            " 分钟</b>" +
+            '<span class="tiny muted">用尽后将自动尝试直连（免费，无需操作）</span>' +
+            '<span class="grow"></span><span class="btn sm">了解降级规则</span></div>'
+          );
+        if (st.q <= 80)
+          return (
+            '<div class="banner">' +
+            '<span class="tiny">中继线路正常</span><span class="grow"></span>' +
+            indicator() +
+            "</div>"
+          );
+        return "";
+      }
+      function sessionWin() {
+        var h = "";
+        h +=
+          '<div class="chrome"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span style="margin-left:6px">远程桌面 — 我的台式机 · 1920×1080</span><span class="grow"></span><span class="tiny">— □ ✕</span></div>';
+        /* 首连提示行：常驻（断点 4） */
+        h +=
+          '<div class="bar" style="background:#fafafa">' +
+          (st.link === "direct"
+            ? tag("● 本次连接：直连", true) +
+              '<span class="tiny">不消耗免费中继时长</span>'
+            : tag("● 本次连接：中继", true) +
+              '<span class="tiny">在消耗免费中继时长</span>') +
+          '<span class="grow"></span><span class="tiny muted">画质：' +
+          (st.degraded ? "720p / 30fps（已降低）" : "自适应 1080p / 30fps") +
+          '</span><span class="btn sm ghost">缩放 ▾</span></div>';
+        h += banner();
+        h +=
+          '<div class="pane-slot"><div class="pad grow" style="display:flex;flex-direction:column;gap:10px">';
+        h += '<div class="proto-strip"><div class="stripe side-gap"></div>';
+        h +=
+          '<div class="ph-img grow" style="height:100%">被控端画面（等比缩放）</div>';
+        h += '<div class="stripe side-gap"></div></div>';
+        h +=
+          '<div class="tiny muted">两侧灰条 = 保持比例的留白（黑边），画面本身不变形、不改被控端分辨率。</div>';
+        h += "</div>";
+        /* 引导页覆盖层（只在直连失败时出现 —— 断点 1） */
+        if (
+          st.main === "session" &&
+          st.q <= 0 &&
+          st.link === "relay" &&
+          st.guide
+        ) {
+          h +=
+            '<div class="modal"><div class="dlg">' +
+            '<div class="dlg-h">暂时无法直连 —— 这几步你可以自己做（不需要付费）</div>' +
+            '<div class="dlg-b stack tiny">' +
+            "<div>① 手机开热点，把两台机器接到同一个网络</div>" +
+            "<div>② 在路由器里打开 UPnP（多数路由器默认关闭）</div>" +
+            "<div>③ 公司/学校网络可能拦截：请让管理员放行本程序</div>" +
+            '<div class="muted" style="margin-top:4px">直连成功后，画面会自动恢复，并且不再消耗免费中继时长。</div>' +
+            "</div>" +
+            '<div class="dlg-f">' +
+            '<span class="btn sm" onclick="go(\'viewonly\')">继续以仅查看</span>' +
+            '<span class="btn sm solid" onclick="go(\'back\')">已知晓，返回会话</span>' +
+            "</div></div></div>";
+        }
+        /* 仅查看覆盖层 */
+        if (
+          st.main === "session" &&
+          st.q <= 0 &&
+          st.link === "relay" &&
+          st.viewonly
+        ) {
+          h +=
+            '<div class="overlay-msg"><div class="stack" style="text-align:center;max-width:340px">' +
+            "<b>当前为「仅查看」</b>" +
+            '<div class="tiny muted">中继已用尽，且暂时无法直连。画面已停止刷新，你的操作不会被发送到对方电脑。</div>' +
+            '<div class="hstack" style="justify-content:center">' +
+            '<span class="btn sm" onclick="requestControl()">请求恢复控制</span>' +
+            '<span class="btn sm" onclick="go(\'disconnect\')">断开</span>' +
+            "</div></div></div>";
+        }
+        h += "</div>";
+        h +=
+          '<div class="bar bar--bottom"><span class="btn sm">文件</span><span class="btn sm">剪贴板</span><span class="btn sm">全屏</span>' +
+          '<span class="grow"></span>' +
+          indicator() +
+          '<span class="btn sm" onclick="go(\'disconnect\')">断开</span></div>';
+        return h;
+      }
+      function renderMain() {
+        var el = document.getElementById("pane-main");
+        var h = "";
+        if (st.main === "idle") {
+          h +=
+            '<div class="chrome"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span style="margin-left:6px">远程桌面</span></div>';
+          h +=
+            '<div class="bar"><b>我的设备</b><span class="grow"></span><span class="input" style="width:130px">搜索设备</span><span class="btn sm">+ 添加设备</span></div>';
+          h +=
+            '<div class="pad grow" style="display:flex;gap:12px;flex-wrap:wrap;align-content:flex-start">';
+          h +=
+            '<div class="box" style="width:176px;padding:11px"><div class="ph-img" style="height:66px;margin-bottom:9px">显示器</div><div class="hstack"><b>我的台式机</b><span class="grow"></span>' +
+            tag("在线", true) +
+            '</div><div class="ph w75" style="margin-top:6px"></div><div class="hstack" style="margin-top:10px"><span class="btn sm solid" onclick="go(\'connect\')">连接</span><span class="btn sm">更多</span></div></div>';
+          h +=
+            '<div class="box" style="width:176px;padding:11px"><div class="ph-img" style="height:66px;margin-bottom:9px">笔记本</div><div class="hstack"><b>爸爸的笔记本</b><span class="grow"></span>' +
+            tag("在线", true) +
+            '</div><div class="ph w55" style="margin-top:6px"></div><div class="hstack" style="margin-top:10px"><span class="btn sm" onclick="go(\'connect\')">连接</span><span class="btn sm">更多</span></div></div>';
+          h +=
+            '<div class="box" style="width:176px;padding:11px;border-style:dashed;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#8f8f8f">+<br />添加设备</div>';
+          h += "</div>";
+        } else if (st.main === "connecting") {
+          h +=
+            '<div class="chrome"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span style="margin-left:6px">远程桌面</span></div>';
+          h +=
+            '<div class="banner">' +
+            tag("● 正在建立连接…", true) +
+            '<span class="tiny muted">先经中继贯通，随后自动尝试直连</span></div>';
+          h +=
+            '<div class="pane-slot"><div class="pad grow hstack" style="justify-content:center"><div class="ph-img" style="width:100%;height:60px">连接中（通常 1 秒内）</div></div></div>';
+        } else if (st.main === "ended") {
+          h +=
+            '<div class="chrome"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span style="margin-left:6px">远程桌面 — 会话已结束</span></div>';
+          h +=
+            '<div class="bar"><b>本次会话已结束</b><span class="grow"></span></div>';
+          h +=
+            '<div class="pane-slot"><div class="pad stack grow" style="justify-content:center;align-items:center;text-align:center;gap:10px">' +
+            "<b>连接已断开</b>" +
+            '<div class="tiny muted" style="max-width:420px">本机不再有任何远程进程占用。会话起止时间会记入连接日志，仅用于排查问题与计费核对。</div>' +
+            '<div class="hstack" style="justify-content:center">' +
+            '<span class="btn sm solid" onclick="go(\'connect\')">重新连接</span>' +
+            '<span class="btn sm">返回设备列表</span>' +
+            "</div>" +
+            '<div class="stripe no-zone" style="width:100%;height:40px;border:1px dashed var(--line);display:flex;align-items:center;justify-content:center;font-size:10.5px;color:var(--ink3)">此处不得出现：断连促销弹窗 / 推广位（红线 ⚠️ §13.4-⑤）</div>' +
+            "</div></div>";
+        } else {
+          h += sessionWin();
+        }
+        el.innerHTML = h;
+      }
+
+      /* ---------- 被控端 ---------- */
+      function renderHost() {
+        var el = document.getElementById("pane-host");
+        var h = "";
+        h +=
+          '<div class="chrome"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span style="margin-left:6px">远程桌面 · 本机</span></div>';
+        if (st.host === "idle" || st.host === "ended") {
+          h += '<div class="pad stack">';
+          if (st.host === "ended")
+            h +=
+              '<div class="box box--fill" style="padding:10px"><b>已断开</b><div class="tiny muted" style="margin-top:5px">屏幕亮度、息屏时间、输入法已还原；本机不再有任何远程进程占用。</div></div>';
+          h +=
+            '<div class="box" style="padding:12px"><span class="label">本机识别码</span><div class="hstack"><b style="font:600 20px/1.2 Consolas,monospace;letter-spacing:3px">123 456 789</b><span class="grow"></span><span class="btn sm">复制</span></div>';
+          h +=
+            '<div style="margin-top:12px"></div><span class="label">临时密码</span><div class="hstack"><b style="font:600 17px/1.2 Consolas,monospace;letter-spacing:3px">a7k2f9</b><span class="grow"></span><span class="btn sm">换一个</span></div><div class="tiny muted" style="margin-top:6px">每次连接后自动更换。</div></div>';
+          h +=
+            '<div class="box box--fill" style="padding:10px"><b>当前状态</b><div class="hstack" style="margin-top:6px">' +
+            tag("未被连接") +
+            "</div></div>";
+          h +=
+            '<div class="box" style="padding:10px"><b>常用开关</b><div class="item" style="border:0;padding:6px 0"><span>开机自动启动</span><span class="grow"></span>' +
+            tag("开", true) +
+            '</div><div class="item" style="border:0;padding:6px 0"><span>空闲时近零占用</span><span class="grow"></span>' +
+            tag("开", true) +
+            "</div></div>";
+          h += "</div>";
+        }
+        if (st.host === "confirm") {
+          h += '<div class="pad stack">';
+          h +=
+            '<div class="box box--fill" style="padding:10px"><b>有人请求控制本机</b><div class="tiny muted" style="margin-top:5px">请求方：我的台式机 · 识别码 123 456 789</div></div>';
+          h +=
+            '<div class="box" style="border:2px solid var(--ink);padding:11px;background:#fff"><b>⚠️ 允许之前请确认：</b>';
+          h +=
+            '<div class="tiny" style="margin-top:6px">· 对方将<b>看到并操作你屏幕上的一切</b>，包括聊天窗口与银行页面。</div>';
+          h +=
+            '<div class="tiny" style="margin-top:4px">· 任何自称「客服」「公检法」「贷款审核」要求你同意控制屏幕的，<b>都是诈骗</b>。</div>';
+          h +=
+            '<div class="tiny muted" style="margin-top:6px">本弹窗不可折叠、不可跳过。</div></div>';
+          h +=
+            '<div class="stack" style="gap:6px"><span class="btn block solid" onclick="go(\'allow\')">允许本次</span><span class="btn block" onclick="go(\'allow\')">总是允许此设备</span><span class="btn block ghost" onclick="go(\'deny\')">拒绝</span></div>';
+          h += "</div>";
+        }
+        if (st.host === "connected") {
+          h +=
+            '<div class="bar" style="background:#fafafa">' +
+            tag("● 正在被控制", true) +
+            '<span class="tiny">来自「我的台式机」</span><span class="grow"></span><span class="tiny muted">本提示常驻，不可关闭</span></div>';
+          h += '<div class="pane-slot"><div class="pad stack grow">';
+          h +=
+            '<div class="box box--fill" style="padding:10px"><b>你的屏幕正在被对方查看与操作</b><div class="tiny muted" style="margin-top:5px">如果这不是你发起的，请立刻点下面的「断开」。</div></div>';
+          h +=
+            '<div class="ph-img" style="height:96px">本机桌面（被控中）</div>';
+          h +=
+            '<div class="hstack"><span class="btn block solid" style="min-height:30px" onclick="go(\'hostDisconnect\')">断开连接</span></div>';
+          h +=
+            '<div class="tiny muted">断开会立即生效，对方不会收到任何"是否挽留"的询问。</div>';
+          h += "</div></div>";
+        }
+        if (st.host === "request-ctl") {
+          h +=
+            '<div class="bar" style="background:#fafafa">' +
+            tag("● 对方在看你的屏幕", true) +
+            '<span class="grow"></span></div>';
+          h += '<div class="pad stack">';
+          h +=
+            '<div class="box box--fill" style="padding:10px"><b>对方请求恢复「可操作」</b><div class="tiny muted" style="margin-top:5px">允许后，对方将能够使用鼠标和键盘操作你的电脑。</div></div>';
+          h +=
+            '<div class="hstack"><span class="btn sm solid" onclick="go(\'allowCtl\')">允许操作</span><span class="btn sm" onclick="go(\'denyCtl\')">保持仅查看</span></div>';
+          h += "</div>";
+        }
+        if (st.host === "viewonly") {
+          h +=
+            '<div class="bar" style="background:#fafafa">' +
+            tag("● 对方正在查看本机画面", true) +
+            '<span class="grow"></span><span class="tiny muted">只读</span></div>';
+          h += '<div class="pane-slot"><div class="pad stack grow">';
+          h +=
+            '<div class="box box--fill" style="padding:10px"><b>对方现在只能看，不能操作</b><div class="tiny muted" style="margin-top:5px">你的鼠标、键盘不会被对方使用。若想结束，点「断开」。</div></div>';
+          h +=
+            '<div class="ph-img" style="height:80px">本机桌面（只读查看中）</div>';
+          h +=
+            '<div class="hstack"><span class="btn block solid" onclick="go(\'hostDisconnect\')">断开连接</span></div>';
+          h +=
+            '<div class="stripe no-zone" style="height:44px;border:1px dashed var(--line);display:flex;align-items:center;justify-content:center;font-size:10.5px;color:var(--ink3)">此处严禁出现：余额 / 充值 / 会员 / 升级 提示</div>';
+          h += "</div></div>";
+        }
+        el.innerHTML = h;
+      }
+
+      /* ---------- 主渲染 ---------- */
+      function render() {
+        renderMain();
+        renderHost();
+        var names = {
+          idle: "未连接",
+          connecting: "连接中",
+          session: "会话中（" + (st.link === "direct" ? "直连" : "中继") + "）",
+          ended: "已断开",
+        };
+        document.getElementById("m-state").textContent =
+          names[st.main] || st.main;
+        var hn = {
+          idle: "未被连接",
+          confirm: "等待本机确认",
+          connected: "正在被控制",
+          "request-ctl": "收到恢复控制请求",
+          viewonly: "被查看（只读）",
+          ended: "已断开",
+        };
+        document.getElementById("h-state").textContent = hn[st.host] || st.host;
+        checkRedlines();
+      }
+
+      /* ---------- 动作 ---------- */
+      function go(a) {
+        if (a === "connect") {
+          if (st.main !== "idle" && st.main !== "ended") return;
+          st.main = "connecting";
+          st.host = "confirm";
+          st.q = 100;
+          st.link = "relay";
+          st.guide = false;
+          st.viewonly = false;
+          st.degraded = false;
+          log("控制端", "点「连接」→ 先经中继贯通（秒连），随后后台尝试直连");
+          log(
+            "被控端",
+            "收到连接请求 → 首次被控确认页（反诈提示，其他动作被阻塞）",
+          );
+          render();
+          return;
+        }
+        if (a === "allow") {
+          if (st.host !== "confirm") return;
+          st.host = "connected";
+          log("被控端", "点「允许本次」");
+          setTimeout(function () {
+            st.main = "session";
+            log("控制端", "会话建立：中继链路（首连提示行常驻）");
+            log("被控端", "会话中：顶栏常驻「正在被控制」+ 一键断开");
+            render();
+          }, 500);
+          render();
+          return;
+        }
+        if (a === "deny") {
+          st.host = "idle";
+          st.main = "idle";
+          log(
+            "被控端",
+            "点「拒绝」→ 控制端回到设备列表（不显示「对方拒绝了」以外的任何引导）",
+          );
+          render();
+          return;
+        }
+        if (a === "upgrade") {
+          if (st.main !== "session") return;
+          st.link = "direct";
+          log("控制端", "后台打洞成功 → 自动切直连（用户无需操作）", 2);
+          render();
+          return;
+        }
+        if (a === "fallback") {
+          if (st.main !== "session") return;
+          st.link = "relay";
+          log("控制端", "直连不可用 → 回退中继：同一行先后出现两句相反的话", 2);
+          render();
+          return;
+        }
+        if (a === "guide") {
+          if (st.main !== "session") return;
+          st.link = "relay";
+          st.q = 0;
+          st.guide = true;
+          log(
+            "控制端",
+            "中继用尽 + 直连失败 → 引导页（只给自行动作，不给付费入口）",
+            1,
+          );
+          log("被控端", "被控端无任何变化（这是控制端的技术问题）", 5);
+          render();
+          return;
+        }
+        if (a === "back") {
+          if (!st.guide) return;
+          st.guide = false;
+          st.degraded = true;
+          st.link = "relay";
+          log(
+            "控制端",
+            "返回会话 → 明示「画质已降低：1080p/30 → 720p/30」+ 原因",
+            3,
+          );
+          render();
+          return;
+        }
+        if (a === "final") {
+          if (st.main !== "session") return;
+          st.link = "relay";
+          st.guide = false;
+          st.viewonly = false;
+          st.cd = 30;
+          log("控制端", "进入终止前 30 秒倒计时（可主动选「继续以仅查看」）");
+          if (st.tick) clearInterval(st.tick);
+          st.tick = setInterval(function () {
+            st.cd -= 1;
+            var el = document.getElementById("cd");
+            if (el) el.textContent = st.cd;
+            if (st.cd <= 0) {
+              clearInterval(st.tick);
+              st.tick = null;
+              go("viewonly");
+            }
+          }, 1000);
+          render();
+          return;
+        }
+        if (a === "viewonly") {
+          if (st.main !== "session") return;
+          if (st.tick) clearInterval(st.tick);
+          st.tick = null;
+          st.guide = false;
+          st.viewonly = true;
+          st.link = "relay";
+          st.host = "viewonly";
+          log("控制端", "转「仅查看」：画面停止刷新，操作不发送", 8);
+          log("被控端", "同步显示中性提示「对方只能看，不能操作」", 8);
+          render();
+          return;
+        }
+        if (a === "requestControl") {
+          st.host = "request-ctl";
+          log("控制端", "点「请求恢复控制」");
+          log("被控端", "🔴 此处暴露 W2 缺口：被控端原先没有可应答的界面", 8);
+          render();
+          return;
+        }
+        if (a === "allowCtl") {
+          st.host = "connected";
+          st.viewonly = false;
+          st.q = 100;
+          log("被控端", "点「允许操作」→ 恢复可控（原型补上的那一帧）", 8);
+          render();
+          return;
+        }
+        if (a === "denyCtl") {
+          st.host = "viewonly";
+          log(
+            "被控端",
+            "点「保持仅查看」→ 控制端仍为仅查看（请求被温和拒绝）",
+            8,
+          );
+          render();
+          return;
+        }
+        if (a === "hostDisconnect") {
+          st.host = "ended";
+          st.main = "ended";
+          if (st.tick) clearInterval(st.tick);
+          st.tick = null;
+          st.viewonly = false;
+          st.guide = false;
+          log(
+            "被控端",
+            "点「断开连接」→ 立即生效，一次点击，无二次确认（红线 C3）",
+            7,
+          );
+          log("控制端", "会话结束 → 只给一条非阻塞提示 + 「重新连接」按钮", 7);
+          render();
+          return;
+        }
+        if (a === "disconnect") {
+          st.host = "ended";
+          st.main = "ended";
+          if (st.tick) clearInterval(st.tick);
+          st.tick = null;
+          st.viewonly = false;
+          st.guide = false;
+          log("控制端", "点「断开」→ 断开后页面无任何促销弹窗/推广位");
+          log("被控端", "会话结束：亮度、息屏时间、输入法已还原");
+          render();
+          return;
+        }
+      }
+
+      function useTime() {
+        if (st.main !== "session") return;
+        var before = st.q;
+        st.q = Math.max(0, st.q - 30);
+        log(
+          "控制端",
+          "会话继续消耗中继：约剩 " +
+            mins() +
+            " 分钟（折叠态只给粗粒度，不给百分比）",
+          4,
+        );
+        if (st.q === 0) {
+          log("控制端", "达到 0 → 自动尝试直连（不弹引导页，除非直连失败）", 1);
+        }
+        render();
+      }
+
+      function requestControl() {
+        go("requestControl");
+      }
+
+      function auto() {
+        var seq = [
+          "connect",
+          "allow",
+          "upgrade",
+          "fallback",
+          "use",
+          "use",
+          "use",
+          "use",
+          "guide",
+          "back",
+          "final",
+          "viewonly",
+        ];
+        var i = 0;
+        var t = setInterval(function () {
+          if (i >= seq.length || st.main === "ended") {
+            clearInterval(t);
+            return;
+          }
+          var a = seq[i++];
+          if (a === "use") useTime();
+          else if (a === "viewonly") {
+            if (st.tick) clearInterval(st.tick);
+            st.tick = null;
+            go("viewonly");
+          } else go(a);
+        }, 700);
+      }
+
+      function reset() {
+        if (st.tick) clearInterval(st.tick);
+        st.main = "idle";
+        st.link = "relay";
+        st.host = "idle";
+        st.q = 100;
+        st.cd = 0;
+        st.tick = null;
+        st.guide = false;
+        st.viewonly = false;
+        st.degraded = false;
+        st.log = [];
+        paintLog();
+        log("系统", "重置：余量示意 62 分钟（真实值后端下发）");
+        render();
+      }
+
+      /* 倒计时的显示由 banner 处理：这里补一个 30s 版本 */
+      var _banner = banner;
+      banner = function () {
+        if (st.main === "session" && st.degraded) {
+          return (
+            '<div class="banner">' +
+            "<b>画质已降低：1080p / 30fps → 720p / 30fps</b>" +
+            '<span class="tiny muted">原因：免费中继时长已用尽，且当前网络暂时无法直连</span>' +
+            '<span class="grow"></span>' +
+            '<span class="btn sm">了解降级规则</span></div>'
+          );
+        }
+        if (st.main === "session" && st.cd > 0) {
+          return (
+            '<div class="banner">' +
+            "<b>免费中继时长已用尽</b>" +
+            '<span class="count" id="cd">' +
+            st.cd +
+            "</span>" +
+            '<span class="tiny">秒后转为「仅查看」</span>' +
+            '<span class="grow"></span>' +
+            '<span class="btn sm" onclick="go(\'viewonly\')">继续以仅查看</span>' +
+            '<span class="btn sm" onclick="go(\'disconnect\')">结束会话</span></div>'
+          );
+        }
+        return _banner();
+      };
+
+      reset();
+      log("系统", "原型就绪。被控端红线断言已开启（每次界面变化都会跑一次）。");
+      paintLog();
+    </script>
+  </body>
+</html>

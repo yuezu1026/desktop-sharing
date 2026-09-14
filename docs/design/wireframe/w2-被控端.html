@@ -9,6 +9,7 @@
   <body>
     <nav class="topbar">
       <a href="index.html">索引</a>
+      <a href="proto-流程原型.html">▶ 可点击原型</a>
       <a href="w1-控制端-连接与额度.html">W1 控制端·连接与额度</a>
       <a href="w2-被控端.html" aria-current="page">W2 被控端</a>
       <a href="w3-账号与设备管理.html">W3 账号与设备</a>
@@ -23,7 +24,7 @@
       且<b>绝对不能出现任何金额、余额、充值字样</b>（<code
         >商业化与计费设计</code
       >
-      §13.4 红线②）。 <br />本页 6 帧，其中 5 帧是"缺了就违规或伤体验"的。
+      §13.4 红线②）。 <br />本页 7 帧，其中 6 帧是"缺了就违规或伤体验"的。
     </p>
 
     <div class="legend">
@@ -326,7 +327,7 @@
             明确写出「断开后立即生效」——让按钮的后果可预期，这比任何确认弹窗都有效。
           </li>
           <li>
-            本屏同样<b>不出现金额</b>。对方是否在消耗免费时长，是对方那一端的事（W1-03）。
+            本屏同样<b>不出现金额</b>。对方是否在消耗免费中继时长，是对方那一端的事（W1-03）。
           </li>
           <li>断开按钮必须是本屏<b>视觉权重最高</b>的元素。</li>
         </ul>
@@ -391,8 +392,8 @@
               "
             >
               <span class="tiny muted"
-                >⚠️ 此处严禁出现：余额不足 / 免费时长已用尽 / 开通会员可继续 /
-                升级提示</span
+                >⚠️ 此处严禁出现：余额不足 / 免费中继时长已用尽 / 开通会员可继续
+                / 升级提示</span
               >
             </div>
             <div class="grow"></div>
@@ -403,7 +404,7 @@
         <ul class="notes">
           <li>
             <b>①</b> 措辞必须<b>中性且不追问原因</b>：只说"对方已暂停操作"，<b
-              >不说"因为对方的免费时长用完了"</b
+              >不说"因为对方的免费中继时长用完了"</b
             >
             —— 那是对方的商业信息，暴露给被控端既越界又让被控端莫名其妙。
           </li>
@@ -572,6 +573,83 @@
           <li>
             「宽限期/自动断开时长」这类选项 P1 再补（P0 保持可选项目尽可能少）。
           </li>
+        </ul>
+      </figure>
+
+      <!-- ============ W2-07（可点击原型跑出后补的帧） ============ -->
+      <figure class="frame" id="w2-07">
+        <figcaption>
+          <span class="fid">W2-07</span><b>对方请求恢复操作（🔴 补帧）</b> · 层①
+          红线执行体 · P0　|　来源 可点击原型断点 #8
+        </figcaption>
+        <div class="screen screen--panel-s" style="height: 348px">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">远程桌面 · 正在被查看</span>
+          </div>
+          <div class="banner">
+            <span class="ico"></span>
+            <span
+              ><b>对方请求恢复操作</b><br />
+              <span class="tiny muted"
+                >你之前只允许对方查看；现在对方请求能操作本机</span
+              ></span
+            >
+            <span class="grow"></span>
+            <span class="tag on">● 仅查看中</span>
+          </div>
+          <div class="pad stack" style="gap: 10px">
+            <div class="box" style="padding: 10px">
+              <span class="label">这次允许的是什么</span>
+              <div class="tiny">
+                允许后，<b>对方可以使用你的鼠标和键盘操作本机</b>。<br />
+                如果你不是自己请他帮忙，请保持仅查看并「断开」。
+              </div>
+            </div>
+            <div class="hstack">
+              <span class="btn" style="min-height: 30px">保持仅查看</span>
+              <span class="btn" style="min-height: 30px">允许操作</span>
+              <span class="grow"></span>
+              <span class="btn ghost">断开</span>
+            </div>
+            <div
+              class="stripe"
+              style="
+                height: 40px;
+                border: 1px solid var(--line2);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              "
+            >
+              <span class="tiny muted"
+                >⚠️ 此处严禁出现：余额不足 / 免费中继时长已用尽 /
+                开通会员可继续</span
+              >
+            </div>
+          </div>
+          <span class="pin" style="left: 24px; top: 56px">1</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 🔴
+            <b>本帧是可点击原型跑出来的补帧</b
+            >：控制端有「请求恢复控制」，而被控端原先只有「断开」 ⇒
+            那个按钮永远等不到回应，是<b>死按钮</b>。两侧界面必须成对存在。
+          </li>
+          <li>
+            🔴
+            <b>默认动作必须是「保持仅查看」</b
+            >：恢复操作是权限提权，不得把「允许操作」做成高亮主按钮（与 W2-02
+            的谨慎基调一致）。
+          </li>
+          <li>
+            与 <a href="#w2-02">W2-02</a>
+            的区别：W2-02 是「首次被控确认」（含反诈三条，且不可折叠）；
+            本帧是<b>同一次会话内的权限变化</b>，不需重复反诈，但必须说明「这次允许的是什么」。
+          </li>
+          <li>本屏同样<b>不出现任何金额</b>（§13.4 红线②）。</li>
         </ul>
       </figure>
     </div>
