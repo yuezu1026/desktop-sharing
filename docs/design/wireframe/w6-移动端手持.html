@@ -28,8 +28,10 @@
     <div class="legend">
       移动端同样受全部红线约束：<b>被控端不出现金额</b>、<b
         >iOS 无站外支付引导</b
-      >、 <b>免费中继时长只做渐进披露</b>。下面
-      <b>4 个条目 / 4 张图全部为 P0</b>。
+      >、 <b>免费中继时长只做渐进披露</b>。下面共 <b>8 个条目 / 8 张图</b>：<b
+        >W6-01 ~ W6-04 全部为 P0</b
+      >；<b>W6-05 ~ W6-08（外接大屏 / 桌面模式）为 P1</b>（v2 §2.3.2
+      增强路径）。
     </div>
 
     <div class="flow">
@@ -359,6 +361,499 @@
           </li>
           <li>
             本屏是「手机被控免费」这条钩子的落地现场，也是整套设计里<b>最有画面感的一屏</b>（对父母的实际价值）。
+          </li>
+        </ul>
+      </figure>
+    </div>
+
+    <h2>W6 · 外接大屏 / 桌面模式（P1 增强路径 · v2 §2.3.2）</h2>
+    <p class="lede">
+      手持单屏是<b>默认主路径</b>（身旁无外接屏时它是唯一可用的方式），外接大屏是
+      <b>P1 增强</b>：现场恰好有一块 HDMI 屏时，会话从分钟级跃升到小时级。 下面
+      4 帧解决的是「<b>接上屏之后界面变成什么</b>」—— 注意它与
+      D9（保远端画面原样、只得等比缩放）<b>方向相反，不得混用</b>（v2 §2.4）。
+    </p>
+
+    <div class="flow">
+      <!-- ============ W6-05 ============ -->
+      <figure class="frame" id="w6-05">
+        <figcaption>
+          <span class="fid">W6-05</span
+          ><b>检测到外接显示器 · 进入大屏布局的确认</b> · 层① 已拍板决策执行体 ·
+          P1　|　来源 v2 §2.3.2 · 决策 **D5 / D6** · 红线 v2
+          §2.4（方向不得混用）
+        </figcaption>
+        <div
+          class="screen screen--mob"
+          style="height: 500px; display: flex; flex-direction: column"
+        >
+          <div class="bar" style="flex: none">
+            <span class="tag on">直连</span>
+            <span class="tiny muted">我的台式机</span>
+            <span class="grow"></span><span class="ico"></span>
+          </div>
+          <div class="pad" style="padding: 8px">
+            <div class="ph-img" style="height: 400px">
+              <span class="tiny muted">手持会话画面（被底部弹层遮住）</span>
+            </div>
+          </div>
+          <div class="grow"></div>
+          <div class="bar bar--bottom" style="flex: none">
+            <span class="btn sm">键盘</span><span class="btn sm">全屏</span>
+            <span class="grow"></span><span class="btn sm">断开</span>
+          </div>
+
+          <div class="modal" style="align-items: flex-end">
+            <div class="dlg" style="width: 100%">
+              <div class="dlg-h">检测到外接显示器</div>
+              <div class="dlg-b">
+                <div class="stack">
+                  <div class="tiny muted">
+                    外接显示器 1 · 1920×1080 · USB-C 有线直出
+                  </div>
+                  <div class="stack tiny" style="border: 1px solid var(--line)">
+                    <div class="item sel">
+                      <span style="width: 14px">◉</span
+                      ><span
+                        ><b>切换为大屏布局</b><br /><span class="muted"
+                          >多窗口 · 可拖拽调整窗口 · 完整键鼠与右键</span
+                        ></span
+                      >
+                    </div>
+                    <div class="item">
+                      <span style="width: 14px">○</span
+                      ><span
+                        ><b>保持手机布局</b><br /><span class="muted"
+                          >画面仍按手机比例等比显示</span
+                        ></span
+                      >
+                    </div>
+                  </div>
+                  <div class="hstack tiny">
+                    <span>☑</span><span>记住我的选择（下次自动进入）</span>
+                  </div>
+                  <div class="box--fill box tiny" style="padding: 8px">
+                    只改<b>控制端</b>的界面布局；<b>不会修改被控端的屏幕分辨率与缩放</b>。
+                  </div>
+                </div>
+              </div>
+              <div class="dlg-f">
+                <span class="btn">以后再说</span
+                ><span class="btn solid">切换为大屏布局</span>
+              </div>
+            </div>
+          </div>
+
+          <span class="pin" style="left: 296px; top: 196px">1</span>
+          <span class="pin" style="left: 296px; top: 412px">2</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 检测到外接屏<b>必须给「不切换」的出路</b>，且要能被记住 ——
+            每次插屏都弹一次的提示，等于把增强功能做成骚扰。
+          </li>
+          <li>
+            <b>②</b> 🔴 这一屏只切换<b>控制端的界面布局</b>；<b
+              >不得顺带修改被控端的屏幕分辨率 / DPI</b
+            >
+            （D9）。两条约束方向相反，混用会让被控端的人以为"我的电脑被人改了"。
+          </li>
+          <li>
+            🔴 <b>不得出现「无线投屏」入口</b>：远控画面输出只承诺 USB-C → HDMI
+            / DP <b>有线直出</b>（D5 —— Miracast 会多一跳编码 + 两跳传输）。
+          </li>
+          <li>
+            🔴 本帧仍受红线约束：确认弹层里<b>不得</b>借机卖会员。机型不支持时走
+            <b>W6-08</b>（中性说明），不是购买页。
+          </li>
+        </ul>
+      </figure>
+
+      <!-- ============ W6-06 ============ -->
+      <figure class="frame" id="w6-06">
+        <figcaption>
+          <span class="fid">W6-06</span
+          ><b>大屏布局会话（多窗口 / 可见光标 / 右键菜单 / 拖拽调整）</b> · 层③
+          常规界面 · P1　|　来源 v2 §2.3.2「布局 + 输入」要求
+        </figcaption>
+        <div
+          class="screen screen--desk"
+          style="display: flex; flex-direction: column"
+        >
+          <div class="chrome" style="flex: none">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px"
+              >远程桌面 · 大屏布局（外接显示器 1）</span
+            >
+          </div>
+          <div class="bar" style="flex: none">
+            <span class="tag on">外接屏</span>
+            <span class="tiny muted">我的台式机 · 直连</span>
+            <span class="grow"></span>
+            <span class="btn sm">新建窗口</span>
+            <span class="btn sm">退出大屏布局</span>
+          </div>
+          <div style="display: flex; flex: 1; min-height: 0">
+            <aside class="side" style="width: 150px">
+              <div class="label">窗口</div>
+              <div class="tiny">
+                <div class="item sel" style="border: 0; padding: 6px 7px">
+                  会话 · 我的台式机
+                </div>
+                <div class="item" style="border: 0; padding: 6px 7px">
+                  会话 · 办公室 Mac
+                </div>
+                <div class="item" style="border: 0; padding: 6px 7px">
+                  文件传输
+                </div>
+                <div class="item" style="border: 0; padding: 6px 7px">
+                  剪贴板同步
+                </div>
+              </div>
+              <div class="label" style="margin-top: 12px">指针</div>
+              <div class="tiny muted">可见光标：开</div>
+            </aside>
+
+            <main class="grow" style="padding: 10px">
+              <div class="ph-img" style="height: 100%; position: relative">
+                <span class="tiny muted"
+                  >被控端画面 · 1920×1080 等比铺满可用区（不变形）</span
+                >
+                <span
+                  style="
+                    position: absolute;
+                    left: 196px;
+                    top: 118px;
+                    border: 1px solid var(--ink);
+                    background: #fff;
+                    padding: 1px 5px;
+                    font-size: 10px;
+                  "
+                  >▸ 远端光标</span
+                >
+                <div
+                  style="
+                    position: absolute;
+                    left: 236px;
+                    top: 142px;
+                    width: 116px;
+                    border: 1px solid var(--line);
+                    background: #fff;
+                  "
+                >
+                  <div class="tiny" style="padding: 4px 9px">查看</div>
+                  <div class="tiny" style="padding: 4px 9px">排序方式</div>
+                  <div
+                    class="tiny"
+                    style="padding: 4px 9px; background: var(--fill)"
+                  >
+                    刷新
+                  </div>
+                  <div
+                    class="tiny muted"
+                    style="padding: 4px 9px; border-top: 1px solid var(--line2)"
+                  >
+                    这是远端的右键菜单
+                  </div>
+                </div>
+                <span
+                  style="
+                    position: absolute;
+                    right: 6px;
+                    bottom: 6px;
+                    border: 1px solid var(--line);
+                    background: #fff;
+                    padding: 1px 5px;
+                    font-size: 10px;
+                  "
+                  >⇲ 拖拽边缘调整窗口</span
+                >
+              </div>
+            </main>
+
+            <aside
+              style="
+                width: 176px;
+                border-left: 1px solid var(--line2);
+                padding: 10px;
+                background: #fafafa;
+              "
+            >
+              <div class="label">键鼠</div>
+              <div class="stack tiny">
+                <div class="hstack">
+                  <span class="grow muted">滚轮方向</span><span>自然</span>
+                </div>
+                <div class="hstack">
+                  <span class="grow muted">右键</span><span>远端右键</span>
+                </div>
+                <div class="hstack">
+                  <span class="grow muted">⌘ ↔ Ctrl 换算</span><span>开</span>
+                </div>
+              </div>
+              <div class="label" style="margin-top: 12px">显示</div>
+              <div class="stack tiny">
+                <div class="hstack">
+                  <span class="grow muted">缩放</span><span>适应可用区</span>
+                </div>
+                <div class="hstack">
+                  <span class="grow muted">多显示器</span
+                  ><span>显示器 1 ▾</span>
+                </div>
+              </div>
+              <div
+                class="box--fill box tiny"
+                style="padding: 8px; margin-top: 12px"
+              >
+                🔴 只改控制端布局，不动被控端分辨率。
+              </div>
+            </aside>
+          </div>
+          <div class="bar bar--bottom" style="flex: none">
+            <span class="tiny muted">USB-C → HDMI 有线直出 · 1920×1080</span>
+            <span class="grow"></span>
+            <span class="tiny muted">窗口化启动，不默认全屏（D9）</span>
+          </div>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 大屏布局 ≠ 全屏：仍然<b>窗口化启动</b>（D9 / C1），
+            只是把「手机界面」换成「多窗口桌面界面」。
+          </li>
+          <li>
+            <b>②</b> <b>可见远端光标</b>是键鼠场景的最低门槛 ——
+            没有它，用户不知道鼠标到底在哪一层。
+          </li>
+          <li>
+            <b>③</b>
+            右键菜单必须是<b>被控端的菜单</b>（真右键语义），不是控制端自己造的菜单，
+            否则文件操作会全部做错地方。
+          </li>
+          <li>
+            <b>④</b>
+            画面仍<b>等比</b>；可用区比例与被控端不一致时留白，<b>不得拉伸</b>。
+          </li>
+          <li>
+            退出路径有两条（顶部 +
+            底部同名按钮），且<b>退出后立即回到手持布局</b>，不留中间态。
+          </li>
+          <li>
+            「文件传输 / 剪贴板同步」在本稿中<b>未出稿</b>（见 README
+            §7），此处仅表示它们在大屏形态下是并列窗口。
+          </li>
+        </ul>
+      </figure>
+
+      <!-- ============ W6-07 ============ -->
+      <figure class="frame" id="w6-07">
+        <figcaption>
+          <span class="fid">W6-07</span><b>外接模式设置（键鼠映射 / 缩放）</b> ·
+          层③ 常规界面 · P1　|　来源 v2 §2.3.2「输入」要求 · 与
+          <a href="w1-控制端-连接与额度.html#w1-08">W1-08</a> 显示设置同族
+        </figcaption>
+        <div class="screen screen--panel" style="height: 560px">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">外接模式 · 键鼠与显示</span>
+          </div>
+          <div class="pad stack" style="height: calc(100% - 28px)">
+            <div>
+              <span class="label">鼠标</span>
+              <div class="stack tiny" style="border: 1px solid var(--line)">
+                <div class="item">
+                  <span class="grow">滚轮方向</span>
+                  <span class="input" style="height: 24px; width: 118px"
+                    >自然 ▾</span
+                  >
+                </div>
+                <div class="item">
+                  <span class="grow">右键映射</span>
+                  <span class="input" style="height: 24px; width: 118px"
+                    >鼠标右键 ▾</span
+                  >
+                </div>
+                <div class="item">
+                  <span class="grow">指针加速</span>
+                  <span class="input" style="height: 24px; width: 118px"
+                    >跟随系统 ▾</span
+                  >
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <span class="label">键盘</span>
+              <div class="stack tiny" style="border: 1px solid var(--line)">
+                <div class="item sel">
+                  <span style="width: 14px">☑</span
+                  ><span
+                    >跨系统快捷键自动换算<br /><span class="muted"
+                      >⌘ ↔ Ctrl · Option ↔ Alt · Win ↔ ⌘</span
+                    ></span
+                  >
+                </div>
+                <div class="item">
+                  <span style="width: 14px">☑</span
+                  ><span
+                    >组合键直通远端<br /><span class="muted"
+                      >Ctrl / Alt / Win / Esc / F1–F12 不被控制端截获</span
+                    ></span
+                  >
+                </div>
+                <div class="item">
+                  <span class="grow">输入法</span>
+                  <span class="input" style="height: 24px; width: 118px"
+                    >远端输入法 ▾</span
+                  >
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <span class="label">显示</span>
+              <div class="input">
+                适应可用区 ▾<span class="grow"></span
+                ><span class="tiny muted">等比，不变形</span>
+              </div>
+            </div>
+
+            <div class="box--fill box tiny" style="padding: 9px">
+              🔴 本页只改<b>控制端</b>的映射与缩放；<b
+                >不得修改被控端的屏幕分辨率 / DPI</b
+              >。外接大屏是「把远端 UI 改成大屏版」，D9 是「保远端画面原样」——
+              <b>方向相反，不得混用</b>（v2 §2.4）。
+            </div>
+            <div class="grow"></div>
+            <div class="hstack" style="justify-content: flex-end">
+              <span class="btn">恢复默认</span
+              ><span class="btn solid">保存</span>
+            </div>
+          </div>
+          <span class="pin" style="left: 392px; top: 208px">1</span>
+          <span class="pin" style="left: 392px; top: 432px">2</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b>
+            跨系统快捷键换算是<b>「能不能干活」的分水岭</b>：不通映射时， Mac
+            用户按 ⌘C 会变成在 Windows 上按 Win+C。
+          </li>
+          <li>
+            <b>②</b> 🔴 红线：外接形态<b>不得</b>借「大屏」之名去改被控端分辨率
+            —— 用户接的是自己的屏，凭什么改别人的电脑。
+          </li>
+          <li>
+            与 <a href="w1-控制端-连接与额度.html#w1-08">W1-08</a> 的分工：W1-08
+            管<b>手持 / 窗口态</b>的缩放三选一，
+            本页管<b>外接态</b>的键鼠与缩放；两页的「拉伸会变形」警告口径必须一致。
+          </li>
+          <li>
+            「多显示器」切换仍归
+            <a href="w1-控制端-连接与额度.html#w1-08">W1-08</a
+            >（那是<b>被控端</b>的屏幕选择）， 本页不重复放。
+          </li>
+        </ul>
+      </figure>
+
+      <!-- ============ W6-08 ============ -->
+      <figure class="frame" id="w6-08">
+        <figcaption>
+          <span class="fid">W6-08</span
+          ><b>机型不支持时的中性说明（🔴 不得引导付费）</b> · 层① 体验红线 ·
+          P1　|　来源 v2 §2.3.2 机型前提（DP Alt Mode 非全线）· 红线② 同源纪律
+        </figcaption>
+        <div
+          class="screen screen--mob"
+          style="height: 560px; display: flex; flex-direction: column"
+        >
+          <div class="bar" style="flex: none">
+            <span class="tiny muted">外接显示器</span>
+            <span class="grow"></span><span class="ico"></span>
+          </div>
+          <div class="pad" style="padding: 12px 10px">
+            <div class="box" style="padding: 12px">
+              <b class="tiny">这台手机无法输出到外接显示器</b>
+              <div class="tiny muted" style="margin-top: 6px">
+                手机的 USB-C 接口不支持视频输出（DP Alt
+                Mode）。这是机型本身的硬件能力差异，
+                与账号、权限、系统版本都无关。
+              </div>
+            </div>
+          </div>
+          <div class="pad" style="padding: 0 10px">
+            <span class="label">你仍然可以</span>
+            <div class="stack tiny" style="border: 1px solid var(--line)">
+              <div class="item">
+                <span style="width: 14px">✓</span
+                ><span
+                  >照常用手机手持模式<br /><span class="muted"
+                    >功能不受影响，这本来就是默认路径</span
+                  ></span
+                >
+              </div>
+              <div class="item">
+                <span style="width: 14px">✓</span
+                ><span
+                  >换一台支持视频输出的手机<br /><span class="muted"
+                    >支持机型清单由服务端下发，不硬编码</span
+                  ></span
+                >
+              </div>
+              <div class="item">
+                <span style="width: 14px">✓</span
+                ><span
+                  >用 PC 客户端接大屏<br /><span class="muted"
+                    >PC → PC 才是时长主力场景</span
+                  ></span
+                >
+              </div>
+            </div>
+          </div>
+          <div class="pad" style="padding: 8px 10px">
+            <div class="box--fill box tiny" style="padding: 9px">
+              🔴 硬件能力问题和权限问题一样，<b>不得</b>包装成计费问题 ——
+              本屏<b>不得</b>出现「开通 / 升级 / 会员」。
+            </div>
+          </div>
+          <div class="pad" style="padding: 0 10px">
+            <div class="box tiny" style="padding: 9px">
+              ⚠️ 也<b>不得</b>把「无线投屏」写成替代路径：远控画面输出只承诺
+              USB-C → HDMI / DP 有线直出（D5）。
+            </div>
+          </div>
+          <div class="grow"></div>
+          <div class="pad" style="padding: 0 10px 8px">
+            <div class="tiny muted">
+              文案纪律：说清「为什么不行」与「还能怎么做」，<b>不解释价格、不引导购买</b>。
+            </div>
+          </div>
+          <div class="bar bar--bottom" style="flex: none">
+            <span class="btn sm">查支持机型</span>
+            <span class="grow"></span><span class="btn solid sm">知道了</span>
+          </div>
+          <span class="pin" style="left: 296px; top: 60px">1</span>
+          <span class="pin" style="left: 296px; top: 348px">2</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 必须<b>先说清原因</b>（硬件能力差异），否则用户会以为是 bug
+            或以为「充钱就能解锁」。
+          </li>
+          <li>
+            <b>②</b> 🔴 与 <a href="#w6-03">W6-03</a> 同源纪律：<b
+              >权限 / 硬件问题不是计费问题</b
+            >
+            —— 这一屏出现任何购买引导，就是把「能力边界」卖成「付费墙」。
+          </li>
+          <li>
+            🔴 <b>不得承诺无线投屏做替代</b>（D5）：画质与延迟都会二次损失，
+            写了就是新的过度承诺。
+          </li>
+          <li>
+            支持机型白名单<b>必须后端下发</b>（做法同 v2 §3.6），
+            线框里的机型举例一律视为示意值。
           </li>
         </ul>
       </figure>
