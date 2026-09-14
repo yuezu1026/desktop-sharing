@@ -23,9 +23,9 @@
     <h1>W1 · 控制端 · 连接与免费中继时长</h1>
     <p class="lede">
       这是全套线框里<b>最不能省的一组</b>：连接模式指示器是主主张的唯一执行体，降级链四态是「禁止静默降码率」的唯一执行体。
-      <br />本页 <b>11 个条目 / 14 张图</b>（W1-05 一屏四态 ⇒ 1 条 4 图；W1-06 /
+      <br />本页 <b>12 个条目 / 15 张图</b>（W1-05 一屏四态 ⇒ 1 条 4 图；W1-06 /
       W1-06b 为「仅查看」的两种成因，各自独立成条），其中
-      <b>7 个条目属「缺了就是违反已拍板决策」</b>。 <br class="muted" />🔴
+      <b>8 个条目属「缺了就是违反已拍板决策」</b>。 <br class="muted" />🔴
       全页出现的<b>免费中继时长</b>数值均为示意，<b>实际必须后端下发</b>（`商业化与计费设计`
       §13.5：TURN 报价到手前数值会变）。
       <br />术语纪律：免费档配额一律写「<b>免费中继时长</b>」，<span class="no"
@@ -36,7 +36,12 @@
       分钟」<b>必须带注脚</b>「按当前画质估算 · 切换画质会变」② 折算取<b
         >码率地板 2 Mbps</b
       >（SSOT <b>P18</b>）③ <b>纯音频模式不参与分钟折算</b>（SSOT
-      <b>P17</b>，改显示 GB）④ <b>扣减永远按 GB</b>。详见 W1-04 ④~⑦。
+      <b>P17</b>，改显示 GB）④ <b>扣减永远按 GB</b>。详见 W1-04 ④~⑦。 <br />🔴
+      <b>全屏 / 沉浸式纪律（`[D22]`，本页 W1-11 是执行体）</b
+      >：全屏仅由用户<b>显式触发</b>；工具条自动隐藏，但 🔴
+      <b>连接模式指示器不得消失</b
+      >（降级为画面右上角的极简角标）；退出全屏恢复进入前的窗口尺寸与位置。详见
+      v2 §2.4.1 与 W1-11。
     </p>
 
     <h2>1 · 主界面与连接过程</h2>
@@ -334,6 +339,11 @@
           <li>
             顶部提示行是<b>常驻一行</b>而不是 Toast：需要被反复看到（Toast 3
             秒会消失，主主张就丢了）。
+          </li>
+          <li>
+            <b>④</b> 🔴 底部「全屏」进入
+            <b>W1-11 全屏 / 沉浸式会话</b>（`[D22]`）：工具条会自动隐藏，但
+            <b>连接模式指示器不得消失</b> —— 降级为画面右上角的极简角标。
           </li>
         </ul>
       </figure>
@@ -927,7 +937,9 @@
           <span class="fid">W1-08</span><b>显示设置（缩放模式）</b> · 层①
           红线执行体 · P0　|　来源 v2 §1 D9 · E6 体验红线 C1
         </figcaption>
-        <div class="screen screen--panel">
+        <!-- ⚠️ 画布由 470 加高到 530：本轮加入「全屏快捷键」一行（`[D22]`）。
+             改高必须重跑 `node tools/wireframe-selfcheck.mjs`。 -->
+        <div class="screen screen--panel" style="height: 530px">
           <div class="chrome">
             <span class="dot"></span><span class="dot"></span
             ><span class="dot"></span>
@@ -983,7 +995,18 @@
             <div class="box--fill box tiny pad" style="padding: 9px">
               🔴
               启动方式固定为<b>窗口化</b>，不得默认全屏；离开全屏后回到窗口化。
+              全屏内的可见性纪律见
+              <b>W1-11</b>（`[D22]`：指示器降级为角标，<b>不得消失</b>）。
             </div>
+
+            <div>
+              <span class="label">全屏快捷键</span>
+              <div class="input">
+                Ctrl + Alt + F ▾<span class="grow"></span
+                ><span class="tiny muted">🔴 可见可改（`[D22-1]`）</span>
+              </div>
+            </div>
+
             <div class="grow"></div>
             <div class="hstack" style="justify-content: flex-end">
               <span class="btn">取消</span><span class="btn solid">保存</span>
@@ -991,6 +1014,7 @@
           </div>
           <span class="pin" style="left: 392px; top: 104px">1</span>
           <span class="pin" style="left: 392px; top: 332px">2</span>
+          <span class="pin" style="left: 392px; top: 424px">3</span>
         </div>
         <ul class="notes">
           <li>
@@ -1000,6 +1024,13 @@
           <li>
             <b>②</b>
             不得默认全屏（C1）——这条写进设置页作为固定行为说明，避免后续被"优化掉"。
+          </li>
+          <li>
+            <b>③</b> 🔴
+            <b>全屏快捷键必须可见可改</b
+            >（`[D22-1]`）：全屏只能由用户显式触发，触发方式必须写在设置页，
+            <span class="no">不得</span>做成隐藏彩蛋。改此键<b>不得</b>影响 ESC
+            与 F11 —— Web 控制端那两条由浏览器接管，见 W1-11 ⑥。
           </li>
           <li>「多显示器」P0 只需能切换；同时显示属 P1。</li>
         </ul>
@@ -1192,6 +1223,207 @@
             128 kbps / P17 = 纯音频 0.1 Mbps）只以事实陈述出现，<span class="no"
               >不写成</span
             >"省时长"推销口吻。
+          </li>
+        </ul>
+      </figure>
+    </div>
+
+    <h2>5 · 全屏 / 沉浸式会话（🔴 `[D22]` 新增）</h2>
+
+    <div class="flow">
+      <!-- ============ W1-11 ============ -->
+      <figure class="frame" id="w1-11">
+        <figcaption>
+          <span class="fid">W1-11</span><b>全屏 / 沉浸式会话（PC 控制端）</b> ·
+          层① 红线执行体 · P0　|　来源 v2 §2.4.1 <b>[D22]</b> 红线 3 · 商业化
+          §13.2#1 · §13.5
+        </figcaption>
+        <div class="screen screen--desk">
+          <!-- 画布 830×500：全屏态没有 chrome、没有底栏 —— 这正是危险之处：
+               元素越少，越容易顺手把「连接模式指示器」也一起减掉。 -->
+          <div class="body" style="height: 100%">
+            <div
+              class="pad grow"
+              style="display: flex; flex-direction: column; gap: 8px"
+            >
+              <div class="tiny muted">
+                全屏态：无窗口边框 /
+                无系统任务栏。下图为「工具条已唤出」的瞬时状态；静止 3 s
+                后工具条自动淡出，<b>仅保留右上角标</b>。
+              </div>
+
+              <!-- 全屏画面 -->
+              <div
+                style="
+                  position: relative;
+                  display: flex;
+                  align-items: stretch;
+                  height: 230px;
+                "
+              >
+                <div
+                  class="stripe"
+                  style="width: 40px; border: 1px solid var(--line2)"
+                ></div>
+                <div class="ph-img grow" style="height: 100%">
+                  被控端画面（全屏 · 等比放大，不变形、不改被控端分辨率）
+                </div>
+                <div
+                  class="stripe"
+                  style="width: 40px; border: 1px solid var(--line2)"
+                ></div>
+
+                <!-- 🔴 极简角标 = 全屏内唯一常驻的指示器形态（红线 3） -->
+                <div
+                  style="
+                    position: absolute;
+                    top: 8px;
+                    right: 8px;
+                    display: flex;
+                    align-items: center;
+                    gap: 5px;
+                    padding: 3px 7px;
+                    background: rgba(255, 255, 255, 0.88);
+                    border: 1px solid var(--line);
+                    border-radius: 3px;
+                  "
+                >
+                  <span class="dot" style="width: 7px; height: 7px"></span
+                  ><span class="tiny">● 直连</span>
+                </div>
+
+                <!-- 唤出态工具条：顶边悬停 / 快捷键 -->
+                <div
+                  style="
+                    position: absolute;
+                    top: 8px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    padding: 4px 8px;
+                    background: rgba(255, 255, 255, 0.96);
+                    border: 1px solid var(--line);
+                    border-radius: 3px;
+                  "
+                >
+                  <span class="btn sm">退出全屏</span>
+                  <span class="btn sm ghost">画面 ▾</span>
+                  <span class="btn sm ghost">声音 ▾</span>
+                  <span class="btn sm ghost">快捷键</span>
+                  <span class="tag on">● 直连</span>
+                  <span class="btn sm">断开</span>
+                </div>
+              </div>
+
+              <!-- 唤出方式 / 退出与保持 -->
+              <div style="display: flex; gap: 8px">
+                <div
+                  class="box--fill box tiny"
+                  style="height: 96px; padding: 8px; flex: 1"
+                >
+                  <b>唤出工具条的两种方式</b><br />
+                  ① 鼠标移到<b>屏幕顶边</b>悬停<br />
+                  ② 快捷键 <b>Ctrl+Alt+F</b>（设置页可见可改，`[D22-1]`）<br />
+                  🔴
+                  <span class="no">不得</span
+                  >抢占被控端鼠标：唤出条只响应本机指针
+                </div>
+                <div
+                  class="box--fill box tiny"
+                  style="height: 96px; padding: 8px; flex: 1"
+                >
+                  <b>退出全屏与状态保持</b><br />
+                  ① 退出后<b>恢复进入前的窗口尺寸与位置</b>（`[D22-3]`）<br />
+                  ② <b>断线重连不改变全屏状态</b>（重连后仍在全屏）<br />
+                  ③ 工具条唤出时不得遮挡画面中心区
+                </div>
+              </div>
+
+              <!-- 多显示器全屏拼接 -->
+              <div
+                class="box--fill box tiny"
+                style="height: 96px; padding: 8px; display: flex; gap: 10px"
+              >
+                <div style="display: flex; gap: 4px; width: 300px">
+                  <div class="ph-img grow" style="height: 100%">
+                    显示器 1（主）
+                  </div>
+                  <div class="ph-img grow" style="height: 100%">显示器 2</div>
+                </div>
+                <div style="flex: 1">
+                  <b>多显示器全屏拼接</b><br />
+                  「拼接成一块超宽画面」与「只在单块上全屏」<b>都可在全屏内切换</b>，<span
+                    class="no"
+                    >不得</span
+                  >要求用户先退出全屏（`[D22-4]`）。退出后回到<b>进入前所在的窗口与显示器</b>。
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <span class="pin" style="left: 722px; top: 38px">1</span>
+          <span class="pin" style="left: 172px; top: 38px">2</span>
+          <span class="pin" style="left: 14px; top: 308px">3</span>
+          <span class="pin" style="left: 14px; top: 410px">4</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 🔴 <b>红线 3：全屏期间连接模式指示器不得消失</b> ——
+            工具条收起后降级为画面右上角的<b>极简角标</b>（`● 直连` / `● 中继`
+            二字 +
+            一个连接质量点），常驻可见。沉浸感靠<b>减法</b>（工具条自动隐藏 /
+            边框归零）实现，<span class="no">不靠</span>删掉指示器 —— 它是 D1
+            主主张在<b>全屏下唯一还能承载的元素</b>（`商业化与计费设计` §13.2#1
+            明写「常驻」）。
+          </li>
+          <li>
+            <b>②</b>
+            允许的淡化下限：可降低对比度 / 缩小字号 / 半透明，但
+            <span class="no">不得低于 WCAG AA</span>；也
+            <span class="no">不得做成静态图标</span
+            >（那就退化成「一个不说话的标识」，失去「可当场验证」的价值）。
+          </li>
+          <li>
+            <b>③</b>
+            唤出方式两种：<b>顶边悬停</b> / <b>快捷键</b>（默认 Ctrl+Alt+F，<b
+              >设置页可见可改</b
+            >
+            → W1-08）。唤出条
+            <span class="no">不得</span
+            >抢占被控端鼠标，避免"沉浸时误操作对方电脑"。
+          </li>
+          <li>
+            <b>④</b>
+            退出全屏 <b>恢复进入前的窗口尺寸与位置</b>；<b
+              >断线重连不改变全屏状态</b
+            >
+            —— 重连弹回窗口化会被读成"又出问题了"。
+          </li>
+          <li>
+            <b>⑤</b>
+            <b>多显示器全屏拼接</b>：拼接 / 单屏切换<b>可在全屏内完成</b>，<span
+              class="no"
+              >不得</span
+            >要求先退出全屏。
+          </li>
+          <li>
+            <b>⑥</b> 🔴 <b>浏览器（Web 控制端）的天花板</b>：Fullscreen API
+            <b>只能由用户手势触发</b>（与 D9「不得默认全屏」一致）；<b
+              >ESC 提示由浏览器强制保留，页面不得拦截</b
+            >；<b>F11 由浏览器接管、页面拿不到按键</b> ⇒ 🔴
+            <b>不得对外承诺「与客户端一致的沉浸感」</b
+            >；对用户只能说「网页版可以全屏」。Web 控制端约束登记见 README §7。
+          </li>
+          <li>
+            <b>⑦</b> 🔴 全屏是<b>唯一会把所有界面元素让给画面</b>的状态 ⇒ 也是<b
+              >最可能把 D1 指示器挤掉</b
+            >的状态，故本条红线的优先级<b>高于</b>沉浸感诉求。
+          </li>
+          <li>
+            <b>⑧</b> 手机作控制端的沉浸式另见 <b>W6-09</b>（收益远大于 PC
+            端：系统栏长期占用屏幕）。
           </li>
         </ul>
       </figure>

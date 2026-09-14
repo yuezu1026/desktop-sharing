@@ -28,10 +28,10 @@
     <div class="legend">
       移动端同样受全部红线约束：<b>被控端不出现金额</b>、<b
         >iOS 无站外支付引导</b
-      >、 <b>免费中继时长只做渐进披露</b>。下面共 <b>8 个条目 / 8 张图</b>：<b
+      >、 <b>免费中继时长只做渐进披露</b>。下面共 <b>9 个条目 / 9 张图</b>：<b
         >W6-01 ~ W6-04 全部为 P0</b
       >；<b>W6-05 ~ W6-08（外接大屏 / 桌面模式）为 P1</b>（v2 §2.3.2
-      增强路径）。
+      增强路径）；<b>W6-09（沉浸式手持）为 P0</b>（`[D22]` 补稿，见本页末尾）。
     </div>
 
     <div class="flow">
@@ -201,6 +201,12 @@
           <li>
             🔴 移动端不得因为屏幕小而常驻显示余量数字 ——
             小屏不是放松红线纪律的理由。
+          </li>
+          <li>
+            <b>④</b> 🔴 底部「全屏」进入
+            <b>W6-09 沉浸式手持</b>（`[D22]`）：隐藏系统栏，但
+            <b>连接模式指示器不得消失</b>（降级为右上角极简角标）；
+            <b>退出必须有两条路径</b>，否则用户会被困在沉浸态。
           </li>
         </ul>
       </figure>
@@ -859,6 +865,168 @@
           <li>
             支持机型白名单<b>必须后端下发</b>（做法同 v2 §3.6），
             线框里的机型举例一律视为示意值。
+          </li>
+        </ul>
+      </figure>
+    </div>
+
+    <h2>W6 · 沉浸式手持（🔴 `[D22]` 新增）</h2>
+    <p class="lede">
+      手机做控制端时，<b>沉浸式的收益远大于 PC</b>：系统状态栏 / 导航栏在 6
+      寸屏上按比例算是一块不小的面积。但收益大不等于可以默认开启 ——
+      <b>仍然不得默认全屏</b>（D9 / C1），且 🔴
+      <b>连接模式指示器同样不得消失</b>（`[D22]` 红线 3，组件规范与
+      <a href="w1-控制端-连接与额度.html#w1-11">W1-11</a> 同一份）。
+    </p>
+
+    <div class="flow">
+      <!-- ============ W6-09 ============ -->
+      <figure class="frame" id="w6-09">
+        <figcaption>
+          <span class="fid">W6-09</span><b>沉浸式手持（手机 → PC）</b> · 层③
+          常规界面 · P0　|　来源 v2 §2.4.1 <b>[D22]</b> 红线 3 · §2.3.1 移动端 ·
+          W6-02
+        </figcaption>
+        <div class="screen screen--mob">
+          <div
+            class="pad"
+            style="
+              padding: 10px;
+              display: flex;
+              flex-direction: column;
+              gap: 8px;
+              height: 100%;
+            "
+          >
+            <div class="tiny muted">
+              沉浸式：系统状态栏 / 导航栏已隐藏，画面贴边。
+            </div>
+
+            <!-- 沉浸态画面 -->
+            <div class="ph-img" style="height: 260px; position: relative">
+              <span
+                class="tiny muted"
+                style="
+                  position: absolute;
+                  left: 50%;
+                  top: 46%;
+                  transform: translate(-50%, -50%);
+                "
+                >被控端画面（等比缩放，不变形）</span
+              >
+
+              <!-- 🔴 极简角标：与 W1-11 同一组件规范 -->
+              <div
+                style="
+                  position: absolute;
+                  top: 6px;
+                  right: 6px;
+                  display: flex;
+                  align-items: center;
+                  gap: 5px;
+                  padding: 3px 7px;
+                  background: rgba(255, 255, 255, 0.88);
+                  border: 1px solid var(--line);
+                  border-radius: 3px;
+                "
+              >
+                <span class="dot" style="width: 7px; height: 7px"></span
+                ><span class="tiny">● 中继</span>
+              </div>
+
+              <!-- 唤出条（下缘上滑后） -->
+              <div
+                style="
+                  position: absolute;
+                  left: 6px;
+                  right: 6px;
+                  bottom: 6px;
+                  display: flex;
+                  align-items: center;
+                  gap: 4px;
+                  padding: 4px 6px;
+                  background: rgba(255, 255, 255, 0.96);
+                  border: 1px solid var(--line);
+                  border-radius: 3px;
+                "
+              >
+                <span class="btn sm">退出沉浸式</span>
+                <span class="btn sm ghost">键盘</span>
+                <span class="btn sm ghost">指针 ▾</span>
+                <span class="grow"></span><span class="btn sm">断开</span>
+              </div>
+            </div>
+
+            <div class="box--fill box tiny" style="padding: 8px">
+              <b>边缘手势唤出唤出条</b><br />
+              ① 屏幕<b>下缘上滑</b>（竖屏 / 横屏通用）<br />
+              ② 屏幕<b>右缘左滑</b>；3 s 无操作再次淡出
+            </div>
+
+            <div class="box--fill box tiny" style="padding: 8px">
+              <b>指针模式 ⇄ 虚拟键盘</b><br />
+              触控板模式 / 直接触摸<b>必须可切换</b>（沿用 W6-02）<br />
+              键盘唤出时画面<b>等比上推</b>，不得裁切、不得拉伸
+            </div>
+
+            <div class="box--fill box tiny" style="padding: 8px">
+              <b>退出沉浸式两条路径</b><br />
+              ① 唤出条 →「退出沉浸式」② 系统返回手势（Android 返回 / iOS
+              侧滑）<br />
+              🔴 <span class="no">不得</span>只留一条
+            </div>
+
+            <div class="box--fill box tiny" style="padding: 8px">
+              <b>横屏重排</b><br />
+              横屏时唤出条移到底部安全区，工具收敛到唤出条内<br />
+              退出后回到<b>进入前的竖屏与页面位置</b>
+            </div>
+          </div>
+
+          <span class="pin" style="left: 296px; top: 38px">1</span>
+          <span class="pin" style="left: 290px; top: 262px">2</span>
+          <span class="pin" style="left: 14px; top: 306px">3</span>
+          <span class="pin" style="left: 14px; top: 458px">4</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 🔴 <b>手机上沉浸式的收益远大于 PC</b>：系统状态栏 /
+            导航栏长期占用 6 寸屏，隐藏后可用面积提升可观 ——
+            这是移动端最值得做的"减法"。
+          </li>
+          <li>
+            <b>②</b> 🔴 但 <b>仍然不得默认全屏</b>（D9 /
+            C1）：必须由用户<b>显式触发</b>；退出后回到进入前的竖屏与页面位置。
+          </li>
+          <li>
+            <b>③</b> 唤出方式：<b>下缘上滑</b>（通用）+ <b>右缘左滑</b>；3 s
+            无操作再次淡出。边缘手势区宽度须可调，避免与系统返回手势打架。
+          </li>
+          <li>
+            <b>④</b> <b>指针模式 ⇄ 虚拟键盘必须可切换</b>（沿用 W6-02
+            双模指针规范）；键盘唤出时画面 <b>等比上推</b>，<span class="no"
+              >不得裁切</span
+            >、<span class="no">不得拉伸</span>。
+          </li>
+          <li>
+            <b>⑤</b> 🔴 <b>退出必须有两条路径</b>：唤出条上的「退出沉浸式」+
+            系统返回手势（Android 返回键 / iOS
+            侧滑）。只留一条会把用户<b>困在</b>沉浸态 ——
+            全屏下画面占满屏幕时尤其致命。
+          </li>
+          <li>
+            <b>⑥</b> 🔴 <b>连接模式指示器同样不得消失</b>（`[D22]` 红线
+            3）：降级为右上角极简角标（`● 直连` / `● 中继` +
+            连接质量点），组件规范与 W1-11 共用一份。
+          </li>
+          <li>
+            <b>⑦</b>
+            横屏重排：唤出条移到底部安全区；竖屏 /
+            横屏切换<b>不改变沉浸状态</b>，也不打断会话。
+          </li>
+          <li>
+            ⚠️ 本帧是 <b>`[D22]` 补稿</b>，因此编号排在 W6-08
+            之后；内容归属<b>手持组</b>（W6-01 ~ W6-04），不属外接大屏组。
           </li>
         </ul>
       </figure>
