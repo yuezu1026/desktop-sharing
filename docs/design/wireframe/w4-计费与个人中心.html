@@ -29,9 +29,13 @@
     <div class="legend">
       🔴
       <b>数值纪律：</b
-      >本页所有价格与<b>免费中继时长</b>数值均为<b>示意占位</b>，实际由<b>定价版本管理（D14）后端下发</b>；且
+      >本页所有价格与<b>中继时长</b>数值均为<b>示意占位</b>，实际由<b>定价版本管理（D14）后端下发</b>；且
       <code>成本测算表</code> §10.2 的 TURN
-      报价到手前，<b>对外材料不得出现具体数值</b>。
+      报价到手前，<b>对外材料不得出现具体数值</b>。<br />
+      🔴
+      <b>术语纪律：</b
+      >付费买到的是<b>「中继时长」</b>；只有<b>免费档配额</b>才叫<b>「免费中继时长」</b>（用户可见文案一律遵守，见
+      README §6.1）。
     </div>
 
     <h2>1 · 购买页（非 iOS / iOS 两套对照）</h2>
@@ -43,7 +47,7 @@
           <span class="fid">W4-01</span><b>购买页 · 最小版（非 iOS）</b> · 层③
           常规商业化界面 · P0　|　来源 商业化 §13.2#7
         </figcaption>
-        <div class="screen screen--desk" style="height: 524px">
+        <div class="screen screen--desk" style="height: 560px">
           <div class="chrome">
             <span class="dot"></span><span class="dot"></span
             ><span class="dot"></span>
@@ -80,7 +84,7 @@
                 <b>个人版包含</b>
                 <div class="tiny" style="margin-top: 6px">
                   <div class="item" style="border: 0; padding: 4px 0">
-                    · 更大的<b>免费中继时长</b>（数值以后端下发为准）
+                    · 更大的<b>中继时长</b>（数值以后端下发为准）
                   </div>
                   <div class="item" style="border: 0; padding: 4px 0">
                     · 更高的中继带宽优先权
@@ -107,7 +111,9 @@
                 >立即开通</span
               >
               <div class="tiny muted" style="text-align: center">
-                开通即表示同意《自动续费服务协议》
+                <b>协议文案随档位变化（开发按档位取用，不得一套通用）</b><br />
+                · <b>年付</b>：「开通即表示同意《服务协议》；到期前需你确认，<b>不会自动扣费</b>」<br />
+                · <b>月付</b>：「开通即表示同意《自动续费服务协议》；扣费前 5 天提醒，可随时取消」
               </div>
             </div>
 
@@ -320,7 +326,10 @@
                 <tr>
                   <td>
                     <b>手机被控</b
-                    ><span class="tiny muted">（对手 ¥25/月）</span>
+                    ><span class="tiny muted"
+                      >（对手 ¥25/月 · ⚠️ 该数值<b>来源待核实</b>，核实前不得对外引用，见
+                      `竞品对标表` §9）</span
+                    >
                   </td>
                   <td><b>✅ 免费</b></td>
                   <td>✅</td>
@@ -347,11 +356,15 @@
                   <td>—</td>
                 </tr>
                 <tr>
-                  <td>画质档位</td>
-                  <td>4 Mbps / 30fps / 1080p</td>
-                  <td>同</td>
-                  <td>同</td>
-                  <td>同</td>
+                  <td>
+                    画质档位<span class="tiny muted"
+                      >（分档方案与 SSOT 对齐中）</span
+                    >
+                  </td>
+                  <td colspan="4" class="muted">
+                    自适应，按链路与设备能力协商；<b>最高档位以后端下发为准</b>。（旧稿写的「4
+                    Mbps / 30fps / 1080p」是示意值，<b>不是上限承诺</b>。）
+                  </td>
                 </tr>
                 <tr>
                   <td>通道数 / 会话数</td>
@@ -672,21 +685,21 @@
           <div class="pad" style="padding-top: 12px">
             <div class="box" style="padding: 11px">
               <b
-                >🔴 退款与免费中继时长 /
+                >🔴 退款与中继时长 /
                 订阅的联动（开发按此实现，不是客服裁量）</b
               >
               <div class="tiny" style="margin-top: 7px; line-height: 1.9">
                 ① 可退前提：<b>7 天内 且 中继用量为 0</b
                 >（硬判定，非人工判断）<br />
                 ② 退款成功后<b>立即回收</b>：订阅终止、<b
-                  >未用完的免费中继时长立即作废</b
+                  >未用完的中继时长立即作废</b
                 >
                 ——
                 <span class="no">不得</span>"钱退了时长还留着"<br />
                 ③ 已消耗的流量不追偿（订单备注保留消耗记录）<br />
                 ④
                 <span class="no">不得</span
-                >用免费中继时长补偿替代退款（退款只能用钱；时长补偿只适用于我方故障）<br />
+                >用中继时长补偿替代退款（退款只能用钱；时长补偿只适用于我方故障）<br />
                 ⑤ 同账号
                 <b>180 天内最多 1 次</b>「未使用可退」，重复请求转人工审核
               </div>
