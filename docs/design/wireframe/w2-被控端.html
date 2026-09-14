@@ -652,6 +652,97 @@
           <li>本屏同样<b>不出现任何金额</b>（§13.4 红线②）。</li>
         </ul>
       </figure>
+
+      <!-- ============ W2-08（D19 新增） ============ -->
+      <figure class="frame" id="w2-08">
+        <figcaption>
+          <span class="fid">W2-08</span
+          ><b>采音提示 + 一键静音（🔴 D19 新增）</b> · 层① 红线执行体 ·
+          P0　|　来源 v2 §4.4 · 商业化 §13.4 红线⑥
+        </figcaption>
+        <div class="screen screen--panel-s" style="height: 356px">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">远程桌面 · 正在被控制</span>
+          </div>
+          <div class="banner">
+            <span class="ico"></span>
+            <span
+              ><b>本机的声音正在被对方听到</b><br />
+              <span class="tiny muted"
+                >包含正在播放的音乐 / 视频，以及麦克风收到的声音</span
+              ></span
+            >
+            <span class="grow"></span>
+            <span class="btn sm">静音（本机声音不再传出）</span>
+          </div>
+          <div class="pad stack" style="gap: 10px">
+            <div class="box" style="padding: 10px">
+              <span class="label">会话中的音频控制（被控端）</span>
+              <div class="item" style="border: 0; padding: 6px 0">
+                <span>传出本机声音（对方能听到）</span><span class="grow"></span
+                ><span class="tag on">开</span>
+              </div>
+              <div class="item" style="border: 0; padding: 6px 0">
+                <span>对讲（对方说话 → 本机扬声器）</span
+                ><span class="grow"></span><span class="tag on">开</span>
+              </div>
+              <div class="item" style="border: 0; padding: 6px 0">
+                <span>开始采音时播放提示音</span><span class="grow"></span
+                ><span class="tag on">开</span>
+              </div>
+            </div>
+            <div class="tiny muted">
+              ⚠️ 已静音时，对方界面只显示中性状态「对方已静音本机声音」，且
+              <b>不得</b>因此降低画质 / 缩短时长 / 提示升级。
+            </div>
+            <div
+              class="stripe"
+              style="
+                height: 40px;
+                border: 1px solid var(--line2);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              "
+            >
+              <span class="tiny muted"
+                >⚠️ 此处严禁出现：静音需开通会员 / 高清音频请升级 /
+                余额不足</span
+              >
+            </div>
+          </div>
+          <span class="pin" style="left: 24px; top: 56px">1</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 🔴 <b>本帧是「不得静默采音」红线的执行体</b>（商业化 §13.4
+            红线⑥）：采系统混音会把被控端的
+            <b>私人通话 / 语音消息 / 视频声音一起传出去</b> ⇒
+            被控端必须<b>可见</b>且<b>一键可停</b>。
+          </li>
+          <li>
+            🔴
+            <b>静音不是降级惩罚</b>：不得因静音而限速 / 扣额度 / 弹升级提示（与
+            W2-04 同基调 —— 被控端是隐私主体，不是计费对象）。
+          </li>
+          <li>
+            ⚠️
+            <b>本机麦克风不在此列</b>：「让对方听到本机麦克风」属 P1
+            的虚拟设备注入（需签名驱动），P0
+            只做<b>系统混音回传</b>与被控端扬声器播放对讲音频。
+          </li>
+          <li>
+            ⚠️
+            <b>安卓被控端差异</b>：`AudioPlaybackCapture` 可采范围仅 `MEDIA` /
+            `GAME` / `UNKNOWN` ⇒
+            <b>通话类（微信语音 / 视频通话）采不到</b
+            >，界面上不得出现对应开关（不做假按钮）。
+          </li>
+          <li>本屏同样<b>不出现任何金额</b>（§13.4 红线②）。</li>
+        </ul>
+      </figure>
     </div>
 
     <p class="pager">

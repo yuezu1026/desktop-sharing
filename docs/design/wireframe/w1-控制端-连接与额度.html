@@ -927,6 +927,92 @@
           <li>「查看明细」用下划线文字链接而不是按钮 —— 视觉权重必须低。</li>
         </ul>
       </figure>
+
+      <!-- ============ W1-10（D19 新增） ============ -->
+      <figure class="frame" id="w1-10">
+        <figcaption>
+          <span class="fid">W1-10</span><b>音频控制条（🔴 D19 新增）</b> · 层①
+          决策执行体 · P0　|　来源 v2 §1 D19 / §4.4 · 商业化 §13.2#9
+        </figcaption>
+        <div class="screen screen--win">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px"
+              >远程桌面 — 我的台式机 · 1920×1080</span
+            >
+            <span class="grow"></span><span class="tiny">— □ ✕</span>
+          </div>
+
+          <div class="bar" style="background: #fafafa">
+            <span class="tag on">● 本次连接：直连</span>
+            <span class="tiny">不消耗免费中继时长</span>
+            <span class="grow"></span>
+            <span class="tiny muted">画质：自适应 1080p / 30fps</span>
+            <span class="tag on">音频：已开启</span>
+          </div>
+
+          <div class="body" style="height: calc(100% - 28px - 58px)">
+            <div class="pad grow" style="display: flex; gap: 10px">
+              <div class="ph-img grow" style="height: 288px">被控端画面</div>
+              <div class="box" style="width: 196px; padding: 10px">
+                <span class="label">音频通道（三态）</span>
+                <div class="item" style="border: 0; padding: 5px 0">
+                  <span>① 本机声音回传</span><span class="grow"></span
+                  ><span class="tag on">开</span>
+                </div>
+                <div class="item" style="border: 0; padding: 5px 0">
+                  <span>② 对讲（按住说话）</span><span class="grow"></span
+                  ><span class="tag">按</span>
+                </div>
+                <div class="item" style="border: 0; padding: 5px 0">
+                  <span>③ 纯音频模式</span><span class="grow"></span
+                  ><span class="tag">关</span>
+                </div>
+                <div class="tiny muted" style="margin-top: 8px">
+                  打开「纯音频模式」时画面停止传输，并必须同时明示计费口径。
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bar bar--bottom">
+            <span class="btn sm">声音 ▾</span
+            ><span class="btn sm">按住说话</span
+            ><span class="btn sm">纯音频模式</span>
+            <span class="grow"></span>
+            <span class="tag">● 直连</span>
+            <span class="btn sm">断开</span>
+          </div>
+
+          <span class="pin" style="left: 620px; top: 44px">1</span>
+          <span class="pin" style="left: 300px; top: 398px">2</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 🔴 <b>音频是 D8 钩子的另一半</b>（v2 §1
+            D19）：「帮爸妈看手机」若没有音频，子女只能靠对方转述「你点那个」「哪个？」⇒
+            <b>钩子只完成一半</b>。本帧是<b>决策执行体</b>，不得排到 P1。
+          </li>
+          <li>
+            <b>②</b> 🔴 <b>「纯音频模式」必须就地明示计费口径</b>（商业化 §13.2
+            新增第 9 项）：它按<b>更低口径</b>计量（SSOT P17 = 0.1 Mbps vs
+            1080p30 = 4 Mbps）⇒
+            不得沿用画面口径静默扣额度（否则「只听声音」与「看
+            1080p30」扣同样多，而成本差 40 倍）。
+          </li>
+          <li>
+            ⚠️ <b>措辞中性</b>：不得写成「省时长请关画面」的推销口吻（与商业化
+            §13.4 红线①同基调 —— 技术状态与商业计数必须分离）。
+          </li>
+          <li>
+            ⚠️
+            <b>被控端不出现本模块</b
+            >：音频的<b>隐私控制权在被控端</b>（一键静音，见
+            <a href="w2-被控端.html#w2-08">W2-08</a>），控制端只做播放与对讲。
+          </li>
+        </ul>
+      </figure>
     </div>
 
     <p class="pager">
