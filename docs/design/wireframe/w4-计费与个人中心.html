@@ -112,8 +112,11 @@
               >
               <div class="tiny muted" style="text-align: center">
                 <b>协议文案随档位变化（开发按档位取用，不得一套通用）</b><br />
-                · <b>年付</b>：「开通即表示同意《服务协议》；到期前需你确认，<b>不会自动扣费</b>」<br />
-                · <b>月付</b>：「开通即表示同意《自动续费服务协议》；扣费前 5 天提醒，可随时取消」
+                ·
+                <b>年付</b
+                >：「开通即表示同意《服务协议》；到期前需你确认，<b>不会自动扣费</b>」<br />
+                · <b>月付</b>：「开通即表示同意《自动续费服务协议》；扣费前 5
+                天提醒，可随时取消」
               </div>
             </div>
 
@@ -327,7 +330,8 @@
                   <td>
                     <b>手机被控</b
                     ><span class="tiny muted"
-                      >（对手 ¥25/月 · ⚠️ 该数值<b>来源待核实</b>，核实前不得对外引用，见
+                      >（对手 ¥25/月 · ⚠️
+                      该数值<b>来源待核实</b>，核实前不得对外引用，见
                       `竞品对标表` §9）</span
                     >
                   </td>
@@ -517,7 +521,8 @@
       <figure class="frame" id="w4-05">
         <figcaption>
           <span class="fid">W4-05</span><b>用量明细页（🔑 反客诉主体）</b> · 层③
-          常规界面 · P1　|　来源 账号设计 §4.2 · 商业化 §13.3
+          常规界面 · P1　|　来源 账号设计 §4.2 · 商业化 §13.3 · 🔴
+          <b>`[D20-1]` GB 唯一合法出现处</b>
         </figcaption>
         <div class="screen screen--desk" style="height: 460px">
           <div class="chrome">
@@ -542,11 +547,16 @@
               <div class="box--fill box grow" style="padding: 9px">
                 <span class="tiny muted">本期剩余</span>
                 <div><b>约 xx 分钟</b></div>
+                <span class="tiny muted">下次重置 x 月 x 日</span>
               </div>
               <div class="box--fill box grow" style="padding: 9px">
                 <span class="tiny muted">直连时长（不计费）</span>
-                <div><b>xx 小时</b></div>
+                <div><b>xx 分钟</b></div>
               </div>
+            </div>
+            <div class="tiny muted" style="margin-top: 7px">
+              🔴 分钟均<b>按当前画质估算</b>（切换画质会变）；
+              <b>流量（GB）才是权威计量，分钟为折算</b>。
             </div>
           </div>
           <table class="tbl" style="margin-top: 12px">
@@ -574,7 +584,7 @@
                 <td><span class="tag">中继</span></td>
                 <td>22 分钟</td>
                 <td>0.66 GB</td>
-                <td>22 分钟</td>
+                <td>0.66 GB</td>
                 <td>爸爸的笔记本</td>
               </tr>
               <tr>
@@ -582,7 +592,7 @@
                 <td><span class="tag">中继</span></td>
                 <td>3 分钟</td>
                 <td>0.09 GB</td>
-                <td>3 分钟</td>
+                <td>0.09 GB</td>
                 <td>爸爸的笔记本</td>
               </tr>
               <tr>
@@ -615,6 +625,31 @@
           <li>
             <b>③</b> 🔴
             必须与后台操作台<b>同源同一份数据</b>。这不是体验优化，而是"计量争议时能否自证"的基础设施。
+          </li>
+          <li>
+            <b>④</b> 🔴
+            <b>单位纪律（原 R15，现由 `[D20-1]` 固化）</b>：同一量级的量
+            <b>必须同单位</b> —— 中继用「分钟」，<b class="no"
+              >直连不得用「小时」</b
+            >（否则 22 分钟 vs 1.5 小时并排，用户会误以为直连更少）。🔴
+            且<b>必须有「下次重置日」</b>（它直接决定用户要不要省着用）。
+          </li>
+          <li>
+            <b>⑤</b> 🔴
+            <b>本页是 GB 唯一合法出现的地方</b>（`[D20-1]`）：必须写明「<b
+              >GB 是权威计量，分钟为折算</b
+            >」+ 注脚「按当前画质估算 · 切换画质会变」。<span class="no"
+              >不得只给分钟不给 GB</span
+            >—— 否则用户拿着 4K60 的截图来问"为什么 2 GB 只有 12
+            分钟"，我们没有证据。
+          </li>
+          <li>
+            <b>⑥</b> ⚠️ <b>「流量」与「扣除」两列在 P0 数值相同</b>（扣除 =
+            中继流量，<b>无系数、按 GB 扣</b>，`[D20-4]`）。
+            现在就让它们分列，是为了将来引入分档计价时<b>不用改版式</b>；<span
+              class="no"
+              >不得为了"看起来不重复"把扣除换成分钟</span
+            >（那会与权威口径矛盾）。
           </li>
           <li>
             P0 不做本页（P1），但<b>P0 的数据结构必须现在就是对的</b>，否则 P1
@@ -685,8 +720,7 @@
           <div class="pad" style="padding-top: 12px">
             <div class="box" style="padding: 11px">
               <b
-                >🔴 退款与中继时长 /
-                订阅的联动（开发按此实现，不是客服裁量）</b
+                >🔴 退款与中继时长 / 订阅的联动（开发按此实现，不是客服裁量）</b
               >
               <div class="tiny" style="margin-top: 7px; line-height: 1.9">
                 ① 可退前提：<b>7 天内 且 中继用量为 0</b
