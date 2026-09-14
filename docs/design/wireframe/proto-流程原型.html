@@ -154,7 +154,7 @@
     <nav class="topbar">
       <a href="index.html">索引</a>
       <a href="proto-流程原型.html" aria-current="page">▶ 可点击原型</a>
-      <a href="w1-控制端-连接与额度.html">W1 控制端·连接与额度</a>
+      <a href="w1-控制端-连接与额度.html">W1 控制端·连接与时长</a>
       <a href="w2-被控端.html">W2 被控端</a>
       <a href="w3-账号与设备管理.html">W3 账号与设备</a>
       <a href="w4-计费与个人中心.html">W4 计费与个人中心</a>
@@ -171,7 +171,10 @@
       ——
       这样能一眼看出"<b>这一端降级的时候，那一端看到了什么</b>"（这正是静态帧看不出来的东西）。
       <br />🔴
-      全程运行<b>被控端红线自动断言</b>：被控端面板任何时刻出现金额/催费/推销字样，页面顶部立刻报警。
+      全程运行<b>两套红线自动断言</b>：<b>被控端</b>面板出现金额/催费字样 ⇒
+      报警； <b>控制端</b>会话内出现金额转化/推销字样 ⇒ 报警。两者都排除了
+      <code>.no-zone</code>
+      反例区与白名单短语（如「不需要付费」「免费中继时长」）。
       <br />说明：所有数值为示意，<b>实际必须后端下发</b>；本页不引入任何视觉设计（仍是低保真灰阶）。
     </p>
 
@@ -191,7 +194,13 @@
       >
       <span class="btn sm" onclick="go('back')">⑦ 返回会话 → 降码率</span>
       <span class="btn sm" onclick="go('final')">⑧ 终止前倒计时</span>
-      <span class="btn sm" onclick="go('viewonly')">⑨ 转「仅查看」</span>
+      <span class="btn sm" onclick="go('viewonly')">⑨ 转「仅查看」·资源式</span>
+      <span
+        class="btn sm"
+        onclick="go('hostRevoke')"
+        style="border-style: dashed"
+        >⑨b 权限式（被控端收回操作权）</span
+      >
       <span class="btn sm" onclick="go('disconnect')">⑩ 断开</span>
       <span class="sep"></span>
       <span class="btn sm ghost" onclick="auto()">▶ 自动跑一遍</span>
@@ -222,10 +231,12 @@
     <h2>流程日志（含本条流程暴露的断点标记）</h2>
     <div class="log-list" id="log"></div>
 
-    <h2>这条流程跑出来的 8 个断点</h2>
+    <h2>这条流程跑出来的 9 个断点</h2>
     <p class="lede">
-      静态帧评审看不出来的东西，跑一遍就浮出来了。前 7 条是"设计里没写清"，
-      <b class="no">第 8 条是 W2 的真实缺口，必须补稿</b>。
+      静态帧评审看不出来的东西，跑一遍就浮出来了。前 7 条是"设计里没写清"；
+      <b class="no">第 8 条是 W2 的真实缺口 —— 已补稿（W2-07）</b>； 第 8b
+      条是评审新增的「仅查看两种成因不能共用一个说法」—— 已在 W1-06 / W1-06b
+      拆图。
     </p>
 
     <div class="bp">
@@ -267,11 +278,21 @@
       <b>不做</b>"确定要离开吗？"式二次确认（撞体验红线 C3 同类精神）。
     </div>
     <div class="bp bp-hard">
-      <b>🔴 断点 8 · W2 缺"允许恢复控制"。</b>
+      <b>🔴 断点 8 · W2 缺"允许恢复控制"。 【已修 ✓】</b>
       进入「仅查看」是<b>自动的</b>，但恢复控制需要<b>双方同意</b>：
-      控制端有"请求控制"按钮，<b>被控端当前只有"断开"，没有"允许恢复控制"</b>
+      控制端有"请求控制"按钮，<b>被控端原先只有"断开"，没有"允许恢复控制"</b>
       —— 于是"请求控制"会成为一个永远没有应答的死按钮。
-      <b>W2 必须补一帧：被控端收到"对方请求恢复控制"→ 允许 / 拒绝。</b>
+      <b>已补帧：</b>W2-07「收到恢复控制请求 → 允许本次 /
+      保持仅查看」已加入静态稿，
+      本原型右面板也可现场验证（先点「⑨b」走权限式，再点「请求恢复控制」）。
+    </div>
+    <div class="bp bp-hard">
+      <b>🔴 断点 8b · 仅查看有两种成因，不能共用一个说法。 【已修 ✓】</b>
+      ① <b>资源式</b>：中继用尽 + 直连失败 ⇒ 没有通道 ⇒
+      画面<b>冻结在最后一帧</b>，
+      此时<b>不得</b>出现"请求恢复控制"（点了也没用）。 ②
+      <b>权限式</b>：链路正常，对方主动收回操作权 ⇒ 画面<b>仍在实时更新</b>，
+      "请求恢复控制"才是有效按钮。W1-06 / W1-06b 已拆成两张图。
     </div>
 
     <p class="pager">
@@ -302,26 +323,31 @@
         log: [],
         breaks: {},
         alarm: "",
+        viewonlyKind: "",
+        audio: "off",
+        hostSilent: false,
       };
 
-      var BAD_HOST = [
-        "余额",
-        "充值",
-        "会员",
-        "购买",
-        "开通",
-        "套餐",
-        "额度",
-        "付费",
-        "订阅",
-        "续费",
-        "价格",
-        "免费",
-        "时长",
-        "计费",
-        "元",
-      ];
-      var BAD_MAIN = ["余额", "充值", "开通会员", "升级可", "购买", "额度"];
+      /* ---------- 红线断言词表（评审 P0-5 重写：语义正则，不用裸词） ----------
+         旧的裸词表有两个方向的错（已实测）：
+         ① 漏报 —— 「¥25/月」「1080p/30 售价 158 元/年」这类**真违规**写法里
+            「价格 / 付费」一个词都没出现，断言全部哑火；
+         ② 误报 —— 裸字「元」命中合法的「新增一个**元**素」；裸字「免费」「时长」
+            命中合法的「免费中继时长」。
+         现在的规则：**只看【金额形态】与【计费/推销动词】，不看裸字**。
+         两类含义不同的旁白也分开判定（控制端 vs 被控端）。 */
+      /* 金额形态：货币符号+数字 / 数字+元 / 数字+周期价 */
+      var MONEY =
+        /[¥￥$]\s*\d|\d+(\.\d+)?\s*元|\d+\s*[元块]?\s*\/\s*(月|年|季|周|天)|售价|价格|定价|报价|立减|满减|返现|限时|促销/;
+      /* 计费 / 催费动词：被控端任何时刻都不该出现 */
+      var BILLING =
+        /余额|充值|续费|付费|支付|付款|钱包|账单|发票|订单|购买|订购|订阅|套餐|会员|计费|扣费|欠费|额度|权益|收费|优惠|折扣|升级可|开通会员/;
+      /* 控制端会话内禁放（比被控端窄：控制端可以说「免费中继时长」，
+         但不能出现钱包 / 推销 / 开通语义） */
+      var BAD_MAIN =
+        /余额|充值|续费|付费|支付|钱包|账单|发票|购买|订购|订阅|套餐|会员|升级可|开通|限时|优惠|折扣|立减|满减/;
+      /* 白名单：这些语境下允许出现（先剔除再匹配，避免误报） */
+      var ALLOW = /不需要付费|无需付费|不额外收费|免费中继时长|免费版/g;
 
       function mins() {
         return Math.round((MIN_TOTAL * st.q) / 100);
@@ -352,28 +378,100 @@
         return '<span class="tag' + (on ? " on" : "") + '">' + t + "</span>";
       }
 
-      /* ---------- 被控端红线自动断言（每次渲染都跑） ---------- */
+      /* ---------- D19 音频（控制端三态 + 被控端一键静音） ---------- */
+      var AUDIO_LABEL = {
+        off: "关",
+        on: "开",
+        talk: "对讲",
+        audioonly: "纯音频",
+      };
+      function audioTag() {
+        if (st.audio === "off") return "";
+        if (st.hostSilent) return tag("● 对方已静音本机声音");
+        if (st.audio === "on")
+          return (
+            tag("● 声音回传中", true) + '<span class="tiny">128 kbps</span>'
+          );
+        if (st.audio === "talk") return tag("● 按住说话（对讲）", true);
+        return tag("● 纯音频模式", true) + '<span class="tiny">画面已停</span>';
+      }
+      function audioHostRow() {
+        if (st.audio === "off")
+          return '<div class="box" style="padding:10px">对方暂未开启声音回传。<div class="tiny muted">开启了会在这里出现，并且你能随时一键静音。</div></div>';
+        return (
+          '<div class="box box--fill" style="padding:10px"><b>' +
+          (st.hostSilent ? "你已静音本机声音" : "🔴 对方正在采集本机声音") +
+          '</b><div class="tiny muted" style="margin-top:5px">' +
+          (st.hostSilent
+            ? "对方能看到「已静音」（不是静默失败）。🔴 静音不是降级惩罚：不限速 / 不扣免费中继时长 / 不弹升级（红线⑥）。"
+            : "不得静默采音：必须让你随时看得到，并能一键关掉。") +
+          "</div></div>" +
+          '<div class="hstack">' +
+          (st.hostSilent
+            ? '<span class="btn sm" onclick="go(\'hostUnmute\')">恢复声音回传</span>'
+            : '<span class="btn sm solid" onclick="go(\'hostMute\')">一键静音</span>') +
+          "</div>"
+        );
+      }
+      function cycleAudio() {
+        var order = ["off", "on", "talk", "audioonly"];
+        var i = order.indexOf(st.audio);
+        st.audio = order[(i + 1) % order.length];
+        if (st.audio === "off") log("控制端", "声音回传：关闭");
+        else if (st.audio === "on")
+          log(
+            "控制端",
+            "声音回传：开（128 kbps，P16）→ 被控端同步出现「对方正在采集本机声音」+ 一键静音",
+          );
+        else if (st.audio === "talk")
+          log(
+            "控制端",
+            "按住说话（对讲）：仅按住时上行，松手即停 ⇒ 不得自动常开麦克风",
+          );
+        else
+          log(
+            "控制端",
+            "🔴 纯音频模式（约 0.1 Mbps，P17）：画面停传 ⇒ 必须明示「画面已停」，不得让用户以为卡了",
+          );
+        if (st.hostSilent)
+          log(
+            "被控端",
+            "已静音本机声音 ⇒ 控制端应看到「对方已静音本机声音」，不得静默失败",
+          );
+        render();
+      }
+
+      /* ---------- 红线自动断言（每次渲染都跑） ---------- */
       function checkRedlines() {
         var h = document.getElementById("pane-host");
         var m = document.getElementById("pane-main");
         var hit = [];
-        /* 说明性禁放区（.no-zone）里的字样是"反面示例"，不计入断言 */
-        function texts(node) {
+        /* 说明性禁放区（.no-zone）里的字样是"反面示例"，不计入断言；
+           白名单短语（ALLOW）先剔除 —— 例如引导页里合法的「不需要付费」 */
+        function clean(node) {
           if (!node) return "";
           var c = node.cloneNode(true);
           var z = c.querySelectorAll(".no-zone");
           for (var i = 0; i < z.length; i++) z[i].textContent = "";
-          return c.textContent;
+          return c.textContent.replace(ALLOW, "");
         }
-        var ht = texts(h);
-        BAD_HOST.forEach(function (w) {
-          if (ht.indexOf(w) >= 0) hit.push("被控端出现「" + w + "」");
-        });
+        function firstRE(t, re) {
+          var mm = t.match(re);
+          return mm ? mm[0] : "";
+        }
+        var ht = clean(h);
+        if (MONEY.test(ht))
+          hit.push("被控端出现金额字样「" + firstRE(ht, MONEY) + "」");
+        else if (BILLING.test(ht))
+          hit.push("被控端出现计费/催费字样「" + firstRE(ht, BILLING) + "」");
         if (m && st.main !== "idle") {
-          var mt = texts(m);
-          BAD_MAIN.forEach(function (w) {
-            if (mt.indexOf(w) >= 0) hit.push("控制端出现「" + w + "」");
-          });
+          var mt = clean(m);
+          if (MONEY.test(mt))
+            hit.push("控制端出现金额字样「" + firstRE(mt, MONEY) + "」");
+          else if (BAD_MAIN.test(mt))
+            hit.push(
+              "控制端出现计费/推销字样「" + firstRE(mt, BAD_MAIN) + "」",
+            );
         }
         var a = document.getElementById("alarm");
         var s = document.getElementById("alarm-msg");
@@ -381,7 +479,7 @@
           st.alarm = hit.join(" · ");
           s.textContent =
             st.alarm +
-            "（违反 商业化 §13.4 红线②：被控端不得出现金额/催费字样）";
+            "（违反 商业化 §13.4 红线②：被控端不得出现金额/催费字样；控制端会话内不得做计费转化）";
           a.classList.add("on");
         } else {
           st.alarm = "";
@@ -448,18 +546,31 @@
               '<span class="tiny">不消耗免费中继时长</span>'
             : tag("● 本次连接：中继", true) +
               '<span class="tiny">在消耗免费中继时长</span>') +
+          audioTag() +
           '<span class="grow"></span><span class="tiny muted">画质：' +
-          (st.degraded ? "720p / 30fps（已降低）" : "自适应 1080p / 30fps") +
+          (st.audio === "audioonly"
+            ? "已停传（纯音频）"
+            : st.degraded
+              ? "720p / 30fps（已降低）"
+              : "自适应 1080p / 30fps") +
           '</span><span class="btn sm ghost">缩放 ▾</span></div>';
         h += banner();
         h +=
           '<div class="pane-slot"><div class="pad grow" style="display:flex;flex-direction:column;gap:10px">';
         h += '<div class="proto-strip"><div class="stripe side-gap"></div>';
         h +=
-          '<div class="ph-img grow" style="height:100%">被控端画面（等比缩放）</div>';
+          '<div class="ph-img grow" style="height:100%">' +
+          (st.audio === "audioonly"
+            ? "🔴 纯音频模式：画面已停止传输（只剩声音，约 0.1 Mbps）"
+            : "被控端画面（等比缩放）") +
+          "</div>";
         h += '<div class="stripe side-gap"></div></div>';
         h +=
-          '<div class="tiny muted">两侧灰条 = 保持比例的留白（黑边），画面本身不变形、不改被控端分辨率。</div>';
+          '<div class="tiny muted">' +
+          (st.audio === "audioonly"
+            ? "⚠️ 纯音频下必须明示「画面已停」，不得让用户以为画面卡了（W1-10 态 C）。"
+            : "两侧灰条 = 保持比例的留白（黑边），画面本身不变形、不改被控端分辨率。") +
+          "</div>";
         h += "</div>";
         /* 引导页覆盖层（只在直连失败时出现 —— 断点 1） */
         if (
@@ -482,28 +593,59 @@
             '<span class="btn sm solid" onclick="go(\'back\')">已知晓，返回会话</span>' +
             "</div></div></div>";
         }
-        /* 仅查看覆盖层 */
-        if (
-          st.main === "session" &&
-          st.q <= 0 &&
-          st.link === "relay" &&
-          st.viewonly
-        ) {
-          h +=
-            '<div class="overlay-msg"><div class="stack" style="text-align:center;max-width:340px">' +
-            "<b>当前为「仅查看」</b>" +
-            '<div class="tiny muted">中继已用尽，且暂时无法直连。画面已停止刷新，你的操作不会被发送到对方电脑。</div>' +
-            '<div class="hstack" style="justify-content:center">' +
-            '<span class="btn sm" onclick="requestControl()">请求恢复控制</span>' +
-            '<span class="btn sm" onclick="go(\'disconnect\')">断开</span>' +
-            "</div></div></div>";
+        /* 仅查看覆盖层：两种成因必须分开说（断点 P0-3）
+           ① 资源式：中继用尽 + 直连失败 ⇒ 画面冻结，无通道 ⇒ 不该有「请求恢复控制」
+           ② 权限式：链路正常，对方收回操作权 ⇒ 画面仍在实时更新 */
+        if (st.main === "viewonly" || (st.main === "session" && st.viewonly)) {
+          var permission = st.viewonlyKind === "permission";
+          if (st.guide) {
+            /* 引导页已在上面单独渲染（资源式才有引导页），此处不叠加  */
+          } else if (permission) {
+            h +=
+              '<div class="overlay-msg"><div class="stack" style="text-align:center;max-width:360px">' +
+              "<b>对方收回了操作权</b>" +
+              '<div class="tiny muted">画面仍在实时更新，只是你的键盘鼠标不再发送到对方电脑。</div>' +
+              '<div class="hstack" style="justify-content:center">' +
+              '<span class="btn sm" onclick="requestControl()">请求恢复控制</span>' +
+              '<span class="btn sm" onclick="go(\'disconnect\')">断开</span>' +
+              "</div>" +
+              '<div class="tiny muted">对方会收到一条明确请求，可选择允许或拒绝（W2-07）</div>' +
+              "</div></div>";
+          } else {
+            h +=
+              '<div class="overlay-msg"><div class="stack" style="text-align:center;max-width:360px">' +
+              "<b>画面已停在最后一帧，暂时无法继续</b>" +
+              '<div class="tiny muted">原因：免费中继时长已用尽，且当前网络暂时无法直连。</div>' +
+              '<div class="hstack" style="justify-content:center">' +
+              '<span class="btn sm solid" onclick="go(\'guide\')">再试一次直连</span>' +
+              '<span class="btn sm" onclick="go(\'disconnect\')">断开</span>' +
+              "</div>" +
+              '<div class="tiny muted">🔴 资源式下没有「请求恢复控制」——没有通道，那个按钮是死的。</div>' +
+              "</div></div>";
+          }
         }
         h += "</div>";
-        h +=
-          '<div class="bar bar--bottom"><span class="btn sm">文件</span><span class="btn sm">剪贴板</span><span class="btn sm">全屏</span>' +
-          '<span class="grow"></span>' +
-          indicator() +
-          '<span class="btn sm" onclick="go(\'disconnect\')">断开</span></div>';
+        /* 底部工具栏：仅查看时收敛（不得保留会“点了没反应”的完整工具栏） */
+        if (st.main === "viewonly" || (st.main === "session" && st.viewonly)) {
+          h +=
+            '<div class="bar bar--bottom">' +
+            (permission === true
+              ? '<span class="btn sm">文件</span><span class="btn sm">剪贴板</span><span class="btn sm" onclick="cycleAudio()">声音：' +
+                AUDIO_LABEL[st.audio] +
+                "</span>"
+              : '<span class="tiny muted">仅查看：文件 / 剪贴板 / 全屏已不可用（无通道或未授权）</span>') +
+            '<span class="grow"></span>' +
+            indicator() +
+            '<span class="btn sm" onclick="go(\'disconnect\')">断开</span></div>';
+        } else {
+          h +=
+            '<div class="bar bar--bottom"><span class="btn sm">文件</span><span class="btn sm">剪贴板</span><span class="btn sm" onclick="cycleAudio()">声音：' +
+            AUDIO_LABEL[st.audio] +
+            '</span><span class="btn sm">全屏</span>' +
+            '<span class="grow"></span>' +
+            indicator() +
+            '<span class="btn sm" onclick="go(\'disconnect\')">断开</span></div>';
+        }
         return h;
       }
       function renderMain() {
@@ -609,11 +751,16 @@
           h +=
             '<div class="box box--fill" style="padding:10px"><b>你的屏幕正在被对方查看与操作</b><div class="tiny muted" style="margin-top:5px">如果这不是你发起的，请立刻点下面的「断开」。</div></div>';
           h +=
-            '<div class="ph-img" style="height:96px">本机桌面（被控中）</div>';
+            '<div class="ph-img" style="height:96px">本机桌面（被控中）</div>' +
+            audioHostRow();
           h +=
             '<div class="hstack"><span class="btn block solid" style="min-height:30px" onclick="go(\'hostDisconnect\')">断开连接</span></div>';
           h +=
-            '<div class="tiny muted">断开会立即生效，对方不会收到任何"是否挽留"的询问。</div>';
+            '<div class="tiny muted">立即生效，一次点击，无二次确认（红线 C3）。</div>';
+          h +=
+            '<div class="hstack"><span class="btn" style="min-height:26px" onclick="go(\'hostRevoke\')">暂停对方的操作（改为仅查看）</span></div>';
+          h +=
+            '<div class="tiny muted">🔴 这是「权限式仅查看」的入口：链路不断，只是收回操作权。</div>';
           h += "</div></div>";
         }
         if (st.host === "request-ctl") {
@@ -655,6 +802,11 @@
           idle: "未连接",
           connecting: "连接中",
           session: "会话中（" + (st.link === "direct" ? "直连" : "中继") + "）",
+          viewonly:
+            "仅查看（" +
+            (st.link === "direct" ? "直连" : "中继") +
+            "）" +
+            (st.viewonlyKind === "permission" ? " · 对方收回" : " · 画面冻结"),
           ended: "已断开",
         };
         document.getElementById("m-state").textContent =
@@ -728,7 +880,10 @@
           return;
         }
         if (a === "guide") {
-          if (st.main !== "session") return;
+          if (st.main !== "session" && st.main !== "viewonly") return;
+          st.main = "session";
+          st.viewonly = false;
+          st.viewonlyKind = "";
           st.link = "relay";
           st.q = 0;
           st.guide = true;
@@ -776,40 +931,114 @@
           return;
         }
         if (a === "viewonly") {
-          if (st.main !== "session") return;
+          if (st.main !== "session" && st.main !== "viewonly") return;
           if (st.tick) clearInterval(st.tick);
           st.tick = null;
           st.guide = false;
           st.viewonly = true;
+          st.viewonlyKind = "resource";
+          st.main = "viewonly";
           st.link = "relay";
           st.host = "viewonly";
-          log("控制端", "转「仅查看」：画面停止刷新，操作不发送", 8);
-          log("被控端", "同步显示中性提示「对方只能看，不能操作」", 8);
+          log(
+            "控制端",
+            "转「仅查看」·资源式：画面冻结在最后一帧，操作不发送",
+            "8b",
+          );
+          log("被控端", "同步显示中性提示「对方只能看，不能操作」", "8b");
+          render();
+          return;
+        }
+        if (a === "hostRevoke") {
+          /* 链路正常时被控端主动收回操作权 ⇒ 权限式仅查看（画面仍在动） */
+          if (st.host !== "connected") return;
+          st.host = "viewonly";
+          st.main = "viewonly";
+          st.viewonly = true;
+          st.viewonlyKind = "permission";
+          st.guide = false;
+          log("被控端", "点「暂停对方的操作」→ 对方转为仅查看");
+          log(
+            "控制端",
+            "权限式「仅查看」：画面仍在实时更新，只是键鼠不再发送 ⇒ 按钮应为「请求恢复控制」",
+            "8b",
+          );
           render();
           return;
         }
         if (a === "requestControl") {
+          if (st.viewonlyKind !== "permission") {
+            log(
+              "控制端",
+              "⚠️ 资源式下不应出现此按钮：没有通道，点下去永远没有应答（评审 P0-3）",
+              8,
+            );
+            render();
+            return;
+          }
           st.host = "request-ctl";
-          log("控制端", "点「请求恢复控制」");
-          log("被控端", "🔴 此处暴露 W2 缺口：被控端原先没有可应答的界面", 8);
+          log("控制端", "点「请求恢复控制」→ 对方待应答");
+          log(
+            "被控端",
+            "收到「对方请求恢复控制」→ 允许本次 / 保持仅查看（此即 W2-07，断点 8 已修）",
+            8,
+          );
           render();
           return;
         }
         if (a === "allowCtl") {
           st.host = "connected";
           st.viewonly = false;
-          st.q = 100;
+          st.viewonlyKind = "";
           log("被控端", "点「允许操作」→ 恢复可控（原型补上的那一帧）", 8);
+          if (st.q <= 0 && st.link === "relay") {
+            /* 这条日志是 P0-3 的证据：资源式下【本就不该有】「请求恢复控制」 */
+            st.main = "viewonly";
+            st.viewonly = true;
+            st.viewonlyKind = "resource";
+            log(
+              "控制端",
+              "⚠️ 对方已允许，但中继已用尽且无法直连 ⇒ 画面依旧冻结：资源式下【本就不该有】「请求恢复控制」按钮（评审 P0-3）",
+              8,
+            );
+          } else {
+            st.main = "session";
+            log("控制端", "对方允许 → 恢复可操作（仍是中继链路）");
+          }
           render();
           return;
         }
         if (a === "denyCtl") {
           st.host = "viewonly";
+          st.main = "viewonly";
+          st.viewonly = true;
+          st.viewonlyKind = "permission";
           log(
             "被控端",
             "点「保持仅查看」→ 控制端仍为仅查看（请求被温和拒绝）",
             8,
           );
+          log(
+            "控制端",
+            "权限式：画面仍在实时更新，文案不得写「画面已停止刷新」",
+            8,
+          );
+          render();
+          return;
+        }
+        if (a === "hostMute") {
+          st.hostSilent = true;
+          log(
+            "被控端",
+            "点「一键静音」→ 立即生效（红线⑥：静音不得成为降级惩罚：不限速 / 不扣免费中继时长 / 不弹升级）",
+          );
+          log("控制端", "看得到「对方已静音本机声音」（不是静默失败）", 6);
+          render();
+          return;
+        }
+        if (a === "hostUnmute") {
+          st.hostSilent = false;
+          log("被控端", "恢复声音回传");
           render();
           return;
         }
@@ -865,6 +1094,7 @@
       }
 
       function auto() {
+        /* 全流程含第 ⑩ 步（旧版停在第 ⑨ 步 —— 评审 P0-6① 已修） */
         var seq = [
           "connect",
           "allow",
@@ -878,7 +1108,12 @@
           "back",
           "final",
           "viewonly",
+          "disconnect",
         ];
+        log(
+          "系统",
+          "▶ 自动跑一遍：①→⑩ 全部执行（仅查看走资源式；权限式请点「⑨b」或右面板「暂停对方的操作」）",
+        );
         var i = 0;
         var t = setInterval(function () {
           if (i >= seq.length || st.main === "ended") {
@@ -905,6 +1140,9 @@
         st.tick = null;
         st.guide = false;
         st.viewonly = false;
+        st.viewonlyKind = "";
+        st.audio = "off";
+        st.hostSilent = false;
         st.degraded = false;
         st.log = [];
         paintLog();

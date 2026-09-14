@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>W1 · 控制端 · 连接与额度（低保真）</title>
+    <title>W1 · 控制端 · 连接与免费中继时长（低保真）</title>
     <link rel="stylesheet" href="wireframe.css" />
   </head>
   <body>
@@ -11,7 +11,7 @@
       <a href="index.html">索引</a>
       <a href="proto-流程原型.html">▶ 可点击原型</a>
       <a href="w1-控制端-连接与额度.html" aria-current="page"
-        >W1 控制端·连接与额度</a
+        >W1 控制端·连接与时长</a
       >
       <a href="w2-被控端.html">W2 被控端</a>
       <a href="w3-账号与设备管理.html">W3 账号与设备</a>
@@ -20,13 +20,17 @@
       <a href="w6-移动端手持.html">W6 移动端手持</a>
     </nav>
 
-    <h1>W1 · 控制端 · 连接与额度</h1>
+    <h1>W1 · 控制端 · 连接与免费中继时长</h1>
     <p class="lede">
       这是全套线框里<b>最不能省的一组</b>：连接模式指示器是主主张的唯一执行体，降级链四态是「禁止静默降码率」的唯一执行体。
-      <br />本页 9 帧，其中 <b>6 帧属「缺了就是违反已拍板决策」</b>。
-      <br class="muted" />🔴
-      全页出现的额度数值均为示意，<b>实际必须后端下发</b>（`商业化与计费设计`
+      <br />本页 <b>11 个条目 / 14 张图</b>（W1-05 一屏四态 ⇒ 1 条 4 图；W1-06 /
+      W1-06b 为「仅查看」的两种成因，各自独立成条），其中
+      <b>7 个条目属「缺了就是违反已拍板决策」</b>。 <br class="muted" />🔴
+      全页出现的<b>免费中继时长</b>数值均为示意，<b>实际必须后端下发</b>（`商业化与计费设计`
       §13.5：TURN 报价到手前数值会变）。
+      <br />术语纪律：<b>界面文案一律写「免费中继时长」</b>，<span class="no"
+        >不写「额度」</span
+      >——「额度」只用于运营台与开发文档（见 README §6 术语表）。
     </p>
 
     <h2>1 · 主界面与连接过程</h2>
@@ -241,7 +245,7 @@
           ><b>会话窗口（窗口化 + 等比缩放 + 黑边 + 首连提示）</b> · 层①
           红线执行体 · P0　|　来源 v2 §1 D9 · 商业化 §13.2#1#6
         </figcaption>
-        <div class="screen screen--win">
+        <div class="screen screen--win" style="height: 470px">
           <div class="chrome">
             <span class="dot"></span><span class="dot"></span
             ><span class="dot"></span>
@@ -259,7 +263,9 @@
             <span class="btn sm ghost">缩放 ▾</span>
           </div>
 
-          <div class="body" style="height: calc(100% - 28px - 34px)">
+          <!-- ⚠️ 画布高度 = chrome(28) + 上栏(37) + 下栏(37) + 内容所需。
+               原先写 "- 28px - 34px" 只减了一根栏 ⇒ 底部工具栏被裁掉（评审 P0-2）。 -->
+          <div class="body" style="height: calc(100% - 28px - 37px - 37px)">
             <div
               class="pad grow"
               style="display: flex; flex-direction: column; gap: 10px"
@@ -455,11 +461,14 @@
       <b>C 码率已降（必须明示到具体档位）</b> →
       <b>D 终止前告知（给倒计时与选择）</b>。
       四态都<b>不出现金额</b>，只说明「发生了什么」和「下一步做什么」。
+      <br />四态各自有锚点，可单独引用： <a href="#w1-05a">A</a> ·
+      <a href="#w1-05b">B</a> · <a href="#w1-05c">C</a> ·
+      <a href="#w1-05d">D</a>。
     </div>
     <div class="flow">
-      <figure class="frame">
+      <figure class="frame" id="w1-05a">
         <figcaption>态 A · 预警（余量进入低位）</figcaption>
-        <div class="screen" style="width: 392px; height: 230px">
+        <div class="screen" style="width: 392px; height: 236px">
           <div class="chrome">
             <span class="dot"></span><span class="dot"></span
             ><span class="dot"></span>
@@ -488,9 +497,9 @@
         </ul>
       </figure>
 
-      <figure class="frame">
+      <figure class="frame" id="w1-05b">
         <figcaption>态 B · 转直连（中继已停）</figcaption>
-        <div class="screen" style="width: 392px; height: 230px">
+        <div class="screen" style="width: 392px; height: 236px">
           <div class="chrome">
             <span class="dot"></span><span class="dot"></span
             ><span class="dot"></span>
@@ -518,9 +527,9 @@
         </ul>
       </figure>
 
-      <figure class="frame">
+      <figure class="frame" id="w1-05c">
         <figcaption>态 C · 🔴 码率已降（最关键的一态）</figcaption>
-        <div class="screen" style="width: 392px; height: 230px">
+        <div class="screen" style="width: 392px; height: 250px">
           <div class="chrome">
             <span class="dot"></span><span class="dot"></span
             ><span class="dot"></span>
@@ -552,7 +561,7 @@
         </ul>
       </figure>
 
-      <figure class="frame">
+      <figure class="frame" id="w1-05d">
         <figcaption>态 D · 终止前告知（→ 仅查看）</figcaption>
         <div class="screen" style="width: 392px; height: 230px">
           <div class="chrome">
@@ -563,7 +572,7 @@
           <div class="banner">
             <span class="tiny"
               ><b>本次会话将在 30 秒后结束</b
-              >，之后画面会保持更新但无法操作</span
+              >，之后画面<b>停止刷新</b>（保留最后一帧，后文称「仅查看·资源式」）</span
             >
           </div>
           <div class="pad">
@@ -572,13 +581,24 @@
               <span class="btn sm solid">继续以「仅查看」保持</span>
               <span class="btn sm">立即结束</span>
               <span class="grow"></span
-              ><span class="tiny muted">不消耗免费中继时长</span>
+              ><span class="tiny muted">画面已停，不再产生任何流量</span>
             </div>
           </div>
           <span class="pin" style="left: 16px; top: 38px">1</span>
         </div>
         <ul class="notes">
           <li><b>①</b> 终止前必须<b>给倒计时与选择</b>，不得突然黑屏。</li>
+          <li>
+            🔴 <b>不得写「画面会保持更新」</b>（评审 P0-3）：这里走的是<b
+              >中继用尽 + 直连失败</b
+            >，没有任何通道能刷新画面 ⇒
+            说"还在更新"是<b>假承诺</b>，用户点进去发现卡住就再也不信任何提示。
+          </li>
+          <li>
+            🔴
+            原先那句「不消耗免费中继时长」在<b>本态不成立</b>（它只适用于「已切直连」）⇒
+            已删；换成可核实的事实：画面停 ⇒ 不再产生流量。
+          </li>
           <li>
             「仅查看」是<b>兜底体验</b>而不是惩罚，文案要平实。<span class="no"
               >禁用</span
@@ -591,11 +611,12 @@
     <h2>4 · 仅查看 · 转直连引导 · 显示设置 · 断连后</h2>
 
     <div class="flow">
-      <!-- ============ W1-06 ============ -->
+      <!-- ============ W1-06（资源式） ============ -->
       <figure class="frame" id="w1-06">
         <figcaption>
-          <span class="fid">W1-06</span><b>「仅查看」遮罩（控制端）</b> · 层①
-          红线执行体 · P0　|　来源 商业化 §13.2#4 · §13.4 红线②
+          <span class="fid">W1-06</span
+          ><b>「仅查看」遮罩 · 资源式（中继用尽 + 直连失败 ⇒ 画面冻结）</b>
+          · 层① 红线执行体 · P0　|　来源 商业化 §13.2#4 · §13.4 红线②
         </figcaption>
         <div class="screen screen--win" style="height: 400px">
           <div class="chrome">
@@ -608,7 +629,7 @@
             style="height: calc(100% - 28px); position: relative"
           >
             <div class="ph-img" style="height: 270px">
-              画面仍在实时更新（灰化表示不可操作）
+              画面已停止刷新（保留最后一帧，不黑屏）
             </div>
             <div class="overlay-msg" style="top: 0; height: 270px">
               <div
@@ -621,7 +642,7 @@
                   text-align: center;
                 "
               >
-                <b>画面仍在，操作已暂停</b>
+                <b>画面已停在最后一帧，暂时无法继续</b>
                 <div class="ph w85" style="margin: 9px auto"></div>
                 <div class="tiny muted">
                   原因：免费中继时长已用尽，且当前网络暂时无法直连
@@ -645,7 +666,12 @@
         <ul class="notes">
           <li>
             <b>①</b>
-            必须说清「<b>画面还在，只是不能操作</b>」——否则用户以为断线了，会反复重连。
+            必须说清「<b>画面停在最后一帧，不是断线</b>」——否则用户以为坏了，会反复重连。
+          </li>
+          <li>
+            🔴 <b>不得写「画面仍在实时更新」</b>（评审
+            P0-3）：中继已停、直连不通 ⇒
+            <b>没有任何通道能刷新画面</b>，那句话是假的。
           </li>
           <li>
             <b>②</b> 🔴
@@ -654,8 +680,103 @@
           </li>
           <li>「再试一次直连」是<b>免费动作</b>，必须是主按钮。</li>
           <li>
+            🔴
+            <b>资源式下不得出现「请求恢复控制」</b
+            >——没有通道可用，那个按钮是死按钮（性质同
+            <a href="w2-被控端.html#w2-07">W2-07</a> 断点）。它只属于权限式（见
+            <a href="#w1-06b">W1-06b</a>）。
+          </li>
+          <li>
             被控端对应提示见
             <a href="w2-被控端.html#w2-04">W2-04</a>（中性、无金额）。
+          </li>
+        </ul>
+      </figure>
+
+      <!-- ============ W1-06b（权限式） ============ -->
+      <figure class="frame" id="w1-06b">
+        <figcaption>
+          <span class="fid">W1-06b</span
+          ><b>「仅查看」遮罩 · 权限式（链路正常，对方收回了操作权）</b> · 层①
+          红线执行体 · P0　|　来源 商业化 §13.2#4 · v2 §2.3 观察模式
+        </figcaption>
+        <div class="screen screen--win" style="height: 400px">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">远程桌面 — 我的台式机</span>
+          </div>
+
+          <div class="bar" style="background: #fafafa">
+            <span class="tag">● 本次连接：中继</span>
+            <span class="tiny">在消耗免费中继时长</span>
+            <span class="grow"></span>
+            <span class="tiny muted">画质：1080p / 30fps</span>
+            <span class="tag">仅查看</span>
+          </div>
+
+          <div
+            class="pad"
+            style="height: calc(100% - 28px - 37px); position: relative"
+          >
+            <div class="ph-img" style="height: 270px">
+              画面仍在实时更新（灰化表示不可操作）
+            </div>
+            <div class="overlay-msg" style="top: 0; height: 270px">
+              <div
+                class="box"
+                style="
+                  background: #fff;
+                  border-style: solid;
+                  padding: 16px;
+                  width: 400px;
+                  text-align: center;
+                "
+              >
+                <b>对方收回了操作权</b>
+                <div class="ph w85" style="margin: 9px auto"></div>
+                <div class="tiny muted">
+                  画面仍在实时更新，只是你的键盘鼠标不再发送到对方电脑
+                </div>
+                <div
+                  class="hstack"
+                  style="margin-top: 12px; justify-content: center"
+                >
+                  <span class="btn sm solid">请求恢复控制</span>
+                  <span class="btn sm">断开</span>
+                </div>
+                <div class="tiny muted" style="margin-top: 10px">
+                  对方会收到一条明确请求，可选择允许或拒绝（见
+                  <a href="w2-被控端.html#w2-07">W2-07</a>）
+                </div>
+              </div>
+            </div>
+          </div>
+          <span class="pin" style="left: 120px; top: 150px">1</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 与
+            <a href="#w1-06">W1-06</a>
+            的差别只有一句：<b>画面是否还在动</b>。资源式 ⇒ 冻结 +
+            「再试一次直连」；权限式 ⇒ 实时 + 「请求恢复控制」。
+            <span class="no">禁止</span>把两者合成一张。
+          </li>
+          <li>
+            🔴
+            <b>同一个遮罩、两种原因，必须给两个不同的按钮</b
+            >：按钮与链路状态不匹配 ⇒ 用户点两次就失去信任（这正是评审 P0-3
+            的根因）。
+          </li>
+          <li>
+            权限式下<b>中继仍在计时</b>（画面还在传）⇒
+            被控端与本人两侧都应有可见提示
+            <span class="no">不得</span>静默计时。
+          </li>
+          <li>
+            「仅查看」是<b>兜底体验</b>不是惩罚，文案保持平实。<span class="no"
+              >禁用</span
+            >任何\"开通会员可继续操作\"的措辞（红线⑤的变体）。
           </li>
         </ul>
       </figure>
@@ -912,7 +1033,7 @@
             </main>
           </div>
           <span class="pin" style="left: 196px; top: 268px">1</span>
-          <span class="pin" style="left: 836px; top: 268px">2</span>
+          <span class="pin" style="left: 802px; top: 268px">2</span>
         </div>
         <ul class="notes">
           <li>
@@ -952,7 +1073,8 @@
             <span class="tag on">音频：已开启</span>
           </div>
 
-          <div class="body" style="height: calc(100% - 28px - 58px)">
+          <!-- ⚠️ 实测：上栏 35px + 下栏 37px。原先只减 58px ⇒ 底部音频条下缘被裁（评审 P0-2）。 -->
+          <div class="body" style="height: calc(100% - 28px - 35px - 37px)">
             <div class="pad grow" style="display: flex; gap: 10px">
               <div class="ph-img grow" style="height: 288px">被控端画面</div>
               <div class="box" style="width: 196px; padding: 10px">
@@ -1010,6 +1132,21 @@
             <b>被控端不出现本模块</b
             >：音频的<b>隐私控制权在被控端</b>（一键静音，见
             <a href="w2-被控端.html#w2-08">W2-08</a>），控制端只做播放与对讲。
+          </li>
+          <li>
+            🔴
+            <b>异常态缺口（评审 P1-6，本轮未出图，高保真阶段必须补）</b
+            >：以下四种必须有明确文案与视觉，<span class="no">不得</span
+            >只做"默认正常"：①<b>对讲建立失败</b>（麦克风被占用 /
+            无权限）②<b>对讲权限被拒</b>（被控端关闭，且需留可查记录）③<b>对方采不到音</b>（设备无声
+            /
+            正被静音）④<b>回声啸叫自动抑制</b>（提示已降低增益，而不是让用户听到尖叫）。
+          </li>
+          <li>
+            ⚠️ 「音频：已开启」这类标签只描述<b>技术状态</b>；计费口径（P16 =
+            128 kbps / P17 = 纯音频 0.1 Mbps）只以事实陈述出现，<span class="no"
+              >不写成</span
+            >"省时长"推销口吻。
           </li>
         </ul>
       </figure>

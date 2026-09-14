@@ -28,6 +28,13 @@
 html {
   scroll-behavior: smooth;
 }
+/* 顶部导航是 sticky（约 46px 高）—— 锚点跳转必须留偏移，否则被点击的帧标题
+   会被压在导航下面（"点了链接却看不到目标"）。 */
+figure.frame,
+h2,
+h3 {
+  scroll-margin-top: 74px;
+}
 body {
   margin: 0;
   padding: 0 26px 90px;
@@ -132,6 +139,9 @@ figure.frame > figcaption b {
   border-radius: 3px;
   margin-right: 7px;
 }
+/* ⚠️ 画布高度 = 设计意图，且 overflow:hidden ⇒ 子元素底边一旦超过画布底边会被
+   【静默裁掉】（看图的人根本不知道少了东西，截图也看不出来）。
+   改稿后必须跑一次几何自检：`node tools/wireframe-selfcheck.mjs`。 */
 .screen {
   position: relative;
   background: var(--card);

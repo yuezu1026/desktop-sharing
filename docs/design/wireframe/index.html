@@ -10,7 +10,7 @@
     <nav class="topbar">
       <a href="index.html" aria-current="page">索引</a>
       <a href="proto-流程原型.html">▶ 可点击原型</a>
-      <a href="w1-控制端-连接与额度.html">W1 控制端·连接与额度</a>
+      <a href="w1-控制端-连接与额度.html">W1 控制端·连接与时长</a>
       <a href="w2-被控端.html">W2 被控端</a>
       <a href="w3-账号与设备管理.html">W3 账号与设备</a>
       <a href="w4-计费与个人中心.html">W4 计费与个人中心</a>
@@ -65,31 +65,28 @@
         <tr>
           <td><a href="w1-控制端-连接与额度.html">W1</a></td>
           <td>
-            <b>控制端 · 连接与额度</b><br /><span class="tiny muted"
-              >主界面 / 连接中 / 会话窗口 / 余量三态 / 降级链四态 / 仅查看遮罩 /
-              转直连引导页 / 显示设置 / 断连后</span
+            <b>控制端 · 连接与免费中继时长</b><br /><span class="tiny muted"
+              >主界面 / 连接中 / 会话窗口 / 余量默认折叠 / 降级链四态 /
+              仅查看遮罩两式 / 转直连引导页 / 显示设置 / 断连后 /
+              音频控制条三态</span
             >
           </td>
           <td>
-            9<br /><span class="tiny muted"
-              >共 12 张图<br />（W1-05 拆 4 态）</span
+            11<br /><span class="tiny muted"
+              >共 14 张图<br />（W1-05 一屏拆 4 态<br />⇒ 1 条 4 图）</span
             >
           </td>
-          <td>6（含最关键的「转直连引导页」）</td>
+          <td>7（含最关键的「转直连引导页」）</td>
         </tr>
         <tr>
           <td><a href="w2-被控端.html">W2</a></td>
           <td>
             <b>被控端</b><br /><span class="tiny muted"
               >主界面 / 首次被控确认+反诈 / 会话中·一键断开 / 仅查看中性提示 /
-              资源档位 / 设置总览 / 请求恢复操作</span
+              资源档位 / 设置总览 / 请求恢复操作 / 采音提示+一键静音</span
             >
           </td>
-          <td>
-            7<br /><span class="tiny muted"
-              >共 7 张图<br />（W2-07 为原型补帧）</span
-            >
-          </td>
+          <td>8<br /><span class="tiny muted">共 8 张图</span></td>
           <td>6（反诈位、无金额、无挽留、恢复控制需应答）</td>
         </tr>
         <tr>
@@ -119,7 +116,7 @@
           <td>
             <b>合规 · 实名 · 运营操作台</b><br /><span class="tiny muted"
               >隐私告知 / 实名入口三类触发 / 未实名降级 / 运营台3查 /
-              额度计量同源 / 3动作+权限审计</span
+              中继时长计量同源 / 3动作+权限审计</span
             >
           </td>
           <td>6</td>
@@ -140,14 +137,15 @@
     </table>
 
     <p class="lede" style="margin-top: 14px">
-      合计 <b>40 个界面条目 ⇒ 43 张线框图</b>（P0 32 / P1 8；多出的 3 张 =
-      W1-05「降级链」四态各出一张，另 1 张 = W2-07 为原型跑出的补帧）· 另有
-      <b>5 项"明确不做"</b>的界面写在红线里（见 README §2.8）。
+      合计 <b>43 个界面条目 ⇒ 46 张线框图</b>（层分布 ① 30 / ② 3 / ③ 10；优先级
+      P0 39 / P1 4）。<br />条目与图数不相等的原因只有一个：<b>W1-05「降级链」一屏拆四态</b>（1
+      条目 → 4 图）。另有 <b>5 项"明确不做"</b>的界面写在红线里（见 README
+      §2.8）。
     </p>
 
     <h2>2. 帧清单（点击直达）</h2>
 
-    <h3>W1 · 控制端 · 连接与额度</h3>
+    <h3>W1 · 控制端 · 连接与免费中继时长</h3>
     <table class="tbl" style="max-width: 1000px; background: #fff">
       <tbody>
         <tr>
@@ -177,16 +175,36 @@
           <td>P0</td>
         </tr>
         <tr>
-          <td><a href="w1-控制端-连接与额度.html#w1-05">W1-05</a></td>
           <td>
-            <b>降级链四态</b>（预警 / 转直连 / 🔴降码率明示 / 终止前告知）
+            <a href="w1-控制端-连接与额度.html#w1-05a">W1-05a</a><br />
+            <a href="w1-控制端-连接与额度.html#w1-05b">W1-05b</a><br />
+            <a href="w1-控制端-连接与额度.html#w1-05c">W1-05c</a><br />
+            <a href="w1-控制端-连接与额度.html#w1-05d">W1-05d</a>
+          </td>
+          <td>
+            <b>降级链四态</b>（四态分四个锚点，可单独引用）：<br />a
+            预警（余量进低位）/ b 转直连 / c 🔴降码率明示 / d 终止前告知
           </td>
           <td>①</td>
           <td>P0</td>
         </tr>
         <tr>
           <td><a href="w1-控制端-连接与额度.html#w1-06">W1-06</a></td>
-          <td>「仅查看」遮罩（控制端）</td>
+          <td>
+            「仅查看」遮罩 · <b>资源式</b>（免费中继时长用尽且直连失败 ⇒
+            画面冻结在最后一帧）
+          </td>
+          <td>①</td>
+          <td>P0</td>
+        </tr>
+        <tr>
+          <td>
+            <a href="w1-控制端-连接与额度.html#w1-06b">W1-06b</a>
+          </td>
+          <td>
+            「仅查看」遮罩 · <b>权限式</b>（链路正常，对方收回操作权 ⇒
+            <b>画面仍在实时更新</b>，仅键盘鼠标不发送）
+          </td>
           <td>①</td>
           <td>P0</td>
         </tr>
@@ -210,6 +228,16 @@
               style="display: inline; padding: 0; border: 0; background: none"
               ><b>无促销弹窗</b></span
             >）
+          </td>
+          <td>①</td>
+          <td>P0</td>
+        </tr>
+        <tr>
+          <td><a href="w1-控制端-连接与额度.html#w1-10">W1-10</a></td>
+          <td>
+            🔴
+            <b>音频控制条</b>（声音回传 / 按住说话对讲 /
+            纯音频模式三态合帧）<span class="tag">新增·D19</span>
           </td>
           <td>①</td>
           <td>P0</td>
@@ -261,6 +289,18 @@
           <td>
             🔴
             对方请求恢复操作（<b>原型补帧</b>：缺它则控制端「请求控制」是死按钮）
+          </td>
+          <td>①</td>
+          <td>P0</td>
+        </tr>
+        <tr>
+          <td><a href="w2-被控端.html#w2-08">W2-08</a></td>
+          <td>
+            🔴
+            <b>采音提示 + 一键静音</b>（被控端侧声音回传的同意与撤回）<span
+              class="tag"
+              >新增·D19</span
+            >
           </td>
           <td>①</td>
           <td>P0</td>
@@ -465,11 +505,14 @@
     </table>
 
     <p class="lede" style="margin-top: 10px">
-      内置两条自动断言：<b>被控端金额词告警</b> +
-      <b>控制端禁用词告警</b>（任一时刻命中就在页顶报警）。 实测：10
-      步全可达、红线告警 0 次、溢出 0、控件重叠 0。<br />
-      这条流程跑出 8 个断点（其中第 8 个 ⇒ 已补 W2-07），完整清单见
-      <a href="README.md#9-可点击原型2026-09-14-新增">README §9.1</a>。
+      内置两条自动断言：<b>被控端金额/催费告警</b> +
+      <b>控制端转化词告警</b>（任一时刻命中就在页顶报警，白名单与反例区已排除）。 实测：auto
+      一键跑完全部步骤、红线告警 0 次、JS 报错 0。<br />
+      这条流程跑出 <b>9 个断点</b>（第 8 个 ⇒ 已补 W2-07；第 8b 个 ⇒
+      已拆成 W1-06 / W1-06b），完整清单见
+      <a href="README.md#9-可点击原型2026-09-14-新增">README §9.1</a>。<br />
+      几何纪律：改稿后跑 <code>node tools/wireframe-selfcheck.mjs</code>
+      （画布静默裁切 / 横向溢出 / 锚点可达，退出码 0 才算过）。
     </p>
 
     <h2>4. 评审建议顺序</h2>
@@ -485,7 +528,12 @@
       ① README §8 的 6 个问题已定案 ✅ → ② W1/W2 可点击原型已完成 ✅ （<a
         href="proto-流程原型.html"
         >proto-流程原型.html</a
-      >）→ ③ 下一个可选动作：进入高保真（视觉）阶段。
+      >）→ ③ UI/UX 评审的 22 条 P0 + 11 条 P1 已全部回写 ✅（<a
+        href="README.md"
+        >README §11</a
+      >）→ ④ 下一个可选动作：进入高保真（视觉）阶段（须先补
+      <code>:hover</code> / <code>:focus</code> / <code>:disabled</code>
+      与 <code>&lt;button&gt;</code> 语义）。
     </div>
 
     <p class="pager">

@@ -10,7 +10,7 @@
     <nav class="topbar">
       <a href="index.html">索引</a>
       <a href="proto-流程原型.html">▶ 可点击原型</a>
-      <a href="w1-控制端-连接与额度.html">W1 控制端·连接与额度</a>
+      <a href="w1-控制端-连接与额度.html">W1 控制端·连接与时长</a>
       <a href="w2-被控端.html">W2 被控端</a>
       <a href="w3-账号与设备管理.html">W3 账号与设备</a>
       <a href="w4-计费与个人中心.html" aria-current="page">W4 计费与个人中心</a>
@@ -29,9 +29,9 @@
     <div class="legend">
       🔴
       <b>数值纪律：</b
-      >本页所有价格与额度均为<b>示意占位</b>，实际由<b>定价版本管理（D14）后端下发</b>；
-      且 <code>成本测算表</code> §10.2 的 TURN
-      报价到手前，<b>对外材料不得出现具体额度数字</b>。
+      >本页所有价格与<b>免费中继时长</b>数值均为<b>示意占位</b>，实际由<b>定价版本管理（D14）后端下发</b>；且
+      <code>成本测算表</code> §10.2 的 TURN
+      报价到手前，<b>对外材料不得出现具体数值</b>。
     </div>
 
     <h2>1 · 购买页（非 iOS / iOS 两套对照）</h2>
@@ -43,7 +43,7 @@
           <span class="fid">W4-01</span><b>购买页 · 最小版（非 iOS）</b> · 层③
           常规商业化界面 · P0　|　来源 商业化 §13.2#7
         </figcaption>
-        <div class="screen screen--desk" style="height: 500px">
+        <div class="screen screen--desk" style="height: 524px">
           <div class="chrome">
             <span class="dot"></span><span class="dot"></span
             ><span class="dot"></span>
@@ -80,7 +80,7 @@
                 <b>个人版包含</b>
                 <div class="tiny" style="margin-top: 6px">
                   <div class="item" style="border: 0; padding: 4px 0">
-                    · 更大的中继时长额度（数值以后端下发为准）
+                    · 更大的<b>免费中继时长</b>（数值以后端下发为准）
                   </div>
                   <div class="item" style="border: 0; padding: 4px 0">
                     · 更高的中继带宽优先权
@@ -144,7 +144,7 @@
             </div>
           </div>
           <span class="pin" style="left: 204px; top: 176px">1</span>
-          <span class="pin" style="left: 840px; top: 326px">2</span>
+          <span class="pin" style="left: 800px; top: 326px">2</span>
           <span class="pin" style="left: 24px; top: 56px">3</span>
         </div>
         <ul class="notes">
@@ -671,16 +671,22 @@
 
           <div class="pad" style="padding-top: 12px">
             <div class="box" style="padding: 11px">
-              <b>🔴 退款与额度 / 订阅的联动（开发按此实现，不是客服裁量）</b>
+              <b
+                >🔴 退款与免费中继时长 /
+                订阅的联动（开发按此实现，不是客服裁量）</b
+              >
               <div class="tiny" style="margin-top: 7px; line-height: 1.9">
                 ① 可退前提：<b>7 天内 且 中继用量为 0</b
                 >（硬判定，非人工判断）<br />
-                ② 退款成功后<b>立即回收</b>：订阅终止、未用完额度立即作废 ——
-                <span class="no">不得</span>"钱退了额度还留着"<br />
+                ② 退款成功后<b>立即回收</b>：订阅终止、<b
+                  >未用完的免费中继时长立即作废</b
+                >
+                ——
+                <span class="no">不得</span>"钱退了时长还留着"<br />
                 ③ 已消耗的流量不追偿（订单备注保留消耗记录）<br />
                 ④
                 <span class="no">不得</span
-                >用额度补偿替代退款（退款只能用钱；额度补偿只适用于我方故障）<br />
+                >用免费中继时长补偿替代退款（退款只能用钱；时长补偿只适用于我方故障）<br />
                 ⑤ 同账号
                 <b>180 天内最多 1 次</b>「未使用可退」，重复请求转人工审核
               </div>
@@ -700,7 +706,7 @@
           </li>
           <li>
             <b>②</b> 🔴 五条联动必须落在系统里，而不是客服的脑子里。尤其第 ②④
-            条：<b>钱退了额度还留着</b>是资金漏洞，<b>用额度抵退款</b>是投诉放大器。
+            条：<b>钱退了时长还留着</b>是资金漏洞，<b>用时长抵退款</b>是投诉放大器。
           </li>
           <li>发票是"必须支持"，不是"可选"（账号设计 §4.3）。</li>
         </ul>

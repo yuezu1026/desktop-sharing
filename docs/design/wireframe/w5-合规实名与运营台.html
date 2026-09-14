@@ -10,7 +10,7 @@
     <nav class="topbar">
       <a href="index.html">索引</a>
       <a href="proto-流程原型.html">▶ 可点击原型</a>
-      <a href="w1-控制端-连接与额度.html">W1 控制端·连接与额度</a>
+      <a href="w1-控制端-连接与额度.html">W1 控制端·连接与时长</a>
       <a href="w2-被控端.html">W2 被控端</a>
       <a href="w3-账号与设备管理.html">W3 账号与设备</a>
       <a href="w4-计费与个人中心.html">W4 计费与个人中心</a>
@@ -156,7 +156,7 @@
                   <b>① 本次操作触发了风控</b>
                 </div>
                 <div class="item" style="padding: 7px 9px; opacity: 0.55">
-                  ② 使用中继时长额度
+                  ② 使用免费中继时长
                 </div>
                 <div class="item" style="padding: 7px 9px; opacity: 0.55">
                   ③ 进行跨账号连接
@@ -193,7 +193,7 @@
                 <b>三类触发事件（D17 口径）</b>
                 <div class="tiny" style="margin-top: 7px; line-height: 1.9">
                   · 触发风控（异常登录、异常连接行为）<br />
-                  · 使用中继时长额度（有成本、可被滥用）<br />
+                  · 使用免费中继时长（有成本、可被滥用）<br />
                   · 跨账号连接（连接非本人账号下的设备）<br />
                   ⚠️ 直连、被控、手机被控<b>不触发</b>实名。
                 </div>
@@ -453,7 +453,10 @@
         <figcaption>
           <span class="fid">W5-05</span
           ><b>查额度与计量明细（争议处理视图）</b> · 层③ 内部界面 · P0　|　来源
-          账号设计 §5.1② · 商业化 §7.1
+          账号设计 §5.1② · 商业化 §7.1 <br /><span class="tiny muted"
+            >（⚠️「额度」是本台与开发文档的<b>内部用词</b>；用户侧一律叫「免费中继时长」。见
+            README §6 术语表）</span
+          >
         </figcaption>
         <div class="screen screen--desk" style="height: 460px">
           <div class="chrome">
@@ -576,7 +579,8 @@
           <span class="fid">W5-06</span><b>3 动作 + 权限模型 + 审计</b> · 层③
           内部界面 · P0　|　来源 账号设计 §5.1 · §5.4
         </figcaption>
-        <div class="screen screen--desk" style="height: 500px">
+        <!-- ⚠️ 原 500px 装不下：表格尾部 + 整个底部操作区被静默裁掉（实测溢出 +190，评审 P0-2）⇒ 700 -->
+        <div class="screen screen--desk" style="height: 700px">
           <div class="chrome">
             <span class="dot"></span><span class="dot"></span
             ><span class="dot"></span>
