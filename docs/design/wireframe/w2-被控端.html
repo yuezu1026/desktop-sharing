@@ -1,0 +1,585 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>W2 · 被控端（低保真）</title>
+    <link rel="stylesheet" href="wireframe.css" />
+  </head>
+  <body>
+    <nav class="topbar">
+      <a href="index.html">索引</a>
+      <a href="w1-控制端-连接与额度.html">W1 控制端·连接与额度</a>
+      <a href="w2-被控端.html" aria-current="page">W2 被控端</a>
+      <a href="w3-账号与设备管理.html">W3 账号与设备</a>
+      <a href="w4-计费与个人中心.html">W4 计费与个人中心</a>
+      <a href="w5-合规实名与运营台.html">W5 合规·实名·运营台</a>
+      <a href="w6-移动端手持.html">W6 移动端手持</a>
+    </nav>
+
+    <h1>W2 · 被控端</h1>
+    <p class="lede">
+      被控端是全套界面里<b>最容易做错</b>的一端：它由"不太懂电脑的人"使用（帮爸妈调手机），
+      且<b>绝对不能出现任何金额、余额、充值字样</b>（<code
+        >商业化与计费设计</code
+      >
+      §13.4 红线②）。 <br />本页 6 帧，其中 5 帧是"缺了就违规或伤体验"的。
+    </p>
+
+    <div class="legend">
+      🔴
+      <b>贯穿本页的一条铁律：</b
+      >被控端是<b>被帮助的一方</b>。任何让它感到"要花钱 / 被催费 /
+      被推销"的界面， 都会直接摧毁「手机被控免费」这个钩子 ——
+      父母手机上弹出"余额不足"的那一刻，用户就不会再让父母装这个软件了。
+    </div>
+
+    <h2>1 · 主界面与授权</h2>
+
+    <div class="flow">
+      <!-- ============ W2-01 ============ -->
+      <figure class="frame" id="w2-01">
+        <figcaption>
+          <span class="fid">W2-01</span><b>被控端主界面</b> · 层① 红线执行体 ·
+          P0　|　来源 v2 §3.1
+        </figcaption>
+        <div class="screen screen--win">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">远程桌面 · 本机</span>
+          </div>
+          <div
+            class="pad"
+            style="height: calc(100% - 28px); display: flex; gap: 14px"
+          >
+            <div class="box" style="width: 300px; padding: 14px">
+              <span class="label">本机识别码</span>
+              <div class="hstack">
+                <b
+                  style="
+                    font:
+                      600 22px/1.2 Consolas,
+                      monospace;
+                    letter-spacing: 3px;
+                  "
+                  >123 456 789</b
+                >
+                <span class="grow"></span><span class="btn sm">复制</span>
+              </div>
+              <div class="ph w55" style="margin-top: 8px"></div>
+
+              <div style="margin-top: 16px"></div>
+              <span class="label">临时密码</span>
+              <div class="hstack">
+                <b
+                  style="
+                    font:
+                      600 18px/1.2 Consolas,
+                      monospace;
+                    letter-spacing: 3px;
+                  "
+                  >a7k2f9</b
+                >
+                <span class="grow"></span><span class="btn sm">换一个</span>
+              </div>
+              <div class="tiny muted" style="margin-top: 7px">
+                每次连接后自动更换；也可设为固定密码（不推荐）。
+              </div>
+
+              <div style="margin-top: 16px"></div>
+              <div class="hstack">
+                <span class="tag on">● 允许被连接</span>
+                <span class="grow"></span>
+                <span class="btn sm">不允许</span>
+              </div>
+            </div>
+
+            <div class="grow stack">
+              <div class="box--fill box" style="padding: 12px">
+                <b>当前状态</b>
+                <div class="hstack" style="margin-top: 7px">
+                  <span class="tag">未被连接</span>
+                </div>
+                <div class="tiny muted" style="margin-top: 7px">
+                  有设备连接时，此处显示连接方与「断开」按钮（见 W2-03）。
+                </div>
+              </div>
+              <div class="box" style="padding: 12px">
+                <b>常用开关</b>
+                <div class="item" style="border: 0; padding: 7px 0">
+                  <span>开机自动启动</span><span class="grow"></span
+                  ><span class="tag on">开</span>
+                </div>
+                <div class="item" style="border: 0; padding: 7px 0">
+                  <span>空闲时近零占用</span><span class="grow"></span
+                  ><span class="tag on">开</span>
+                </div>
+                <div class="item" style="border: 0; padding: 7px 0">
+                  <span>资源档位</span><span class="grow"></span
+                  ><span class="tag">均衡</span>
+                </div>
+              </div>
+              <div class="box tiny" style="padding: 10px; border-style: dashed">
+                安全提示：只把识别码与密码告诉你信任的人。任何人以「客服/公检法需要看屏幕」为由索要，都是诈骗。
+              </div>
+            </div>
+          </div>
+          <span class="pin" style="left: 24px; top: 52px">1</span>
+          <span class="pin" style="left: 24px; top: 196px">2</span>
+          <span class="pin" style="left: 470px; top: 272px">3</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 识别码 /
+            密码必须<b>一眼可见、可直接复制</b>：这是被控端唯一的对外凭据，藏起来就没法用了。
+          </li>
+          <li>
+            <b>②</b> 「允许被连接」总开关 ——
+            一次点击即可彻底关闭被控能力，不需要进设置层层找。
+          </li>
+          <li>
+            <b>③</b> 🔴
+            <b>本页不出现任何金额、余额、充值、会员入口。</b
+            >被控端只谈"能不能连、谁在连、怎么连"，不谈钱。
+          </li>
+          <li>
+            状态必须能一眼看出"现在有没有人在看我屏幕"——这是用户最关心的事。
+          </li>
+        </ul>
+      </figure>
+
+      <!-- ============ W2-02 ============ -->
+      <figure class="frame" id="w2-02">
+        <figcaption>
+          <span class="fid">W2-02</span
+          ><b>首次被控确认页（含反诈风险提示位）</b> · 层① 合规硬项 ·
+          P0　|　来源 v2 §1 E6 <b>A8</b> · §6.5 D17
+        </figcaption>
+        <div class="screen screen--win">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">远程桌面 · 本机</span>
+          </div>
+          <div class="modal" style="position: absolute">
+            <div class="dlg" style="width: 66%">
+              <div class="dlg-h">🔴 有人请求控制本设备</div>
+              <div class="dlg-b stack">
+                <div class="box--fill box" style="padding: 10px">
+                  <div class="hstack">
+                    <span class="ico"></span>
+                    <span
+                      ><b>账号 138****6721（张三）</b><br />
+                      <span class="tiny muted"
+                        >设备：我的台式机·Windows 11 · 来自 北京</span
+                      ></span
+                    >
+                    <span class="grow"></span
+                    ><span class="tiny muted">刚刚</span>
+                  </div>
+                </div>
+
+                <div>
+                  <span class="label">允许后，对方可以</span>
+                  <div class="tiny">
+                    <div class="item" style="border: 0; padding: 4px 0">
+                      ① 看到你屏幕上的所有内容
+                    </div>
+                    <div class="item" style="border: 0; padding: 4px 0">
+                      ② 操作你的鼠标与键盘
+                    </div>
+                    <div class="item" style="border: 0; padding: 4px 0">
+                      ③ 在你允许时传输文件
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  class="warnings"
+                  style="
+                    border: 2px solid var(--ink);
+                    padding: 11px;
+                    background: #fff;
+                  "
+                >
+                  <b>🔴 请确认你认识对方</b>
+                  <div class="tiny" style="margin-top: 6px; line-height: 1.8">
+                    ① 你正在允许对方控制本设备<br />
+                    ② 对方能看到并操作你屏幕上的一切<br />
+                    ③ 不要向陌生人开启；任何自称「客服 /
+                    公检法」要求你打开屏幕的，都是诈骗
+                  </div>
+                </div>
+              </div>
+              <div class="dlg-f">
+                <span class="btn">拒绝</span>
+                <span class="btn solid">允许本次</span>
+              </div>
+            </div>
+          </div>
+          <span class="pin" style="left: 150px; top: 300px">1</span>
+          <span class="pin" style="left: 606px; top: 378px">2</span>
+          <span class="pin" style="left: 150px; top: 96px">3</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 🔴 <b>反诈提示块不得折叠、不得放在"展开更多"里</b>（A8
+            明确要求）。它是本屏视觉权重第二高的元素（仅次于标题）。
+          </li>
+          <li>
+            <b>②</b>
+            「拒绝」与「允许本次」<b>权重接近、并列</b>，不弱化拒绝。<b>不做"仅允许一次"以外的暧昧选项</b>，避免误点。
+          </li>
+          <li>
+            <b>③</b> 必须显示<b>谁在连</b>（账号 + 设备 +
+            来源地）——说不清来源的确认页等于没确认。
+          </li>
+          <li>
+            再次被同一账号连接时不再弹此页 ——
+            但不能因此省略反诈提示：常驻安全提示保留在主界面（W2-01 ③）。
+          </li>
+          <li>
+            ⚠️ 本屏是 P0 合规硬项：<b>最终文案与口径须法务复核</b>（D17）。
+          </li>
+        </ul>
+      </figure>
+    </div>
+
+    <h2>2 · 会话中与状态提示</h2>
+
+    <div class="flow">
+      <!-- ============ W2-03 ============ -->
+      <figure class="frame" id="w2-03">
+        <figcaption>
+          <span class="fid">W2-03</span><b>会话中（一键断开，无挽留）</b> · 层①
+          体验红线 · P0　|　来源 v2 §1 E6 <b>C3</b>
+        </figcaption>
+        <div class="screen screen--win">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">远程桌面 · 正在被控制</span>
+          </div>
+          <div
+            class="pad"
+            style="
+              height: calc(100% - 28px);
+              display: flex;
+              flex-direction: column;
+              gap: 12px;
+            "
+          >
+            <div class="banner" style="border: 2px solid var(--ink)">
+              <span class="ico"></span>
+              <span
+                ><b>账号 138****6721（张三）正在控制本设备</b><br />
+                <span class="tiny muted"
+                  >已连接 06:12 · 画面有变化时会在此显示</span
+                ></span
+              >
+              <span class="grow"></span>
+              <span class="btn solid" style="min-height: 34px; padding: 0 22px"
+                >断开</span
+              >
+            </div>
+
+            <div class="hstack" style="gap: 10px">
+              <div class="box grow" style="padding: 10px">
+                <span class="label">你的屏幕正在被共享</span>
+                <div class="ph-img" style="height: 96px">屏幕缩略</div>
+              </div>
+              <div class="box" style="width: 250px; padding: 10px">
+                <span class="label">本机可控项</span>
+                <div class="item" style="border: 0; padding: 6px 0">
+                  <span>隐私屏（对方看到黑屏）</span><span class="grow"></span
+                  ><span class="tag on">开</span>
+                </div>
+                <div class="item" style="border: 0; padding: 6px 0">
+                  <span>允许对方传输文件</span><span class="grow"></span
+                  ><span class="tag on">开</span>
+                </div>
+                <div class="item" style="border: 0; padding: 6px 0">
+                  <span>允许对方操作键鼠</span><span class="grow"></span
+                  ><span class="tag on">开</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="grow"></div>
+            <div class="tiny muted">
+              点「断开」立即生效，不再询问。断开后对方无法看到或操作本设备。
+            </div>
+          </div>
+          <span class="pin" style="left: 600px; top: 52px">1</span>
+          <span class="pin" style="left: 24px; top: 400px">2</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 🔴
+            <b>「断开」必须点一次即断</b
+            >：不弹二次确认、不倒计时、不出现"确定要断开吗"（C3
+            体验红线）。被控端用户处于"我要马上关掉"的心理状态，任何挽留都是伤害。
+          </li>
+          <li>
+            <b>②</b>
+            明确写出「断开后立即生效」——让按钮的后果可预期，这比任何确认弹窗都有效。
+          </li>
+          <li>
+            本屏同样<b>不出现金额</b>。对方是否在消耗免费时长，是对方那一端的事（W1-03）。
+          </li>
+          <li>断开按钮必须是本屏<b>视觉权重最高</b>的元素。</li>
+        </ul>
+      </figure>
+
+      <!-- ============ W2-04 ============ -->
+      <figure class="frame" id="w2-04">
+        <figcaption>
+          <span class="fid">W2-04</span><b>仅查看时的中性提示（🔴 无金额）</b> ·
+          层① 红线执行体 · P0　|　来源 商业化 §13.2#4 · §13.4 红线②
+        </figcaption>
+        <div class="screen screen--win">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">远程桌面 · 正在被查看</span>
+          </div>
+          <div
+            class="pad"
+            style="
+              height: calc(100% - 28px);
+              display: flex;
+              flex-direction: column;
+              gap: 12px;
+            "
+          >
+            <div class="banner">
+              <span class="ico"></span>
+              <span
+                ><b>对方已暂停操作</b><br />
+                <span class="tiny muted"
+                  >画面可能仍在传输，但对方无法操作你的鼠标和键盘</span
+                ></span
+              >
+              <span class="grow"></span>
+              <span class="btn" style="min-height: 30px">断开</span>
+            </div>
+
+            <div class="hstack" style="gap: 10px">
+              <div class="box grow" style="padding: 10px">
+                <div class="ph-img" style="height: 120px">
+                  屏幕缩略（灰化 = 不可操作）
+                </div>
+              </div>
+              <div class="box" style="width: 250px; padding: 10px">
+                <span class="label">发生了什么</span>
+                <div class="tiny">
+                  对方那边的连接方式变为「仅查看」。<br />
+                  这可能由对方的网络或设置引起，<b>不影响你继续使用本设备</b>。
+                </div>
+              </div>
+            </div>
+
+            <div
+              class="stripe"
+              style="
+                height: 40px;
+                border: 1px solid var(--line2);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              "
+            >
+              <span class="tiny muted"
+                >⚠️ 此处严禁出现：余额不足 / 免费时长已用尽 / 开通会员可继续 /
+                升级提示</span
+              >
+            </div>
+            <div class="grow"></div>
+          </div>
+          <span class="pin" style="left: 24px; top: 52px">1</span>
+          <span class="pin" style="left: 24px; top: 322px">2</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 措辞必须<b>中性且不追问原因</b>：只说"对方已暂停操作"，<b
+              >不说"因为对方的免费时长用完了"</b
+            >
+            —— 那是对方的商业信息，暴露给被控端既越界又让被控端莫名其妙。
+          </li>
+          <li>
+            <b>②</b> 🔴 斜纹区是<b>禁放区标注</b>：被控端任何位置都不得出现金额
+            / 余额 / 充值 / 会员（红线②）。
+          </li>
+          <li>必须保留「断开」：用户不希望被"只看不控"地持续看着。</li>
+        </ul>
+      </figure>
+    </div>
+
+    <h2>3 · 设置</h2>
+
+    <div class="flow">
+      <!-- ============ W2-05 ============ -->
+      <figure class="frame" id="w2-05">
+        <figcaption>
+          <span class="fid">W2-05</span><b>资源档位与隐私设置</b> · 层① 性能红线
+          · P0　|　来源 v2 §1 被控端（空闲态近零损耗 + 资源档位）
+        </figcaption>
+        <div class="screen screen--panel">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">设置 · 性能与隐私</span>
+          </div>
+          <div class="pad stack" style="height: calc(100% - 28px)">
+            <div>
+              <span class="label">资源档位（空闲时的占用）</span>
+              <div class="stack tiny" style="border: 1px solid var(--line)">
+                <div class="item">
+                  <span style="width: 14px">○</span
+                  ><span
+                    ><b>节能</b><br /><span class="muted"
+                      >画质优先降低，CPU 占用最低</span
+                    ></span
+                  >
+                </div>
+                <div class="item sel">
+                  <span style="width: 14px">◉</span
+                  ><span
+                    ><b>均衡（默认）</b><br /><span class="muted"
+                      >清晰度与占用平衡</span
+                    ></span
+                  >
+                </div>
+                <div class="item">
+                  <span style="width: 14px">○</span
+                  ><span
+                    ><b>高性能</b><br /><span class="muted"
+                      >画质优先，占用也最高</span
+                    ></span
+                  >
+                </div>
+              </div>
+            </div>
+
+            <div class="item" style="border: 0">
+              <span>允许对方操作键鼠</span><span class="grow"></span
+              ><span class="tag on">开</span>
+            </div>
+            <div class="item" style="border: 0">
+              <span>允许文件传输</span><span class="grow"></span
+              ><span class="tag on">开</span>
+            </div>
+            <div class="item" style="border: 0">
+              <span>被查看时启用隐私屏</span><span class="grow"></span
+              ><span class="tag">关</span>
+            </div>
+            <div class="item" style="border: 0">
+              <span>断开后自动锁定屏幕</span><span class="grow"></span
+              ><span class="tag on">开</span>
+            </div>
+
+            <div class="box--fill box tiny" style="padding: 9px">
+              🔴 未被连接且无人操作时，占用应接近 0（空闲 1 分钟 CPU &lt;
+              1%、GPU = 0）。这不是"省电优化"，是发版阻塞项。
+            </div>
+            <div class="grow"></div>
+            <div class="hstack" style="justify-content: flex-end">
+              <span class="btn">取消</span><span class="btn solid">保存</span>
+            </div>
+          </div>
+          <span class="pin" style="left: 390px; top: 100px">1</span>
+          <span class="pin" style="left: 390px; top: 352px">2</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 三档都要有，"均衡"为默认 ——
+            不要一上来就用"高性能"（会把常驻被控端做成耗电大户，是卸载主因）。
+          </li>
+          <li>
+            <b>②</b> 🔴 空闲近零占用是<b>发版阻塞项 C2</b
+            >，写进设置页作为固定期望，防止被后续"优化"掉。
+          </li>
+          <li>本页<b>不含</b>任何计费相关开关（被控端不参与计费）。</li>
+        </ul>
+      </figure>
+
+      <!-- ============ W2-06 ============ -->
+      <figure class="frame" id="w2-06">
+        <figcaption>
+          <span class="fid">W2-06</span><b>设置总览</b> · 层③ 常规界面 ·
+          P0　|　来源 v2 §3
+        </figcaption>
+        <div class="screen screen--panel">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">设置</span>
+          </div>
+          <div
+            class="pad"
+            style="height: calc(100% - 28px); display: flex; gap: 12px"
+          >
+            <div class="side" style="width: 120px; padding: 8px">
+              <div class="item sel" style="border: 0; padding: 6px 8px">
+                通用
+              </div>
+              <div class="item" style="border: 0; padding: 6px 8px">
+                性能与隐私
+              </div>
+              <div class="item" style="border: 0; padding: 6px 8px">安全</div>
+              <div class="item" style="border: 0; padding: 6px 8px">网络</div>
+              <div class="item" style="border: 0; padding: 6px 8px">关于</div>
+            </div>
+            <div class="grow stack">
+              <div class="item" style="border: 0; padding: 6px 0">
+                <span>开机自动启动</span><span class="grow"></span
+                ><span class="tag on">开</span>
+              </div>
+              <div class="item" style="border: 0; padding: 6px 0">
+                <span>无人值守访问</span><span class="grow"></span
+                ><span class="tag on">开</span>
+              </div>
+              <div class="item" style="border: 0; padding: 6px 0">
+                <span>使用固定密码</span><span class="grow"></span
+                ><span class="tag">关</span>
+              </div>
+              <div class="item" style="border: 0; padding: 6px 0">
+                <span>被连接时提示音</span><span class="grow"></span
+                ><span class="tag on">开</span>
+              </div>
+              <div class="item" style="border: 0; padding: 6px 0">
+                <span>更新</span><span class="grow"></span
+                ><span class="tiny muted">已是最新</span>
+              </div>
+              <div class="item" style="border: 0; padding: 6px 0">
+                <span>启动时以管理员运行（UAC）</span><span class="grow"></span
+                ><span class="tag on">开</span>
+              </div>
+              <div class="grow"></div>
+              <div class="tiny muted">
+                「无人值守」与「固定密码」是安全敏感项：开启时必须给出明确的风险说明（不得默认开启固定密码）。
+              </div>
+            </div>
+          </div>
+          <span class="pin" style="left: 150px; top: 268px">1</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 安全敏感项（无人值守 / 固定密码 /
+            UAC）必须<b>就地说明风险</b>，不能只给开关。
+          </li>
+          <li>
+            「宽限期/自动断开时长」这类选项 P1 再补（P0 保持可选项目尽可能少）。
+          </li>
+        </ul>
+      </figure>
+    </div>
+
+    <p class="pager">
+      ← 上一页：<a href="w1-控制端-连接与额度.html">W1 · 控制端</a
+      >　·　下一页：<a href="w3-账号与设备管理.html">W3 · 账号与设备管理 →</a
+      >　·　返回 <a href="index.html">索引</a>
+    </p>
+  </body>
+</html>

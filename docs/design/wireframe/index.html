@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>低保真线框稿 · 索引 · 个人消费级远程桌面</title>
+    <link rel="stylesheet" href="wireframe.css" />
+  </head>
+  <body>
+    <nav class="topbar">
+      <a href="index.html" aria-current="page">索引</a>
+      <a href="w1-控制端-连接与额度.html">W1 控制端·连接与额度</a>
+      <a href="w2-被控端.html">W2 被控端</a>
+      <a href="w3-账号与设备管理.html">W3 账号与设备</a>
+      <a href="w4-计费与个人中心.html">W4 计费与个人中心</a>
+      <a href="w5-合规实名与运营台.html">W5 合规·实名·运营台</a>
+      <a href="w6-移动端手持.html">W6 移动端手持</a>
+    </nav>
+
+    <h1>低保真线框稿 · 索引</h1>
+    <p class="lede">
+      个人消费级远程桌面 · <b>低保真阶段交付物</b>（2026-09-14）<br />
+      本稿回答两个问题：<b>① 哪些地方需要 UI　② 每屏放什么、流程怎么走</b>。
+      <b>不</b>回答"好不好看"——颜色/字号/间距/动效属高保真阶段。
+    </p>
+
+    <div class="legend">
+      <b>看图约定：</b>　 灰条
+      <span
+        class="ph"
+        style="
+          display: inline-block;
+          width: 38px;
+          height: 8px;
+          vertical-align: middle;
+        "
+      ></span>
+      = 正文占位　·　 交叉框 = 图形/画面占位　·　 虚线框 = 区域分组　·
+      <span
+        class="pin"
+        style="position: static; display: inline-flex; vertical-align: middle"
+        >1</span
+      >
+      = 标注序号，对应每屏下方说明
+      <br />
+      <b>🔴 暗红标注</b> = 已拍板决策 / 合规硬项的落点，<b>不是 UI 颜色</b
+      >（线框本体一律灰阶）。 <br /><b>来源：</b
+      ><code>商业化与计费设计</code> §13 · <code>账号与管理系统设计</code> §4/§5
+      · <code>需求规划-v2-P0P3重构</code> §1 E6
+    </div>
+
+    <h2>1. 六份线框 · 总览</h2>
+
+    <table class="tbl" style="max-width: 1000px; background: #fff">
+      <thead>
+        <tr>
+          <th style="width: 78px">文件</th>
+          <th>覆盖内容</th>
+          <th style="width: 70px">帧数</th>
+          <th style="width: 150px">其中 🔴 红线执行体</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><a href="w1-控制端-连接与额度.html">W1</a></td>
+          <td>
+            <b>控制端 · 连接与额度</b><br /><span class="tiny muted"
+              >主界面 / 连接中 / 会话窗口 / 余量三态 / 降级链四态 / 仅查看遮罩 /
+              转直连引导页 / 显示设置 / 断连后</span
+            >
+          </td>
+          <td>
+            9<br /><span class="tiny muted">共 12 张图<br />（W1-05 拆 4 态）</span>
+          </td>
+          <td>6（含最关键的「转直连引导页」）</td>
+        </tr>
+        <tr>
+          <td><a href="w2-被控端.html">W2</a></td>
+          <td>
+            <b>被控端</b><br /><span class="tiny muted"
+              >主界面 / 首次被控确认+反诈 / 会话中·一键断开 / 仅查看中性提示 /
+              资源档位 / 设置总览</span
+            >
+          </td>
+          <td>6</td>
+          <td>5（反诈位、无金额、无挽留）</td>
+        </tr>
+        <tr>
+          <td><a href="w3-账号与设备管理.html">W3</a></td>
+          <td>
+            <b>账号与设备管理</b><br /><span class="tiny muted"
+              >登录注册 / 找回+恢复码 / 双重验证 / 设备三态 / 解绑两语义 /
+              注销</span
+            >
+          </td>
+          <td>6</td>
+          <td>4（注销 3 步内、解绑语义分离）</td>
+        </tr>
+        <tr>
+          <td><a href="w4-计费与个人中心.html">W4</a></td>
+          <td>
+            <b>计费与个人中心</b><br /><span class="tiny muted"
+              >购买页(非iOS) / 购买页(iOS对照) / 权益对比表 / 订阅状态 /
+              用量明细 / 账单发票退款 / 取消续费 / 续费提醒</span
+            >
+          </td>
+          <td>8</td>
+          <td>4（iOS 零引导、免费项标「免费」、取消续费、5日提醒）</td>
+        </tr>
+        <tr>
+          <td><a href="w5-合规实名与运营台.html">W5</a></td>
+          <td>
+            <b>合规 · 实名 · 运营操作台</b><br /><span class="tiny muted"
+              >隐私告知 / 实名入口三类触发 / 未实名降级 / 运营台3查 /
+              额度计量同源 / 3动作+权限审计</span
+            >
+          </td>
+          <td>6</td>
+          <td>5（隐私两件事、实名触发链路）</td>
+        </tr>
+        <tr>
+          <td><a href="w6-移动端手持.html">W6</a></td>
+          <td>
+            <b>移动端手持控制</b><br /><span class="tiny muted"
+              >移动端设备列表 / 手持会话(放大镜·双模指针·焦点跟随) / 纯观察模式
+              / PC→手机</span
+            >
+          </td>
+          <td>4</td>
+          <td>2（D10、焦点跟随）</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p class="lede" style="margin-top: 14px">
+      合计 <b>39 个界面条目 ⇒ 42 张线框图</b>（P0 31 / P1 8；多出的 3 张 =
+      W1-05「降级链」四态各出一张）· 另有
+      <b>5 项"明确不做"</b>的界面写在红线里（见 README §2.8）。
+    </p>
+
+    <h2>2. 帧清单（点击直达）</h2>
+
+    <h3>W1 · 控制端 · 连接与额度</h3>
+    <table class="tbl" style="max-width: 1000px; background: #fff">
+      <tbody>
+        <tr>
+          <td style="width: 70px">
+            <a href="w1-控制端-连接与额度.html#w1-01">W1-01</a>
+          </td>
+          <td>主界面（设备列表 + <b>常驻</b>连接模式指示器）</td>
+          <td style="width: 60px">②</td>
+          <td style="width: 60px">P0</td>
+        </tr>
+        <tr>
+          <td><a href="w1-控制端-连接与额度.html#w1-02">W1-02</a></td>
+          <td>连接中（先中继秒连 → 静默升级直连）</td>
+          <td>②</td>
+          <td>P0</td>
+        </tr>
+        <tr>
+          <td><a href="w1-控制端-连接与额度.html#w1-03">W1-03</a></td>
+          <td>会话窗口（窗口化 + 等比 + 黑边 + 工具栏 + 首连提示行）</td>
+          <td>①</td>
+          <td>P0</td>
+        </tr>
+        <tr>
+          <td><a href="w1-控制端-连接与额度.html#w1-04">W1-04</a></td>
+          <td>免费中继余量 · 三态（默认折叠 / 80% 出现 / 展开明细）</td>
+          <td>①</td>
+          <td>P0</td>
+        </tr>
+        <tr>
+          <td><a href="w1-控制端-连接与额度.html#w1-05">W1-05</a></td>
+          <td>
+            <b>降级链四态</b>（预警 / 转直连 / 🔴降码率明示 / 终止前告知）
+          </td>
+          <td>①</td>
+          <td>P0</td>
+        </tr>
+        <tr>
+          <td><a href="w1-控制端-连接与额度.html#w1-06">W1-06</a></td>
+          <td>「仅查看」遮罩（控制端）</td>
+          <td>①</td>
+          <td>P0</td>
+        </tr>
+        <tr>
+          <td><a href="w1-控制端-连接与额度.html#w1-07">W1-07</a></td>
+          <td><b>「转直连」引导页</b>（全文唯一被称"产品价值点"的一步）</td>
+          <td>②</td>
+          <td>P0</td>
+        </tr>
+        <tr>
+          <td><a href="w1-控制端-连接与额度.html#w1-08">W1-08</a></td>
+          <td>显示设置（适应窗口 / 1:1 / 拉伸）</td>
+          <td>①</td>
+          <td>P0</td>
+        </tr>
+        <tr>
+          <td><a href="w1-控制端-连接与额度.html#w1-09">W1-09</a></td>
+          <td>
+            断连后（中性说明；<span
+              class="notes"
+              style="display: inline; padding: 0; border: 0; background: none"
+              ><b>无促销弹窗</b></span
+            >）
+          </td>
+          <td>①</td>
+          <td>P0</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>W2 · 被控端</h3>
+    <table class="tbl" style="max-width: 1000px; background: #fff">
+      <tbody>
+        <tr>
+          <td style="width: 70px"><a href="w2-被控端.html#w2-01">W2-01</a></td>
+          <td>被控端主界面（本机 ID / 临时密码 / 状态）</td>
+          <td style="width: 60px">①</td>
+          <td style="width: 60px">P0</td>
+        </tr>
+        <tr>
+          <td><a href="w2-被控端.html#w2-02">W2-02</a></td>
+          <td>首次被控确认页（<b>含反诈风险提示位，不得折叠</b>）</td>
+          <td>①</td>
+          <td>P0</td>
+        </tr>
+        <tr>
+          <td><a href="w2-被控端.html#w2-03">W2-03</a></td>
+          <td>会话中 + <b>一键断开</b>（无挽留式二次确认）</td>
+          <td>①</td>
+          <td>P0</td>
+        </tr>
+        <tr>
+          <td><a href="w2-被控端.html#w2-04">W2-04</a></td>
+          <td>仅查看时的中性提示（<b>无金额 / 余额 / 充值</b>）</td>
+          <td>①</td>
+          <td>P0</td>
+        </tr>
+        <tr>
+          <td><a href="w2-被控端.html#w2-05">W2-05</a></td>
+          <td>资源档位（节能/均衡/高性能）+ 隐私屏</td>
+          <td>①</td>
+          <td>P0</td>
+        </tr>
+        <tr>
+          <td><a href="w2-被控端.html#w2-06">W2-06</a></td>
+          <td>设置总览（自启 / 无人值守 / 权限 / 更新）</td>
+          <td>③</td>
+          <td>P0</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>W3 · 账号与设备管理</h3>
+    <table class="tbl" style="max-width: 1000px; background: #fff">
+      <tbody>
+        <tr>
+          <td style="width: 70px">
+            <a href="w3-账号与设备管理.html#w3-01">W3-01</a>
+          </td>
+          <td>登录 / 注册（含生物识别快捷登录）</td>
+          <td style="width: 60px">③</td>
+          <td style="width: 60px">P0</td>
+        </tr>
+        <tr>
+          <td><a href="w3-账号与设备管理.html#w3-02">W3-02</a></td>
+          <td>找回密码 + <b>恢复码</b>（两种语义必须分开）</td>
+          <td>①</td>
+          <td>P0</td>
+        </tr>
+        <tr>
+          <td><a href="w3-账号与设备管理.html#w3-03">W3-03</a></td>
+          <td>双重验证（2FA）</td>
+          <td>①</td>
+          <td>P0</td>
+        </tr>
+        <tr>
+          <td><a href="w3-账号与设备管理.html#w3-04">W3-04</a></td>
+          <td>设备列表（<b>三态</b> + 踢下线 + 「最久未连接」排序）</td>
+          <td>①</td>
+          <td>P0</td>
+        </tr>
+        <tr>
+          <td><a href="w3-账号与设备管理.html#w3-05">W3-05</a></td>
+          <td>解绑两种语义（取消授权 ≠ 移除设备）</td>
+          <td>①</td>
+          <td>P0</td>
+        </tr>
+        <tr>
+          <td><a href="w3-账号与设备管理.html#w3-06">W3-06</a></td>
+          <td>一键解绑全部 + <b>注销（3 步内 + 30 天可撤销）</b></td>
+          <td>①</td>
+          <td>P0</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>W4 · 计费与个人中心</h3>
+    <table class="tbl" style="max-width: 1000px; background: #fff">
+      <tbody>
+        <tr>
+          <td style="width: 70px">
+            <a href="w4-计费与个人中心.html#w4-01">W4-01</a>
+          </td>
+          <td>购买页 · 最小版（非 iOS）</td>
+          <td style="width: 60px">③</td>
+          <td style="width: 60px">P0</td>
+        </tr>
+        <tr>
+          <td><a href="w4-计费与个人中心.html#w4-02">W4-02</a></td>
+          <td>购买页 · <b>iOS 版对照</b>（零站外支付引导）</td>
+          <td>①</td>
+          <td>P0</td>
+        </tr>
+        <tr>
+          <td><a href="w4-计费与个人中心.html#w4-03">W4-03</a></td>
+          <td>权益对比表（免费项 <b>显式标「免费」</b>；设备数并列两家）</td>
+          <td>③</td>
+          <td>P1</td>
+        </tr>
+        <tr>
+          <td><a href="w4-计费与个人中心.html#w4-04">W4-04</a></td>
+          <td>个人中心 · 订阅状态（iOS / 非 iOS 两套）</td>
+          <td>③</td>
+          <td>P1</td>
+        </tr>
+        <tr>
+          <td><a href="w4-计费与个人中心.html#w4-05">W4-05</a></td>
+          <td>用量明细页（反客诉主体）</td>
+          <td>③</td>
+          <td>P1</td>
+        </tr>
+        <tr>
+          <td><a href="w4-计费与个人中心.html#w4-06">W4-06</a></td>
+          <td>账单 / 发票 / 退款状态（含五条联动）</td>
+          <td>③</td>
+          <td>P1</td>
+        </tr>
+        <tr>
+          <td><a href="w4-计费与个人中心.html#w4-07">W4-07</a></td>
+          <td>取消续费路径（<b>不得比开通更难</b>）</td>
+          <td>①</td>
+          <td>P0</td>
+        </tr>
+        <tr>
+          <td><a href="w4-计费与个人中心.html#w4-08">W4-08</a></td>
+          <td>续费前 5 日提醒（合规硬项）</td>
+          <td>①</td>
+          <td>P0</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>W5 · 合规 · 实名 · 运营操作台</h3>
+    <table class="tbl" style="max-width: 1000px; background: #fff">
+      <tbody>
+        <tr>
+          <td style="width: 70px">
+            <a href="w5-合规实名与运营台.html#w5-01">W5-01</a>
+          </td>
+          <td>首次连接隐私告知（中继会转发 + 直连只报起止）</td>
+          <td style="width: 60px">①</td>
+          <td style="width: 60px">P0</td>
+        </tr>
+        <tr>
+          <td><a href="w5-合规实名与运营台.html#w5-02">W5-02</a></td>
+          <td>实名认证入口 + <b>三类触发事件</b></td>
+          <td>①</td>
+          <td>P0</td>
+        </tr>
+        <tr>
+          <td><a href="w5-合规实名与运营台.html#w5-03">W5-03</a></td>
+          <td>未实名降级路径（不是拦截，是降级）</td>
+          <td>①</td>
+          <td>P0</td>
+        </tr>
+        <tr>
+          <td><a href="w5-合规实名与运营台.html#w5-04">W5-04</a></td>
+          <td>运营台首页 · <b>3 查</b></td>
+          <td>③</td>
+          <td>P0</td>
+        </tr>
+        <tr>
+          <td><a href="w5-合规实名与运营台.html#w5-05">W5-05</a></td>
+          <td>查额度与计量明细（<b>与用户侧同源</b>）</td>
+          <td>①</td>
+          <td>P0</td>
+        </tr>
+        <tr>
+          <td><a href="w5-合规实名与运营台.html#w5-06">W5-06</a></td>
+          <td><b>3 动作</b> + 权限与审计</td>
+          <td>①</td>
+          <td>P0</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>W6 · 移动端手持控制</h3>
+    <table class="tbl" style="max-width: 1000px; background: #fff">
+      <tbody>
+        <tr>
+          <td style="width: 70px">
+            <a href="w6-移动端手持.html#w6-01">W6-01</a>
+          </td>
+          <td>移动端设备列表</td>
+          <td style="width: 60px">③</td>
+          <td style="width: 60px">P0</td>
+        </tr>
+        <tr>
+          <td><a href="w6-移动端手持.html#w6-02">W6-02</a></td>
+          <td>手持会话（放大镜 / 双模指针 / 焦点跟随 / 连接指示）</td>
+          <td>①</td>
+          <td>P0</td>
+        </tr>
+        <tr>
+          <td><a href="w6-移动端手持.html#w6-03">W6-03</a></td>
+          <td>纯观察模式</td>
+          <td>③</td>
+          <td>P0</td>
+        </tr>
+        <tr>
+          <td><a href="w6-移动端手持.html#w6-04">W6-04</a></td>
+          <td>PC→手机（帮父母排障）控制端</td>
+          <td>①</td>
+          <td>P0</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>3. 评审建议顺序</h2>
+    <p class="lede">
+      不要按屏评审，<b>按流程评审</b>（README §4 有 5 条流）：
+      <b>流 1 首次连接</b> → <b>流 2 降级四态</b> → <b>流 3 被控端授权</b> →
+      <b>流 4 退款</b> → <b>流 5 注销</b>。
+      <br />按流走，缺屏会自己暴露出来；按屏走，缺的流程永远看不出来。
+    </p>
+
+    <div class="legend">
+      <b>下一步可选：</b>
+      ① 先定 README §8 的 6 个问题 → ② 把 W1/W2 做成可点击 HTML 原型跑一遍流 1~3
+      → ③ 进入高保真（视觉）阶段。
+    </div>
+
+    <p class="pager">
+      返回 <a href="../..">项目文档</a>　·　UI 清单与红线自检表见
+      <a href="README.md">README.md</a>
+    </p>
+  </body>
+</html>

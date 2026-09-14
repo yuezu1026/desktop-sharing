@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>W6 · 移动端手持（低保真）</title>
+    <link rel="stylesheet" href="wireframe.css" />
+  </head>
+  <body>
+    <nav class="topbar">
+      <a href="index.html">索引</a>
+      <a href="w1-控制端-连接与额度.html">W1 控制端·连接与额度</a>
+      <a href="w2-被控端.html">W2 被控端</a>
+      <a href="w3-账号与设备管理.html">W3 账号与设备</a>
+      <a href="w4-计费与个人中心.html">W4 计费与个人中心</a>
+      <a href="w5-合规实名与运营台.html">W5 合规·实名·运营台</a>
+      <a href="w6-移动端手持.html" aria-current="page">W6 移动端手持</a>
+    </nav>
+
+    <h1>W6 · 移动端手持</h1>
+    <p class="lede">
+      手机做控制端有<b>两个不可回避的物理事实</b>：屏幕只有 6 寸、没有鼠标。
+      所以移动端不是"把桌面版缩小"，而是<b>必须重新定义交互</b>：
+      放大镜、双模指针、焦点跟随都不是加分项，是可用性的最低门槛。
+    </p>
+
+    <div class="legend">
+      移动端同样受全部红线约束：<b>被控端不出现金额</b>、<b
+        >iOS 无站外支付引导</b
+      >、 <b>免费中继时长只做渐进披露</b>。下面 4 帧中 3 帧为 P0。
+    </div>
+
+    <div class="flow">
+      <!-- ============ W6-01 ============ -->
+      <figure class="frame" id="w6-01">
+        <figcaption>
+          <span class="fid">W6-01</span><b>移动端设备列表</b> · 层③ 常规界面 ·
+          P0　|　来源 v2 §2.3.1 移动端
+        </figcaption>
+        <div class="screen screen--mob">
+          <div class="bar">
+            <b>我的设备</b><span class="tag">6 / 150</span>
+            <span class="grow"></span><span class="ico"></span>
+          </div>
+          <div class="pad" style="padding: 10px">
+            <div
+              class="input"
+              style="height: 26px; line-height: 26px; font-size: 11.5px"
+            >
+              搜索设备
+            </div>
+          </div>
+          <div class="stack" style="padding: 0 10px">
+            <div class="box--fill box" style="padding: 10px">
+              <div class="hstack">
+                <span class="ico"></span>
+                <span class="grow"
+                  ><b>我的台式机</b><br /><span class="tiny muted"
+                    >Windows · 在线</span
+                  ></span
+                >
+                <span class="btn solid sm">连接</span>
+              </div>
+            </div>
+            <div class="box" style="padding: 10px">
+              <div class="hstack">
+                <span class="ico"></span>
+                <span class="grow"
+                  ><b>爸爸的笔记本</b><br /><span class="tiny muted"
+                    >Windows · 3 天前</span
+                  ></span
+                >
+                <span class="btn sm">连接</span>
+              </div>
+            </div>
+            <div class="box" style="padding: 10px">
+              <div class="hstack">
+                <span class="ico"></span>
+                <span class="grow"
+                  ><b>办公室 Mac</b><br /><span class="tiny muted"
+                    >macOS · 2 周前</span
+                  ></span
+                >
+                <span class="btn sm">连接</span>
+              </div>
+            </div>
+            <div class="box" style="padding: 10px; border-style: dashed">
+              <div class="hstack">
+                <span class="ico"></span>
+                <span class="grow tiny"
+                  ><b>旧手机</b><br /><span class="muted">从未连接</span></span
+                >
+                <span class="tag">仅绑定</span>
+              </div>
+            </div>
+          </div>
+          <div class="grow"></div>
+          <div class="bar bar--bottom">
+            <span class="tiny"><b>设备</b></span
+            ><span class="tiny muted">最近</span> <span class="grow"></span
+            ><span class="tiny muted">设置</span>
+          </div>
+          <span class="pin" style="left: 296px; top: 52px">1</span>
+          <span class="pin" style="left: 296px; top: 222px">2</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b>
+            主操作<b>只有一个</b>：「连接」。移动端要克制，设备管理属次要动作（放到设备详情里）。
+          </li>
+          <li>
+            <b>②</b>
+            「从未连接」设备同样要在移动端暴露（发现异常绑定的最短路径）。
+          </li>
+          <li>
+            列表只显示在线 / 离线两种视觉差异 +
+            一个状态点，不用颜色以外的方式区分（色盲可用性）。
+          </li>
+        </ul>
+      </figure>
+
+      <!-- ============ W6-02 ============ -->
+      <figure class="frame" id="w6-02">
+        <figcaption>
+          <span class="fid">W6-02</span
+          ><b>手持会话（放大镜 / 双模指针 / 焦点跟随）</b> · 层① 体验红线 ·
+          P0　|　来源 v2 §1 显示渲染 D9 · 移动端适配
+        </figcaption>
+        <div class="screen screen--mob" style="height: 640px">
+          <div class="bar">
+            <span class="tag on">直连</span>
+            <span class="tiny muted">我的台式机</span>
+            <span class="grow"></span>
+            <span class="tiny" style="text-decoration: underline"
+              >免费时长</span
+            >
+          </div>
+          <div class="pad" style="padding: 8px">
+            <div class="ph-img" style="height: 280px; position: relative">
+              <span
+                class="tiny muted"
+                style="
+                  position: absolute;
+                  left: 50%;
+                  top: 46%;
+                  transform: translate(-50%, -50%);
+                "
+                >被控端画面（等比缩放，不变形）</span
+              >
+              <span class="pin" style="left: 150px; top: 120px">1</span>
+            </div>
+          </div>
+          <div class="pad" style="padding: 0 8px">
+            <div class="hstack tiny" style="justify-content: space-between">
+              <span class="tag on">触控板模式</span
+              ><span class="tag">直接触摸</span> <span class="grow"></span
+              ><span class="tag">焦点跟随</span><span class="tag">放大镜</span>
+            </div>
+          </div>
+          <div class="pad" style="padding: 8px">
+            <div class="box" style="padding: 9px">
+              <b class="tiny">当前手势</b>
+              <div class="tiny muted" style="margin-top: 4px">
+                单指移动光标 · 双指滚动 · 双指轻点 = 右键
+              </div>
+            </div>
+          </div>
+          <div class="grow"></div>
+          <div class="bar bar--bottom">
+            <span class="btn sm">键盘</span><span class="btn sm">快捷键</span>
+            <span class="grow"></span><span class="btn sm">全屏</span
+            ><span class="btn sm">断开</span>
+          </div>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 画面<b>等比缩放、不得变形</b>（D9
+            红线）。移动端屏幕比例与被控端不同，<b
+              >这里是最容易默认拉伸的地方</b
+            >
+            —— 必须强制等比 + 可缩放/平移，绝不能填满即拉伸。
+          </li>
+          <li>
+            <b>②</b>
+            <b>双模指针</b
+            >：触控板模式（相对移动，精度高）与直接触摸（点哪指哪，直观）必须可切换。只给一种必被骂。
+          </li>
+          <li>
+            <b>③</b> <b>放大镜 + 焦点跟随</b>：6 寸屏看 1080p
+            桌面，没有这两个就无法点中任何小目标（关窗口、点菜单）。
+          </li>
+          <li>
+            顶部指示器沿用
+            <a href="w1-控制端-连接与额度.html#w1-04">W1-04</a>
+            的组件规范：默认只显示链路类型，"免费时长"点开才展开明细。
+          </li>
+          <li>
+            🔴 移动端不得因为屏幕小而常驻显示余量数字 ——
+            小屏不是放松红线纪律的理由。
+          </li>
+        </ul>
+      </figure>
+
+      <!-- ============ W6-03 ============ -->
+      <figure class="frame" id="w6-03">
+        <figcaption>
+          <span class="fid">W6-03</span><b>纯观察模式（仅观看 · 不操作）</b> ·
+          层③ 常规界面 · P0　|　来源 商业化 §13.2#4（仅查看遮罩的移动端形态）
+        </figcaption>
+        <div class="screen screen--mob" style="height: 600px">
+          <div class="bar">
+            <span class="tag">仅观看</span>
+            <span class="tiny muted">爸爸的笔记本</span>
+            <span class="grow"></span><span class="ico"></span>
+          </div>
+          <div class="pad" style="padding: 8px">
+            <div class="ph-img" style="height: 300px">
+              <span
+                class="tiny muted"
+                style="display: block; text-align: center; padding-top: 140px"
+              >
+                画面正常播放（实时）<br />你的操作不会作用于对方
+              </span>
+            </div>
+          </div>
+          <div class="pad" style="padding: 0 8px 8px">
+            <div class="box--fill box" style="padding: 9px">
+              <span class="tiny"
+                ><b>当前为「仅观看」</b><br />
+                <span class="muted"
+                  >你可以看到对方的屏幕，但不会影响对方的操作。</span
+                ></span
+              >
+            </div>
+          </div>
+          <div class="grow"></div>
+          <div class="bar bar--bottom">
+            <span class="btn sm">缩放</span><span class="btn sm">旋转</span>
+            <span class="grow"></span><span class="btn solid sm">请求控制</span
+            ><span class="btn sm">断开</span>
+          </div>
+          <span class="pin" style="left: 24px; top: 300px">1</span>
+          <span class="pin" style="left: 296px; top: 566px">2</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b>
+            观察模式必须<b>先说"你在看什么"，再说"你不能做什么"</b>。移动端把画面放大到主位，是因为"看"本身就是这个模式的全部价值。
+          </li>
+          <li>
+            <b>②</b>
+            「请求控制」是向上转正路径：<b>由观看方发起、由被控方确认</b>，且被控方会看到明确提示（见
+            <a href="w2-被控端.html#w2-02">W2-02</a>）。
+          </li>
+          <li>
+            此时<b>不得</b>给"开通会员即可控制"之类文案 ——
+            这是权限问题，不是计费问题。
+          </li>
+        </ul>
+      </figure>
+
+      <!-- ============ W6-04 ============ -->
+      <figure class="frame" id="w6-04">
+        <figcaption>
+          <span class="fid">W6-04</span
+          ><b>PC → 手机（帮父母排障）· 桌面端控制手机</b> · 层① 已拍板决策执行体
+          · P0　|　来源 v2 §1 <b>D10</b> · 手机被控免费（主主张）
+        </figcaption>
+        <div class="screen screen--desk" style="height: 460px">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px"
+              >正在控制：爸爸的手机（Android）</span
+            >
+          </div>
+          <div
+            class="pad"
+            style="height: calc(100% - 28px); display: flex; gap: 16px"
+          >
+            <div
+              class="box"
+              style="width: 230px; padding: 10px; align-self: flex-start"
+            >
+              <div class="ph-img" style="height: 400px">
+                <span
+                  class="tiny muted"
+                  style="display: block; text-align: center; padding-top: 186px"
+                  >手机画面<br />（竖屏等比）</span
+                >
+              </div>
+            </div>
+
+            <div class="grow stack">
+              <div class="bar" style="margin: 0 -8px">
+                <span class="tag on">直连</span>
+                <span class="tiny muted">爸爸的手机 · 已授权</span>
+                <span class="grow"></span>
+                <span class="btn sm">手势</span
+                ><span class="btn sm">音量键</span
+                ><span class="btn sm">旋屏</span>
+                <span class="btn sm">断开</span>
+              </div>
+
+              <div class="box" style="padding: 11px">
+                <b>首次连接时的反诈与边界提示（控制端侧）</b>
+                <div class="tiny" style="margin-top: 7px; line-height: 1.9">
+                  ·
+                  你正在控制<b>对方</b>的手机，对方屏幕上会持续显示"正在被控制"<br />
+                  · 你的操作对方都能看到，<span class="no">不得</span
+                  >要求对方关闭屏幕提示<br />
+                  · 不要向陌生人开启此功能（对方也适用同样的提示）
+                </div>
+              </div>
+
+              <div class="box" style="padding: 11px">
+                <b>被控手机侧的资源提示</b>
+                <div class="tiny" style="margin-top: 7px; line-height: 1.9">
+                  · 长时间投屏会发热、耗电较快（被控端会给出提示）<br />
+                  · 息屏串流方案与"能否净充电"<b>仍待实测</b>（E6 <b>D3</b>）——
+                  未定案前不得对外承诺"可以边充边用"
+                </div>
+              </div>
+
+              <div class="box--fill box" style="padding: 11px">
+                <b>为什么这一屏最重要</b>
+                <div class="tiny" style="margin-top: 7px">
+                  竞品把"手机被控"卖
+                  ¥25/月，<b>我们免费</b>。这一屏就是这条主主张的操作现场 ——
+                  父母遇到问题（不会扫码、不会设置）时，子女在电脑上一分钟解决。
+                </div>
+              </div>
+
+              <div class="grow"></div>
+              <div class="tiny muted">
+                🔴 本屏<b>不得出现任何金额 / 余额 / 充值 / 会员提示</b
+                >（被控端红线的对应面：控制端也不得在这个现场卖货）。
+              </div>
+            </div>
+          </div>
+          <span class="pin" style="left: 24px; top: 56px">1</span>
+          <span class="pin" style="left: 290px; top: 186px">2</span>
+          <span class="pin" style="left: 290px; top: 330px">3</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b>
+            手机画面必须<b>按手机比例等比</b>展示，且允许独立放大；这是"能否真正帮父母操作"的关键。
+          </li>
+          <li>
+            <b>②</b>
+            反诈提示在<b>控制端也要出现</b>，不只是被控端：它同时约束施控方（"不得要求对方关闭提示"）。
+          </li>
+          <li>
+            <b>③</b> 待实测项（D3：息屏串流 /
+            净充电）<b>不得提前写进宣传</b>，否则又是一次"主张 > 证据"。
+          </li>
+          <li>
+            本屏是「手机被控免费」这条钩子的落地现场，也是整套设计里<b>最有画面感的一屏</b>（对父母的实际价值）。
+          </li>
+        </ul>
+      </figure>
+    </div>
+
+    <p class="pager">
+      ← 上一页：<a href="w5-合规实名与运营台.html">W5 · 合规 · 实名 · 运营台</a
+      >　·　返回 <a href="index.html">索引</a>
+    </p>
+  </body>
+</html>

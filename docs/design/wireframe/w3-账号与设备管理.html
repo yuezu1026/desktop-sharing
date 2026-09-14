@@ -1,0 +1,644 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>W3 · 账号与设备管理（低保真）</title>
+    <link rel="stylesheet" href="wireframe.css" />
+  </head>
+  <body>
+    <nav class="topbar">
+      <a href="index.html">索引</a>
+      <a href="w1-控制端-连接与额度.html">W1 控制端·连接与额度</a>
+      <a href="w2-被控端.html">W2 被控端</a>
+      <a href="w3-账号与设备管理.html" aria-current="page">W3 账号与设备</a>
+      <a href="w4-计费与个人中心.html">W4 计费与个人中心</a>
+      <a href="w5-合规实名与运营台.html">W5 合规·实名·运营台</a>
+      <a href="w6-移动端手持.html">W6 移动端手持</a>
+    </nav>
+
+    <h1>W3 · 账号与设备管理</h1>
+    <p class="lede">
+      账号部分最容易"看起来没问题但埋雷"：<b>找回密码 ≠ 恢复码</b>、<b
+        >取消授权 ≠ 移除设备</b
+      >、
+      <b>注销入口要 3 步内可达并给 30 天反悔期</b
+      >。这三件事写错任何一件，都会在真实客诉里放大成合规问题。 <br />本页 6
+      帧，其中 4 帧是合规 / 已拍板决策的执行体。
+    </p>
+
+    <div class="flow">
+      <!-- ============ W3-01 ============ -->
+      <figure class="frame" id="w3-01">
+        <figcaption>
+          <span class="fid">W3-01</span
+          ><b>登录 / 注册（含生物识别快捷登录）</b> · 层③ 常规界面 · P0　|　来源
+          v2 §1 认证 · §6.2
+        </figcaption>
+        <div class="screen screen--desk" style="height: 420px">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">远程桌面</span>
+          </div>
+          <div
+            class="pad"
+            style="
+              height: calc(100% - 28px);
+              display: flex;
+              gap: 24px;
+              justify-content: center;
+              align-items: flex-start;
+            "
+          >
+            <div class="box" style="width: 330px; padding: 16px">
+              <b>登录</b>
+              <div class="tiny muted" style="margin: 4px 0 12px">
+                更常见的那条路径放在左边、放在前面。
+              </div>
+              <span class="label">手机号 / 邮箱</span>
+              <div class="input" style="margin-bottom: 10px">138****6721</div>
+              <span class="label">密码</span>
+              <div class="input" style="margin-bottom: 10px">••••••••</div>
+              <span class="btn solid block">登录</span>
+              <div
+                class="hstack"
+                style="margin-top: 10px; justify-content: space-between"
+              >
+                <span class="tiny" style="text-decoration: underline"
+                  >验证码登录</span
+                >
+                <span class="tiny" style="text-decoration: underline"
+                  >忘记密码</span
+                >
+              </div>
+              <div
+                style="height: 1px; background: var(--line2); margin: 14px 0"
+              ></div>
+              <div class="box--fill box" style="padding: 9px">
+                <div class="hstack">
+                  <span class="ico"></span>
+                  <span class="tiny"
+                    ><b>用本机生物识别直接进</b><br />
+                    <span class="muted"
+                      >已绑定的设备免输密码 · 指纹 / 面容</span
+                    ></span
+                  >
+                  <span class="grow"></span><span class="btn sm">进入</span>
+                </div>
+              </div>
+              <div
+                class="tiny muted"
+                style="margin-top: 12px; text-align: center"
+              >
+                没有账号？<span style="text-decoration: underline">注册</span>
+              </div>
+            </div>
+
+            <div class="box" style="width: 330px; padding: 16px">
+              <b>注册</b>
+              <div class="tiny muted" style="margin: 4px 0 12px">
+                手机号 + 验证码即可，不要求实名。
+              </div>
+              <span class="label">手机号</span>
+              <div class="input" style="margin-bottom: 10px">请输入手机号</div>
+              <span class="label">短信验证码</span>
+              <div class="hstack" style="margin-bottom: 10px">
+                <span class="input grow">6 位数字</span
+                ><span class="btn">获取验证码</span>
+              </div>
+              <span class="label">设置密码</span>
+              <div class="input" style="margin-bottom: 10px">至少 8 位</div>
+              <div class="hstack" style="margin-bottom: 10px">
+                <span style="width: 14px">☐</span
+                ><span class="tiny"
+                  >我已阅读并同意《用户协议》《隐私政策》</span
+                >
+              </div>
+              <span class="btn solid block">注册</span>
+
+              <div class="box--fill box" style="padding: 9px; margin-top: 12px">
+                <span class="tiny"
+                  ><b>关于实名：注册不需要实名。</b><br />
+                  只有在使用中继、跨账号连接、或触发风控时，才会提示你完成实名。</span
+                >
+              </div>
+            </div>
+          </div>
+          <span class="pin" style="left: 204px; top: 288px">1</span>
+          <span class="pin" style="left: 436px; top: 288px">2</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 生物识别是<b>快捷登录</b>而不是"唯一的登录方式"：必须有密码
+            / 验证码的常规路径兜底（换机、重装后不能把人锁在门外）。
+          </li>
+          <li>
+            <b>②</b> 🔴 <b>注册页必须明说"注册不需要实名"</b>（D17
+            延迟实名）。否则用户看到"实名"两个字就会流失 ——
+            这是把已拍板的政策真正执行到界面上的地方。
+          </li>
+          <li>
+            注册页不放"立即购买/试用"任何商业化元素：P0
+            阶段新用户的第一次接触只谈可用性。
+          </li>
+        </ul>
+      </figure>
+
+      <!-- ============ W3-02 ============ -->
+      <figure class="frame" id="w3-02">
+        <figcaption>
+          <span class="fid">W3-02</span
+          ><b>找回密码 + 恢复码（🔴 两种语义必须分开）</b> · 层① 红线执行体 ·
+          P0　|　来源 账号设计 §2 · v2 §6.2
+        </figcaption>
+        <div class="screen screen--desk" style="height: 420px">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">账号恢复</span>
+          </div>
+          <div
+            class="pad"
+            style="height: calc(100% - 28px); display: flex; gap: 24px"
+          >
+            <div class="box" style="width: 330px; padding: 16px">
+              <b>① 重置密码</b>
+              <div class="tiny muted" style="margin: 6px 0 12px">
+                手机号还能用的时候走这条路。改完后账号还在，设备绑定还在。
+              </div>
+              <span class="label">手机号</span>
+              <div class="input" style="margin-bottom: 10px">138****6721</div>
+              <span class="label">短信验证码</span>
+              <div class="hstack" style="margin-bottom: 10px">
+                <span class="input grow">6 位数字</span
+                ><span class="btn">获取</span>
+              </div>
+              <span class="label">新密码</span>
+              <div class="input" style="margin-bottom: 12px">至少 8 位</div>
+              <span class="btn solid block">重置密码</span>
+            </div>
+
+            <div class="box" style="width: 330px; padding: 16px">
+              <b>② 用恢复码登录（换号 / 收不到短信）</b>
+              <div class="tiny muted" style="margin: 6px 0 12px">
+                手机号已经不用了走这条路。<b
+                  >这是自助找回账号的兜底，不是"第二个密码"。</b
+                >
+              </div>
+              <span class="label">账号</span>
+              <div class="input" style="margin-bottom: 10px">138****6721</div>
+              <span class="label">恢复码</span>
+              <div
+                class="input"
+                style="margin-bottom: 6px; font-family: Consolas, monospace"
+              >
+                XXXX-XXXX-XXXX-XXXX
+              </div>
+              <div class="tiny muted" style="margin-bottom: 12px">
+                区分大小写，请原样输入
+              </div>
+              <span class="btn solid block">验证恢复码</span>
+              <div
+                style="height: 1px; background: var(--line2); margin: 14px 0"
+              ></div>
+              <div class="hstack">
+                <span class="tiny"><b>查看 / 重新生成我的恢复码</b></span>
+                <span class="grow"></span><span class="btn sm">打开</span>
+              </div>
+              <div class="tiny muted" style="margin-top: 8px">
+                打开后<b>只显示一次</b>，需当场抄下或保存；重新生成会使旧恢复码立即失效。
+              </div>
+            </div>
+          </div>
+          <span class="pin" style="left: 24px; top: 56px">1</span>
+          <span class="pin" style="left: 376px; top: 56px">2</span>
+          <span class="pin" style="left: 376px; top: 328px">3</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 🔴
+            <b>两种语义必须分开呈现</b
+            >：「重置密码」与「用恢复码登录」不是同一件事，也不是同一种失败场景。合成一个"找回账号"入口，会让换号用户永远找不到路。
+          </li>
+          <li>
+            <b>②</b>
+            恢复码页面必须<b>说清它是什么</b>（换号时的兜底），否则用户不会保存它，等真的需要时就来不及了。
+          </li>
+          <li>
+            <b>③</b> 恢复码<b>只显示一次</b>，且必须当场让用户确认已保存（复制 /
+            下载 / 打印三选一），不可"下次再看"。
+          </li>
+        </ul>
+      </figure>
+
+      <!-- ============ W3-03 ============ -->
+      <figure class="frame" id="w3-03">
+        <figcaption>
+          <span class="fid">W3-03</span><b>双重验证（2FA）</b> · 层① 安全硬项 ·
+          P0　|　来源 v2 §1 认证（生物识别 + 双重验证）
+        </figcaption>
+        <div class="screen screen--panel">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">账号与安全 · 双重验证</span>
+          </div>
+          <div class="pad stack" style="height: calc(100% - 28px)">
+            <div class="item" style="border: 0">
+              <span
+                ><b>双重验证</b><br /><span class="tiny muted"
+                  >新设备登录时需额外输入一次动态码</span
+                ></span
+              >
+              <span class="grow"></span><span class="tag on">已开启</span>
+            </div>
+
+            <div>
+              <span class="label">验证方式</span>
+              <div class="stack tiny" style="border: 1px solid var(--line)">
+                <div class="item sel">
+                  <span style="width: 14px">◉</span
+                  ><span>身份验证器 App（推荐）</span>
+                </div>
+                <div class="item">
+                  <span style="width: 14px">○</span><span>短信验证码</span>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <span class="label">输入 6 位动态码</span>
+              <div class="hstack">
+                <span class="input grow">＿ ＿ ＿ ＿ ＿ ＿</span
+                ><span class="btn">验证</span>
+              </div>
+            </div>
+
+            <div class="box box--fill" style="padding: 10px">
+              <b>备份码</b>
+              <div class="tiny muted" style="margin: 5px 0 8px">
+                手机丢失时用它登录。共 10 个，每个只能用一次。
+              </div>
+              <div class="hstack">
+                <span class="btn sm">下载备份码</span
+                ><span class="btn sm">重新生成</span>
+              </div>
+            </div>
+
+            <div class="grow"></div>
+            <div class="hstack">
+              <span class="btn">关闭双重验证</span><span class="grow"></span
+              ><span class="btn solid">保存</span>
+            </div>
+          </div>
+          <span class="pin" style="left: 390px; top: 100px">1</span>
+          <span class="pin" style="left: 390px; top: 284px">2</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 「身份验证器 App」优先于短信 —— 短信可被 SIM
+            卡劫持，而我们做的是<b>远程控制</b>，账号被夺等于电脑被夺。
+          </li>
+          <li>
+            <b>②</b> 备份码必须存在且醒目：2FA
+            最常见的客诉是"手机丢了，我自己也进不去"。
+          </li>
+          <li>关闭 2FA 需二次验证（本稿未画，开发时按同页内联确认处理）。</li>
+        </ul>
+      </figure>
+
+      <!-- ============ W3-04 ============ -->
+      <figure class="frame" id="w3-04">
+        <figcaption>
+          <span class="fid">W3-04</span><b>设备列表（三态 + 踢下线）</b> · 层①
+          已拍板决策执行体 · P0　|　来源 账号设计 §2.3 / §2.4 · D12-1
+        </figcaption>
+        <div class="screen screen--desk">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">设置 · 我的设备</span>
+          </div>
+          <div class="bar">
+            <b>我的设备</b>
+            <span class="tag">6 / 150</span>
+            <span class="grow"></span>
+            <span class="input" style="width: 120px">搜索</span>
+            <span class="hstack tiny" style="gap: 4px">
+              <span class="tag on">按最久未连接排序</span
+              ><span class="tag">按类型</span>
+            </span>
+          </div>
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th style="width: 210px">设备</th>
+                <th style="width: 130px">状态</th>
+                <th>最后连接</th>
+                <th style="width: 120px">授权</th>
+                <th style="width: 180px">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <div class="hstack">
+                    <span class="ico"></span>我的台式机 · Windows
+                  </div>
+                </td>
+                <td><span class="tag on">● 在线</span></td>
+                <td class="muted">正在被连接</td>
+                <td class="muted">已授权</td>
+                <td>
+                  <span class="btn sm">踢下线</span>
+                  <span class="btn sm">移除</span>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="hstack">
+                    <span class="ico"></span>爸爸的笔记本 · Windows
+                  </div>
+                </td>
+                <td><span class="tag">离线</span></td>
+                <td class="muted">3 天前</td>
+                <td class="muted">已授权</td>
+                <td><span class="btn sm">移除</span></td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="hstack">
+                    <span class="ico"></span>小米 14 · Android
+                  </div>
+                </td>
+                <td><span class="tag">离线</span></td>
+                <td class="muted">2 个月前</td>
+                <td class="muted">已授权</td>
+                <td><span class="btn sm">移除</span></td>
+              </tr>
+              <tr style="background: #fafafa">
+                <td>
+                  <div class="hstack">
+                    <span class="ico"></span>旧手机 · Android
+                  </div>
+                </td>
+                <td><span class="tag">从未连接</span></td>
+                <td class="muted">—</td>
+                <td class="muted">仅绑定</td>
+                <td><span class="btn sm">移除</span></td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="bar bar--bottom">
+            <span class="tiny muted"
+              >「从未连接」=
+              只建立了绑定关系、从未真正连上过；这类设备最容易是被他人误绑，请定期清理。</span
+            >
+            <span class="grow"></span>
+            <span class="btn sm">一键解绑全部</span>
+          </div>
+          <span class="pin" style="left: 250px; top: 96px">1</span>
+          <span class="pin" style="left: 480px; top: 366px">2</span>
+          <span class="pin" style="left: 24px; top: 120px">3</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 🔴 <b>三态必须分开</b>：在线 / 离线（曾连过） /
+            <b>从未连接</b>。第三态是最有价值的一态 ——
+            它是发现"账号被别人绑了设备"的唯一窗口。
+          </li>
+          <li>
+            <b>②</b> 「一键解绑全部」放在列表底部、单独一行，走 W3-06
+            的确认流程。
+          </li>
+          <li>
+            <b>③</b>
+            默认按「最久未连接」排序：让异常设备自己浮到最上面，而不是让用户自己找。
+          </li>
+          <li>
+            「踢下线」只对在线设备出现；<b>踢下线 ≠ 移除</b
+            >（前者断开当前会话，后者解除绑定关系）—— 两者文案必须可区分。
+          </li>
+        </ul>
+      </figure>
+
+      <!-- ============ W3-05 ============ -->
+      <figure class="frame" id="w3-05">
+        <figcaption>
+          <span class="fid">W3-05</span
+          ><b>解绑两种语义（取消授权 ≠ 移除设备）</b> · 层① 红线执行体 ·
+          P0　|　来源 账号设计 §7 · D12「两种语义必须分开」
+        </figcaption>
+        <div class="screen screen--desk" style="height: 440px">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">设备 · 爸爸的笔记本</span>
+          </div>
+          <div
+            class="pad"
+            style="height: calc(100% - 28px); display: flex; gap: 16px"
+          >
+            <div class="box" style="flex: 1; padding: 14px">
+              <b>取消授权</b>
+              <div class="tiny muted" style="margin: 6px 0 10px">
+                让<b>对方不能再连接这台设备</b>，但这台设备仍留在对方的账号里、可再次授权。
+              </div>
+              <div class="tiny">
+                <div class="item" style="border: 0; padding: 5px 0">
+                  · 立即断开正在进行的连接
+                </div>
+                <div class="item" style="border: 0; padding: 5px 0">
+                  · 对方设备列表里仍能看到它
+                </div>
+                <div class="item" style="border: 0; padding: 5px 0">
+                  · 对方可以再次发起授权请求
+                </div>
+              </div>
+              <div
+                style="height: 1px; background: var(--line2); margin: 12px 0"
+              ></div>
+              <span class="label">确认文案（开发按此实现）</span>
+              <div
+                class="tiny"
+                style="
+                  border: 1px solid var(--line);
+                  padding: 9px;
+                  background: #fafafa;
+                "
+              >
+                「将取消对方连接本设备的权限。本设备仍保留在对方列表中，可再次授权。」
+              </div>
+              <div style="margin-top: 12px">
+                <span class="btn">取消授权</span>
+              </div>
+            </div>
+
+            <div class="box" style="flex: 1; padding: 14px">
+              <b>移除设备</b>
+              <div class="tiny muted" style="margin: 6px 0 10px">
+                把这台设备<b>从你的账号里删掉</b>，绑定关系解除，重新添加需要重新走一次绑定。
+              </div>
+              <div class="tiny">
+                <div class="item" style="border: 0; padding: 5px 0">
+                  · 立即断开正在进行的连接
+                </div>
+                <div class="item" style="border: 0; padding: 5px 0">
+                  · 该设备从列表消失
+                </div>
+                <div class="item" style="border: 0; padding: 5px 0">
+                  · 需重新扫码 / 输密码才能再绑定
+                </div>
+              </div>
+              <div
+                style="height: 1px; background: var(--line2); margin: 12px 0"
+              ></div>
+              <span class="label">确认文案（开发按此实现）</span>
+              <div
+                class="tiny"
+                style="
+                  border: 1px solid var(--line);
+                  padding: 9px;
+                  background: #fafafa;
+                "
+              >
+                「将从账号中移除「爸爸的笔记本」。需要再次连接时，请重新添加设备。」
+              </div>
+              <div style="margin-top: 12px">
+                <span class="btn solid">移除设备</span>
+              </div>
+            </div>
+          </div>
+          <span class="pin" style="left: 24px; top: 52px">1</span>
+          <span class="pin" style="left: 440px; top: 52px">2</span>
+          <span class="pin" style="left: 24px; top: 320px">3</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b>
+            两个动作<b>不得放进同一个"解除绑定"菜单项</b>：它们后果不同（可恢复
+            vs 需重新绑定），用户分不清就会误操作。
+          </li>
+          <li>
+            <b>②</b> 两个按钮<b>并列、同一屏</b>，不隐藏任一条路径 ——
+            把"移除"藏起来只会让用户改用"取消授权"（未达目的，还会再来一次）。
+          </li>
+          <li>
+            <b>③</b> 确认文案必须<b>写出"之后会怎样"</b>，而不是"确定要移除吗"。
+          </li>
+          <li>
+            本屏同时是<a href="w2-被控端.html#w2-01">W2-01</a
+            >「允许被连接」开关的账号侧对应物，两处语义必须一致。
+          </li>
+        </ul>
+      </figure>
+
+      <!-- ============ W3-06 ============ -->
+      <figure class="frame" id="w3-06">
+        <figcaption>
+          <span class="fid">W3-06</span
+          ><b>一键解绑全部 + 账号注销（3 步内 + 30 天可撤销）</b> · 层① 合规硬项
+          · P0　|　来源 v2 §1 E6 <b>A3</b>
+        </figcaption>
+        <div class="screen screen--desk" style="height: 460px">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">账号与安全</span>
+          </div>
+          <div class="bar" style="background: #fafafa">
+            <span class="tiny"
+              >路径演示：我的 → 设置 → 账号与安全 → 注销账号　=　<b>3 步可达</b
+              >（A3 验收标准）</span
+            >
+          </div>
+
+          <div
+            class="pad"
+            style="height: calc(100% - 28px - 34px); display: flex; gap: 16px"
+          >
+            <div class="box" style="width: 380px; padding: 13px">
+              <b>注销前你要知道</b>
+              <div class="tiny" style="margin-top: 8px">
+                <div class="item" style="border: 0; padding: 5px 0">
+                  ① 提交后进入 <b>30 天冷静期</b>，期间可随时撤销
+                </div>
+                <div class="item" style="border: 0; padding: 5px 0">
+                  ② 冷静期内你仍可正常登录使用
+                </div>
+                <div class="item" style="border: 0; padding: 5px 0">
+                  ③ 期满后：身份数据被删除，计量与审计流水转为匿名保留
+                </div>
+                <div class="item" style="border: 0; padding: 5px 0">
+                  ④ 未到期的订阅与未使用的额度<b>不会自动退款</b>，请先处理
+                </div>
+                <div class="item" style="border: 0; padding: 5px 0">
+                  ⑤ 全部设备绑定将一并解除（含 6 台设备）
+                </div>
+              </div>
+              <div class="hstack" style="margin-top: 14px">
+                <span class="btn">再想想</span><span class="grow"></span
+                ><span class="btn solid">确定，提交注销</span>
+              </div>
+              <div class="tiny muted" style="margin-top: 10px">
+                ⚠️ 不得设置"输入留言才能注销"之类的挽留阻碍。
+              </div>
+            </div>
+
+            <div class="box" style="flex: 1; padding: 13px">
+              <b>注销中（冷静期内状态页）</b>
+              <div class="box--fill box" style="padding: 11px; margin-top: 9px">
+                <div class="hstack">
+                  <span class="tag on">注销中</span> <span class="grow"></span
+                  ><span class="tiny muted">剩余 27 天</span>
+                </div>
+                <div class="ph w85" style="margin-top: 8px"></div>
+                <div class="tiny muted" style="margin-top: 6px">
+                  计划删除日期：2026-10-11（到期自动执行，无需你操作）
+                </div>
+              </div>
+              <div class="hstack" style="margin-top: 12px">
+                <span class="btn solid">撤销注销</span
+                ><span class="btn">导出我的数据</span>
+              </div>
+              <div class="tiny muted" style="margin-top: 10px">
+                此状态页需在<b>登录后的首屏</b>可见（不能藏在设置里），否则用户会以为账号已经没了。
+              </div>
+            </div>
+          </div>
+          <span class="pin" style="left: 24px; top: 100px">1</span>
+          <span class="pin" style="left: 456px; top: 214px">2</span>
+          <span class="pin" style="left: 24px; top: 56px">3</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b>
+            注销前置条件必须<b>逐条说清</b>：尤其"订阅不会自动退款"这一条 ——
+            不说清就是后续客诉的直接来源。
+          </li>
+          <li>
+            <b>②</b> 冷静期必须有<b>撤销入口</b>，并且登录后首屏可见。30
+            天冷静期的价值全部体现在这个按钮上。
+          </li>
+          <li>
+            <b>③</b> 🔴 入口路径固定为 3 步内（A3 验收项）；<span class="no"
+              >不得</span
+            >用客服介入、留言、人工审核作为注销前置。
+          </li>
+          <li>
+            「一键解绑全部」的确认页复用本屏左侧结构（列出将解除的 N 台设备 +
+            影响说明），不另出稿。
+          </li>
+        </ul>
+      </figure>
+    </div>
+
+    <p class="pager">
+      ← 上一页：<a href="w2-被控端.html">W2 · 被控端</a>　·　下一页：<a
+        href="w4-计费与个人中心.html"
+        >W4 · 计费与个人中心 →</a
+      >　·　返回 <a href="index.html">索引</a>
+    </p>
+  </body>
+</html>

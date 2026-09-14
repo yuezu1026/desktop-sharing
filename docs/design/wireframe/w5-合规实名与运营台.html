@@ -1,0 +1,731 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>W5 · 合规 · 实名 · 运营台（低保真）</title>
+    <link rel="stylesheet" href="wireframe.css" />
+  </head>
+  <body>
+    <nav class="topbar">
+      <a href="index.html">索引</a>
+      <a href="w1-控制端-连接与额度.html">W1 控制端·连接与额度</a>
+      <a href="w2-被控端.html">W2 被控端</a>
+      <a href="w3-账号与设备管理.html">W3 账号与设备</a>
+      <a href="w4-计费与个人中心.html">W4 计费与个人中心</a>
+      <a href="w5-合规实名与运营台.html" aria-current="page"
+        >W5 合规·实名·运营台</a
+      >
+      <a href="w6-移动端手持.html">W6 移动端手持</a>
+    </nav>
+
+    <h1>W5 · 合规 · 实名 · 运营台</h1>
+    <p class="lede">
+      这一页里<b>没有一个界面是"为了好用"</b> —— 全部是发版阻塞项（E6 A 组 / B
+      组）与已拍板决策的执行体。
+      它们看起来最不起眼，但<b>缺任何一个，都不能发版</b>。
+    </p>
+
+    <div class="legend">
+      🔴 <b>A1 硬约束：全站「端到端加密」字样必须清零。</b>
+      本页所有涉及加密的文案只允许写「全程加密传输（TLS）」之类<b>可被技术验证</b>的表述
+      —— 写"端到端"是虚假宣传。
+    </div>
+
+    <h2>1 · 合规告知与实名</h2>
+
+    <div class="flow">
+      <!-- ============ W5-01 ============ -->
+      <figure class="frame" id="w5-01">
+        <figcaption>
+          <span class="fid">W5-01</span
+          ><b>首次连接的隐私告知（中继会转发 / 直连只上报起止）</b> · 层①
+          合规硬项 · P0　|　来源 E6 <b>A2</b>
+        </figcaption>
+        <div class="screen screen--desk" style="height: 420px">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">隐私说明（首次连接时出现一次）</span>
+          </div>
+          <div
+            class="pad"
+            style="height: calc(100% - 28px); display: flex; gap: 16px"
+          >
+            <div class="box grow" style="padding: 14px">
+              <b>连接前，有两件事需要你知道</b>
+
+              <div
+                class="box--fill box"
+                style="padding: 11px; margin-top: 11px"
+              >
+                <b>① 走中继时，画面数据会经过我们的服务器转发</b>
+                <div class="tiny" style="margin-top: 6px; line-height: 1.8">
+                  直连不可用时，连接会通过我们的中继服务器转发。转发<b>全程加密传输</b>，
+                  但我们<b>可以在转发环节看到流量大小</b>（用于计量与限流），因此中继连接<b>不属于端到端加密</b>。<br />
+                  ⚠️ 若你需要完全端到端的场景，请优先使用直连（见 W1-07）。
+                </div>
+              </div>
+
+              <div class="box--fill box" style="padding: 11px; margin-top: 9px">
+                <b>② 走直连时，我们只记录会话开始与结束</b>
+                <div class="tiny" style="margin-top: 6px; line-height: 1.8">
+                  直连时数据点对点传输、不经过我们。我们只记录<b>会话起止时间</b>，
+                  <b>不记录流量大小</b
+                  >，<b>也不据此计费</b>（直连不消耗中继时长）。
+                </div>
+              </div>
+
+              <div class="hstack" style="margin-top: 14px">
+                <span class="btn solid">我知道了</span>
+                <span class="tiny muted" style="margin-left: 10px"
+                  >完整内容见《隐私政策》第 x 节</span
+                >
+              </div>
+              <div class="hstack" style="margin-top: 10px">
+                <span style="width: 14px">☐</span
+                ><span class="tiny muted"
+                  >不再提示（仍可随时在设置中查看）</span
+                >
+              </div>
+            </div>
+
+            <div style="width: 250px" class="stack">
+              <div class="box" style="padding: 11px; border-color: var(--anno)">
+                <b style="color: var(--anno)">🔴 文案红线</b>
+                <div class="tiny" style="margin-top: 7px; line-height: 1.9">
+                  <span class="no">不得</span>写「端到端加密」<br />
+                  <span class="no">不得</span>写「我们看不到任何数据」<br />
+                  <span class="no">不得</span>用"军工级""银行级"等无法验证的表述
+                </div>
+              </div>
+              <div class="box tiny" style="padding: 10px">
+                允许写：全程加密传输（TLS）/ 中继会在服务端转发 /
+                直连时不经过服务器
+              </div>
+              <div class="box tiny" style="padding: 10px; border-style: dashed">
+                出现时机：<b>首次连接前</b>一次，不在每次连接时弹（每次弹=用户会条件反射点掉）。
+              </div>
+            </div>
+          </div>
+          <span class="pin" style="left: 24px; top: 56px">1</span>
+          <span class="pin" style="left: 24px; top: 214px">2</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 🔴
+            这段文字的价值在于<b>它是真的</b>：中继确实会转发、直连确实不计量。写成这样，用户反而更信"直连不消耗时长"这个卖点。
+          </li>
+          <li>
+            <b>②</b> 直连"只记录起止时间、不记录流量"必须写明 ——
+            这既是隐私承诺，也是"为什么直连没法计费"的逻辑闭环。
+          </li>
+          <li>
+            本屏同时是 A1 的落点：<b
+              >连同全部营销页、商店描述、官网一起，"端到端加密"必须清零。</b
+            >
+          </li>
+        </ul>
+      </figure>
+
+      <!-- ============ W5-02 ============ -->
+      <figure class="frame" id="w5-02">
+        <figcaption>
+          <span class="fid">W5-02</span
+          ><b>实名认证（延迟实名 · 三类触发事件）</b> · 层① 合规硬项 ·
+          P0　|　来源 E6 <b>A6</b> · <b>D17</b> · D12-3
+        </figcaption>
+        <div class="screen screen--desk" style="height: 460px">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">实名认证</span>
+          </div>
+          <div
+            class="pad"
+            style="height: calc(100% - 28px); display: flex; gap: 16px"
+          >
+            <div class="box" style="width: 340px; padding: 13px">
+              <b>为什么要现在实名？</b>
+              <div class="tiny muted" style="margin: 6px 0 10px">
+                触发原因（三选一，界面须显示<b>本次的具体原因</b>，不是笼统的"为了安全"）：
+              </div>
+              <div class="tiny" style="border: 1px solid var(--line)">
+                <div class="item" style="padding: 7px 9px">
+                  <b>① 本次操作触发了风控</b>
+                </div>
+                <div class="item" style="padding: 7px 9px; opacity: 0.55">
+                  ② 使用中继时长额度
+                </div>
+                <div class="item" style="padding: 7px 9px; opacity: 0.55">
+                  ③ 进行跨账号连接
+                </div>
+              </div>
+              <div
+                style="height: 1px; background: var(--line2); margin: 13px 0"
+              ></div>
+              <span class="label">真实姓名</span>
+              <div class="input" style="margin-bottom: 10px">
+                请输入身份证上的姓名
+              </div>
+              <span class="label">身份证号</span>
+              <div class="input" style="margin-bottom: 10px">
+                请输入 18 位身份证号
+              </div>
+              <div class="box--fill box" style="padding: 10px">
+                <div class="hstack">
+                  <span class="ico"></span
+                  ><span class="tiny"
+                    >人脸核验（由第三方实名服务完成，我方不留存照片）</span
+                  >
+                  <span class="grow"></span><span class="btn sm">开始核验</span>
+                </div>
+              </div>
+              <div class="hstack" style="margin-top: 13px">
+                <span class="btn solid">提交</span
+                ><span class="btn">稍后再说</span>
+              </div>
+            </div>
+
+            <div class="grow stack">
+              <div class="box" style="padding: 11px">
+                <b>三类触发事件（D17 口径）</b>
+                <div class="tiny" style="margin-top: 7px; line-height: 1.9">
+                  · 触发风控（异常登录、异常连接行为）<br />
+                  · 使用中继时长额度（有成本、可被滥用）<br />
+                  · 跨账号连接（连接非本人账号下的设备）<br />
+                  ⚠️ 直连、被控、手机被控<b>不触发</b>实名。
+                </div>
+              </div>
+              <div class="box" style="padding: 11px">
+                <b>⏸ 延迟实名（D12-3）</b>
+                <div class="tiny" style="margin-top: 7px; line-height: 1.9">
+                  注册<b>不要求</b>实名；只有在上述三类事件发生时才提示。
+                  这样既不牺牲转化，也满足"可追溯"的监管要求。
+                </div>
+              </div>
+              <div class="box" style="padding: 11px; border-color: var(--anno)">
+                <b style="color: var(--anno)">⚠️ 文案须法务复核</b>
+                <div class="tiny" style="margin-top: 7px">
+                  实名原因说明、数据用途、留存期限与拒绝后果，<b>一律经法务确认后定稿</b>；本线框只锁定结构与触发时机。
+                </div>
+              </div>
+            </div>
+          </div>
+          <span class="pin" style="left: 24px; top: 56px">1</span>
+          <span class="pin" style="left: 390px; top: 100px">2</span>
+          <span class="pin" style="left: 390px; top: 266px">3</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 🔴
+            必须写明<b>本次触发的具体原因</b>。只写"为了你的账号安全"会让用户以为要立刻实名，反而流失。
+          </li>
+          <li>
+            <b>②</b>
+            三类触发事件之外<b>不得扩展</b>；直连/被控/手机被控都不得成为实名门槛（否则
+            D17 的"延迟实名"就名存实亡）。
+          </li>
+          <li>
+            <b>③</b> 保留「稍后再说」= 允许降级使用（见
+            W5-03），<b>不是强制拦截</b>。
+          </li>
+        </ul>
+      </figure>
+
+      <!-- ============ W5-03 ============ -->
+      <figure class="frame" id="w5-03">
+        <figcaption>
+          <span class="fid">W5-03</span
+          ><b>未实名的降级路径（🔴 是降级，不是拦截）</b> · 层① 合规硬项 ·
+          P0　|　来源 D17 + D12-3
+        </figcaption>
+        <div class="screen screen--desk" style="height: 420px">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">未实名时的能力对照</span>
+          </div>
+          <div class="pad" style="height: calc(100% - 28px)">
+            <table class="tbl" style="border: 1px solid var(--line)">
+              <thead>
+                <tr>
+                  <th style="width: 260px">能力</th>
+                  <th style="width: 140px">未实名</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>登录 / 注册 / 设备管理</td>
+                  <td><span class="tag on">✅ 完全可用</span></td>
+                  <td>不得以未实名为由限制</td>
+                </tr>
+                <tr>
+                  <td>直连（不限时长）</td>
+                  <td><span class="tag on">✅ 完全可用</span></td>
+                  <td>直连不经过中继，不构成风险敞口</td>
+                </tr>
+                <tr>
+                  <td>被控端使用</td>
+                  <td><span class="tag on">✅ 完全可用</span></td>
+                  <td>被控属于被动方</td>
+                </tr>
+                <tr>
+                  <td>手机被控（免费钩子）</td>
+                  <td><span class="tag on">✅ 完全可用</span></td>
+                  <td>🔴 不得在此设实名门槛</td>
+                </tr>
+                <tr>
+                  <td>使用中继时长</td>
+                  <td><span class="tag">△ 需实名</span></td>
+                  <td>首次使用前提示，完成后继续</td>
+                </tr>
+                <tr>
+                  <td>跨账号连接</td>
+                  <td><span class="tag">△ 需实名</span></td>
+                  <td>首次发生前提示</td>
+                </tr>
+                <tr>
+                  <td>风控命中后的操作</td>
+                  <td><span class="tag">△ 需实名</span></td>
+                  <td>不实名则维持受限，其他功能不受影响</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="box--fill box" style="padding: 11px; margin-top: 12px">
+              <b>降级时的界面要求</b>
+              <div class="tiny" style="margin-top: 7px; line-height: 1.9">
+                ·
+                说清<b>哪一项不能用、其他都还能用</b>（把"还能用的"写出来，比只写"不能用的"更有说服力）<br />
+                · 给出<b>就地完成</b>入口（不跳转、不返回上一级）<br />
+                · <span class="no">不得</span>在此时推销付费（实名 ≠
+                付费，混合会出现"给钱就能用"的错觉，也可能违规）
+              </div>
+            </div>
+          </div>
+          <span class="pin" style="left: 290px; top: 140px">1</span>
+          <span class="pin" style="left: 24px; top: 334px">2</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 🔴
+            <b>手机被控（本产品最大的免费钩子）绝对不能设实名门槛。</b
+            >一旦设了，钩子就废了。
+          </li>
+          <li>
+            <b>②</b>
+            降级界面必须<b>同时列出"还能做什么"</b>，否则用户的感受是"账号被限制了"，而不是"某项功能要实名"。
+          </li>
+          <li>整体原则：实名是<b>风险场景的通行证</b>，不是产品的准入证。</li>
+        </ul>
+      </figure>
+    </div>
+
+    <h2>2 · 内部运营台（P0 最小版：3 查 + 3 动作）</h2>
+
+    <div class="flow">
+      <!-- ============ W5-04 ============ -->
+      <figure class="frame" id="w5-04">
+        <figcaption>
+          <span class="fid">W5-04</span><b>运营台 · 最小版（3 查）</b> · 层③
+          内部界面 · P0　|　来源 账号设计 §5.1 · <b>D12-6</b>（P0 不造完整后台）
+        </figcaption>
+        <div class="screen screen--desk" style="height: 420px">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">运营台 · 客服视图</span>
+          </div>
+          <div class="pad" style="height: calc(100% - 28px)">
+            <div class="hstack" style="margin-bottom: 12px">
+              <span class="input grow">输入手机号 / 账号 ID / 设备识别码</span>
+              <span class="btn solid">查询</span>
+              <span class="grow"></span>
+              <span class="tag">当前角色：客服</span>
+            </div>
+
+            <div class="hstack" style="gap: 12px; align-items: flex-start">
+              <div class="box" style="width: 250px; padding: 11px">
+                <b>① 查用户</b>
+                <div class="tiny" style="margin-top: 8px; line-height: 1.85">
+                  账号 138****6721（张三）<br />
+                  注册：2026-01-02　状态：正常<br />
+                  实名：<span class="tag">未实名</span><br />
+                  设备：6 台（1 在线）
+                </div>
+                <div class="btn sm" style="margin-top: 10px">查看设备列表</div>
+              </div>
+
+              <div class="box grow" style="padding: 11px">
+                <b>② 查额度与计量明细</b>
+                <div class="tiny muted" style="margin-top: 6px">
+                  与用户侧「用量明细」（W4-05）读同一份数据
+                </div>
+                <table
+                  class="tbl"
+                  style="margin-top: 9px; border: 1px solid var(--line2)"
+                >
+                  <thead>
+                    <tr>
+                      <th>时间</th>
+                      <th>方式</th>
+                      <th>时长</th>
+                      <th>流量</th>
+                      <th>扣除</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>09-13 21:10</td>
+                      <td>中继</td>
+                      <td>22 分钟</td>
+                      <td>0.66 GB</td>
+                      <td>22 分钟</td>
+                    </tr>
+                    <tr>
+                      <td>09-12 20:05</td>
+                      <td>中继</td>
+                      <td>3 分钟</td>
+                      <td>0.09 GB</td>
+                      <td>3 分钟</td>
+                    </tr>
+                    <tr>
+                      <td>09-14 10:02</td>
+                      <td>直连</td>
+                      <td>39 分钟</td>
+                      <td>—</td>
+                      <td>0</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="box" style="width: 230px; padding: 11px">
+                <b>③ 查订单与订阅</b>
+                <div class="tiny" style="margin-top: 8px; line-height: 1.85">
+                  当前档位：个人版（月付）<br />
+                  到期：2026-04-01<br />
+                  自动续费：开启<br />
+                  订单：3 笔（1 退款中）
+                </div>
+                <div class="btn sm" style="margin-top: 10px">查看订单</div>
+              </div>
+            </div>
+
+            <div
+              class="box"
+              style="padding: 10px; margin-top: 12px; border-style: dashed"
+            >
+              <span class="tiny"
+                >❗
+                <b>P0 就到 3 查 + 3 动作为止</b
+                >（D12-6）。完整后台（商品定价版本 / 成本看板 / 举报处置）属
+                P1，见 W5-06 备注。</span
+              >
+            </div>
+          </div>
+          <span class="pin" style="left: 24px; top: 100px">1</span>
+          <span class="pin" style="left: 300px; top: 100px">2</span>
+          <span class="pin" style="left: 700px; top: 100px">3</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 查用户 = 客服 90% 的工作起点。三个入口（手机号 / 账号 ID /
+            设备识别码）覆盖真实客诉场景（用户常报"设备号"而不是账号）。
+          </li>
+          <li>
+            <b>②</b> 🔴
+            <b>必须与用户侧同源</b
+            >：用户看到的和客服看到的必须一致。这是计量争议能否当场平息的关键。
+          </li>
+          <li><b>③</b> 订单视图只读；动作按钮见 W5-06（受权限约束）。</li>
+          <li>
+            ⚠️ 内部台也要给 UI：P0
+            阶段它由客服每天使用，做太糙会直接拖慢客诉响应速度。
+          </li>
+        </ul>
+      </figure>
+
+      <!-- ============ W5-05 ============ -->
+      <figure class="frame" id="w5-05">
+        <figcaption>
+          <span class="fid">W5-05</span
+          ><b>查额度与计量明细（争议处理视图）</b> · 层③ 内部界面 · P0　|　来源
+          账号设计 §5.1② · 商业化 §7.1
+        </figcaption>
+        <div class="screen screen--desk" style="height: 460px">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px"
+              >运营台 · 账号 138****6721 · 额度与计量</span
+            >
+          </div>
+          <div
+            class="pad"
+            style="
+              height: calc(100% - 28px);
+              display: flex;
+              flex-direction: column;
+              gap: 11px;
+            "
+          >
+            <div class="hstack" style="gap: 10px">
+              <div class="box--fill box grow" style="padding: 9px">
+                <span class="tiny muted">本期额度（后端下发）</span>
+                <div><b>xx 分钟</b></div>
+              </div>
+              <div class="box--fill box grow" style="padding: 9px">
+                <span class="tiny muted">已用（中继）</span>
+                <div><b>25 分钟</b></div>
+              </div>
+              <div class="box--fill box grow" style="padding: 9px">
+                <span class="tiny muted">剩余</span>
+                <div><b>约 xx 分钟</b></div>
+              </div>
+              <div class="box--fill box grow" style="padding: 9px">
+                <span class="tiny muted">赠送额度</span>
+                <div><b>0 分钟</b></div>
+              </div>
+            </div>
+
+            <table class="tbl" style="border: 1px solid var(--line)">
+              <thead>
+                <tr>
+                  <th style="width: 180px">时间</th>
+                  <th style="width: 90px">方式</th>
+                  <th style="width: 90px">时长</th>
+                  <th style="width: 110px">字节数</th>
+                  <th style="width: 110px">扣除量</th>
+                  <th>会话 ID / 裁决</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>09-13 21:10–21:32</td>
+                  <td>中继</td>
+                  <td>22 分钟</td>
+                  <td>0.66 GB</td>
+                  <td>22 分钟</td>
+                  <td class="muted">sid-9f21…· 服务端裁决</td>
+                </tr>
+                <tr>
+                  <td>09-12 20:05–20:08</td>
+                  <td>中继</td>
+                  <td>3 分钟</td>
+                  <td>0.09 GB</td>
+                  <td>3 分钟</td>
+                  <td class="muted">sid-7a03…· 服务端裁决</td>
+                </tr>
+                <tr style="background: #fafafa">
+                  <td>09-11 15:00–15:02</td>
+                  <td>中继</td>
+                  <td>2 分钟</td>
+                  <td>0.05 GB</td>
+                  <td>2 分钟</td>
+                  <td class="muted">sid-3c88…· <b>网络中断补齐</b></td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="hstack">
+              <span class="btn sm">调额度（唯一自研动作）</span>
+              <span class="btn sm">导出本次明细</span>
+              <span class="grow"></span>
+              <span class="tiny muted"
+                >计量心跳 30 秒 · 额度由服务端裁决，客户端不可信</span
+              >
+            </div>
+
+            <div class="box" style="padding: 10px; border-style: dashed">
+              <span class="tiny">
+                ⚠️ 「网络中断补齐」这类<b>边缘扣费</b>必须能在本页看到并给出解释
+                —— 它是客诉最集中的地方（用户觉得"没连上也被扣了"）。
+              </span>
+            </div>
+          </div>
+          <span class="pin" style="left: 24px; top: 96px">1</span>
+          <span class="pin" style="left: 24px; top: 214px">2</span>
+          <span class="pin" style="left: 24px; top: 352px">3</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 会话 ID +
+            「服务端裁决」字样是给客服用的<b>可信度凭据</b>：有 ID
+            才能定位、才能自证。
+          </li>
+          <li>
+            <b>②</b>
+            边缘扣费（中断补齐、异常终止）必须可解释，且解释口径要与用户侧一致。
+          </li>
+          <li>
+            <b>③</b> 「调额度」是 P0 唯一自研的写动作 ——
+            因为它没有现成工具可替代（渠道后台改不了我方额度）。
+          </li>
+          <li>
+            「导出本次明细」既是客诉证据，也是一种低成本的"技术信任"建设。
+          </li>
+        </ul>
+      </figure>
+
+      <!-- ============ W5-06 ============ -->
+      <figure class="frame" id="w5-06">
+        <figcaption>
+          <span class="fid">W5-06</span><b>3 动作 + 权限模型 + 审计</b> · 层③
+          内部界面 · P0　|　来源 账号设计 §5.1 · §5.4
+        </figcaption>
+        <div class="screen screen--desk" style="height: 500px">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">运营台 · 动作与权限</span>
+          </div>
+          <div
+            class="pad"
+            style="height: calc(100% - 28px); display: flex; gap: 16px"
+          >
+            <div style="width: 290px" class="stack">
+              <div class="box" style="padding: 11px">
+                <b>动作 1 · 调额度</b>
+                <div class="tiny" style="margin-top: 7px">
+                  对象：138****6721
+                </div>
+                <div class="hstack" style="margin-top: 8px">
+                  <span class="input" style="width: 90px">+30</span
+                  ><span class="tiny muted">分钟</span>
+                </div>
+                <span class="label" style="margin-top: 9px">原因（必填）</span>
+                <div class="input" style="height: 44px">
+                  客诉：中断补齐争议，安抚补偿
+                </div>
+                <div class="hstack" style="margin-top: 9px">
+                  <span style="width: 14px">☐</span
+                  ><span class="tiny muted">我已核实明细</span>
+                </div>
+                <div class="btn solid sm" style="margin-top: 9px">
+                  提交（超阈值需第二人复核）
+                </div>
+              </div>
+
+              <div class="box" style="padding: 11px">
+                <b>动作 2 · 封禁 / 解封 / 加白</b>
+                <div class="tiny" style="margin-top: 7px; line-height: 1.85">
+                  封禁（可申诉）· 解封<br />
+                  <b>家庭互助白名单</b> —— §9.3 的唯一落点
+                </div>
+                <div class="hstack" style="margin-top: 9px">
+                  <span class="btn sm">加白</span
+                  ><span class="btn sm">封禁</span
+                  ><span class="btn sm">解封</span>
+                </div>
+              </div>
+
+              <div class="box" style="padding: 11px">
+                <b>动作 3 · 人工触发退款</b>
+                <div class="tiny" style="margin-top: 7px; line-height: 1.85">
+                  跳转渠道商户后台执行，<b>完成后回填状态</b>（本台不直接出款）
+                </div>
+                <div class="btn sm" style="margin-top: 9px">
+                  前往渠道后台 · 回填状态
+                </div>
+              </div>
+            </div>
+
+            <div class="grow stack">
+              <div class="box" style="padding: 11px">
+                <b>🔴 权限模型（P0 可只开两个角色，但必须从第一天就分开）</b>
+              </div>
+              <table class="tbl" style="border: 1px solid var(--line)">
+                <thead>
+                  <tr>
+                    <th style="width: 120px">角色</th>
+                    <th style="width: 110px">查询</th>
+                    <th style="width: 130px">调额度</th>
+                    <th style="width: 120px">封禁/加白</th>
+                    <th style="width: 110px">退款</th>
+                    <th>备注</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>客服</td>
+                    <td>✅</td>
+                    <td>△ 小额</td>
+                    <td><span class="no">❌</span></td>
+                    <td><span class="no">❌</span></td>
+                    <td>P0 必开</td>
+                  </tr>
+                  <tr>
+                    <td>风控 / 运营</td>
+                    <td>✅</td>
+                    <td><span class="no">❌</span></td>
+                    <td>✅</td>
+                    <td><span class="no">❌</span></td>
+                    <td>P0 可并入管理员</td>
+                  </tr>
+                  <tr>
+                    <td>财务</td>
+                    <td>✅</td>
+                    <td><span class="no">❌</span></td>
+                    <td><span class="no">❌</span></td>
+                    <td>✅</td>
+                    <td>P0 可并入管理员</td>
+                  </tr>
+                  <tr>
+                    <td>管理员</td>
+                    <td>✅</td>
+                    <td>✅</td>
+                    <td>✅</td>
+                    <td>✅</td>
+                    <td>含授权</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="box" style="padding: 11px">
+                <b>审计（每次写动作都必须留痕）</b>
+                <div class="tiny" style="margin-top: 7px">
+                  <div class="item" style="border: 0; padding: 4px 0">
+                    2026-09-14 11:20 · 客服 A · 调额度 +30 分钟 · 账号
+                    138****6721 · 原因已填
+                  </div>
+                  <div class="item" style="border: 0; padding: 4px 0">
+                    2026-09-14 09:02 · 管理员 · 加白 · 设备 xxx · 原因：家庭互助
+                  </div>
+                </div>
+              </div>
+              <div class="box tiny" style="padding: 10px; border-style: dashed">
+                P1 才做：商品与定价版本管理（D14，含双人复核 + 预约生效）·
+                成本看板 · 举报处置 · 订阅生命周期 · 灰度配置。
+              </div>
+            </div>
+          </div>
+          <span class="pin" style="left: 24px; top: 56px">1</span>
+          <span class="pin" style="left: 330px; top: 230px">2</span>
+          <span class="pin" style="left: 330px; top: 392px">3</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b>
+            调额度<b>强制填原因</b>，超阈值需<b>第二人复核</b>。这不是流程洁癖：额度是钱，客服自授权限一开，就是资金漏洞。
+          </li>
+          <li>
+            <b>②</b> 🔴 权限必须<b>从第一天就分开</b>（哪怕 P0
+            只有两个人）：客服能退款、或财务能改额度上限，都是不可回退的设计债。
+          </li>
+          <li><b>③</b> 三个动作全部进审计，且审计本身可被"只读角色"查看。</li>
+          <li>
+            「家庭互助白名单」在这里是<b>唯一落点</b> ——
+            目前没有别的地方能完成加白。
+          </li>
+        </ul>
+      </figure>
+    </div>
+
+    <p class="pager">
+      ← 上一页：<a href="w4-计费与个人中心.html">W4 · 计费与个人中心</a
+      >　·　下一页：<a href="w6-移动端手持.html">W6 · 移动端手持 →</a>　·　返回
+      <a href="index.html">索引</a>
+    </p>
+  </body>
+</html>

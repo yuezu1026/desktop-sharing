@@ -1,0 +1,936 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>W1 · 控制端 · 连接与额度（低保真）</title>
+    <link rel="stylesheet" href="wireframe.css" />
+  </head>
+  <body>
+    <nav class="topbar">
+      <a href="index.html">索引</a>
+      <a href="w1-控制端-连接与额度.html" aria-current="page"
+        >W1 控制端·连接与额度</a
+      >
+      <a href="w2-被控端.html">W2 被控端</a>
+      <a href="w3-账号与设备管理.html">W3 账号与设备</a>
+      <a href="w4-计费与个人中心.html">W4 计费与个人中心</a>
+      <a href="w5-合规实名与运营台.html">W5 合规·实名·运营台</a>
+      <a href="w6-移动端手持.html">W6 移动端手持</a>
+    </nav>
+
+    <h1>W1 · 控制端 · 连接与额度</h1>
+    <p class="lede">
+      这是全套线框里<b>最不能省的一组</b>：连接模式指示器是主主张的唯一执行体，降级链四态是「禁止静默降码率」的唯一执行体。
+      <br />本页 9 帧，其中 <b>6 帧属「缺了就是违反已拍板决策」</b>。
+      <br class="muted" />🔴
+      全页出现的额度数值均为示意，<b>实际必须后端下发</b>（`商业化与计费设计`
+      §13.5：TURN 报价到手前数值会变）。
+    </p>
+
+    <h2>1 · 主界面与连接过程</h2>
+
+    <div class="flow">
+      <!-- ============ W1-01 ============ -->
+      <figure class="frame" id="w1-01">
+        <figcaption>
+          <span class="fid">W1-01</span><b>控制端主界面</b> · 层② 主主张可见化 ·
+          P0　|　来源 v2 §1 · 商业化 §13.2#1#2
+        </figcaption>
+        <div class="screen screen--desk">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">远程桌面</span>
+          </div>
+          <div class="body">
+            <aside class="side">
+              <div class="hstack" style="margin-bottom: 12px">
+                <span class="ico"></span><b>远程桌面</b>
+              </div>
+              <div class="tiny">
+                <div class="item sel" style="border: 0; padding: 6px 8px">
+                  我的设备
+                </div>
+                <div class="item" style="border: 0; padding: 6px 8px">
+                  文件传输
+                </div>
+                <div class="item" style="border: 0; padding: 6px 8px">
+                  操作日志
+                </div>
+                <div class="item" style="border: 0; padding: 6px 8px">设置</div>
+              </div>
+            </aside>
+            <main class="grow" style="display: flex; flex-direction: column">
+              <div class="bar">
+                <b>我的设备</b><span class="grow"></span>
+                <span class="input" style="width: 140px">搜索设备</span>
+                <span class="btn sm">+ 添加设备</span>
+              </div>
+
+              <div
+                class="pad grow"
+                style="
+                  display: flex;
+                  gap: 12px;
+                  flex-wrap: wrap;
+                  align-content: flex-start;
+                "
+              >
+                <div class="box" style="width: 176px; padding: 11px">
+                  <div class="ph-img" style="height: 66px; margin-bottom: 9px">
+                    显示器
+                  </div>
+                  <div class="hstack">
+                    <b>我的台式机</b><span class="grow"></span
+                    ><span class="tag on">在线</span>
+                  </div>
+                  <div class="ph w75" style="margin-top: 6px"></div>
+                  <div class="hstack" style="margin-top: 10px">
+                    <span class="btn sm solid">连接</span
+                    ><span class="btn sm">更多</span>
+                  </div>
+                </div>
+                <div class="box" style="width: 176px; padding: 11px">
+                  <div class="ph-img" style="height: 66px; margin-bottom: 9px">
+                    笔记本
+                  </div>
+                  <div class="hstack">
+                    <b>爸爸的笔记本</b><span class="grow"></span
+                    ><span class="tag">离线</span>
+                  </div>
+                  <div class="ph w55" style="margin-top: 6px"></div>
+                  <div class="hstack" style="margin-top: 10px">
+                    <span class="btn sm">连接</span
+                    ><span class="btn sm">更多</span>
+                  </div>
+                </div>
+                <div
+                  class="box"
+                  style="
+                    width: 176px;
+                    padding: 11px;
+                    border-style: dashed;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 6px;
+                    color: #8f8f8f;
+                  "
+                >
+                  <span style="font-size: 20px">+</span>
+                  <span class="tiny">添加设备</span>
+                </div>
+              </div>
+
+              <div class="bar bar--bottom" style="background: #fafafa">
+                <span class="tag on">● 最近一次连接：直连</span>
+                <span class="tiny muted"
+                  >直连不经过中继，不消耗免费中继时长</span
+                >
+                <span class="grow"></span>
+                <span class="tiny muted">账号 · 已实名</span>
+              </div>
+            </main>
+          </div>
+          <span class="pin" style="left: 196px; top: 436px">1</span>
+          <span class="pin" style="left: 212px; top: 96px">2</span>
+          <span class="pin" style="left: 648px; top: 436px">3</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b>
+            连接模式指示器<b>常驻</b>在状态栏，但措辞中性：只陈述事实，不做任何引导。这是
+            D1「透明度」资产的载体。
+          </li>
+          <li>
+            <b>②</b> 设备卡片：在线 /
+            离线两态用同一个「更多」入口，<b>不在卡片上放任何付费引导</b>。
+          </li>
+          <li>
+            <b>③</b> 🔴
+            状态栏右侧只允许出现与安全相关的状态（实名），<b>不得放"升级会员"之类的常驻入口</b>（红线①：状态常驻、商业折叠）。
+          </li>
+          <li>
+            空态：新账号设备数为 0
+            时，此区域整块替换为引导（"在被控设备上安装并登录，设备会自动出现在这里"）。
+          </li>
+        </ul>
+      </figure>
+
+      <!-- ============ W1-02 ============ -->
+      <figure class="frame" id="w1-02">
+        <figcaption>
+          <span class="fid">W1-02</span
+          ><b>连接中（先中继秒连 → 后台静默升级直连）</b> · 层② · P0　|　来源 v2
+          §1 连接建立策略
+        </figcaption>
+        <div class="screen screen--win">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">正在连接 · 我的台式机</span>
+          </div>
+          <div
+            class="pad"
+            style="
+              height: calc(100% - 28px);
+              display: flex;
+              flex-direction: column;
+              gap: 14px;
+            "
+          >
+            <div class="box--fill box" style="padding: 14px">
+              <div class="hstack">
+                <span class="tag on">✓</span><b>已通过中继建立连接</b>
+                <span class="grow"></span
+                ><span class="tiny muted">约 1 秒</span>
+              </div>
+              <div class="ph w85" style="margin-top: 8px"></div>
+              <div class="tiny muted" style="margin-top: 6px">
+                画面即将出现 —— 不必等打洞完成
+              </div>
+            </div>
+
+            <div class="box" style="border-style: dashed; padding: 14px">
+              <div class="hstack">
+                <span class="tag">…</span><b>后台正在探测直连</b>
+                <span class="grow"></span
+                ><span class="tiny muted">不占用免费中继时长</span>
+              </div>
+              <div class="ph w65" style="margin-top: 8px"></div>
+              <div class="hstack" style="margin-top: 10px">
+                <span class="btn sm ghost">停止探测</span>
+              </div>
+            </div>
+
+            <div class="grow"></div>
+            <div class="tiny muted">
+              探测失败不会打断当前会话，也不会弹窗；<b>下次连接会重新尝试</b>。
+            </div>
+          </div>
+          <span class="pin" style="left: 24px; top: 56px">1</span>
+          <span class="pin" style="left: 24px; top: 170px">2</span>
+          <span class="pin" style="left: 24px; top: 388px">3</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 🔴
+            <b>首帧不等打洞</b
+            >：先中继秒连让用户立刻看到画面，这是"体感不输商业软件"的关键（v2 §1
+            连接建立策略）。
+          </li>
+          <li><b>②</b> 直连探测是<b>后台静默</b>过程，成败都不打扰用户。</li>
+          <li>
+            <b>③</b>
+            探测失败<b>不得弹窗</b>，只在此处说明"下次会重新尝试"，避免把技术细节变成用户的焦虑源。
+          </li>
+          <li>
+            ⚠️
+            本屏<b>不显示额度计数</b>：此时还不知道这次会不会走中继超过阈值；计数出现在连上之后的指示器里。
+          </li>
+        </ul>
+      </figure>
+
+      <!-- ============ W1-03 ============ -->
+      <figure class="frame" id="w1-03">
+        <figcaption>
+          <span class="fid">W1-03</span
+          ><b>会话窗口（窗口化 + 等比缩放 + 黑边 + 首连提示）</b> · 层①
+          红线执行体 · P0　|　来源 v2 §1 D9 · 商业化 §13.2#1#6
+        </figcaption>
+        <div class="screen screen--win">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px"
+              >远程桌面 — 我的台式机 · 1920×1080</span
+            >
+            <span class="grow"></span><span class="tiny">— □ ✕</span>
+          </div>
+
+          <div class="bar" style="background: #fafafa">
+            <span class="tag on">● 本次连接：直连</span>
+            <span class="tiny">不消耗免费中继时长</span>
+            <span class="grow"></span>
+            <span class="tiny muted">画质：自适应 1080p / 30fps</span>
+            <span class="btn sm ghost">缩放 ▾</span>
+          </div>
+
+          <div class="body" style="height: calc(100% - 28px - 34px)">
+            <div
+              class="pad grow"
+              style="display: flex; flex-direction: column; gap: 10px"
+            >
+              <div
+                style="
+                  display: flex;
+                  gap: 0;
+                  align-items: stretch;
+                  height: 290px;
+                "
+              >
+                <div
+                  class="stripe"
+                  style="width: 52px; border: 1px solid var(--line2)"
+                ></div>
+                <div class="ph-img grow" style="height: 100%">
+                  被控端画面（等比缩放）
+                </div>
+                <div
+                  class="stripe"
+                  style="width: 52px; border: 1px solid var(--line2)"
+                ></div>
+              </div>
+              <div class="tiny muted">
+                两侧灰条 =
+                保持比例的留白（黑边），<b>画面本身不变形、不改被控端分辨率</b>。
+              </div>
+            </div>
+          </div>
+
+          <div class="bar bar--bottom">
+            <span class="btn sm">文件</span><span class="btn sm">剪贴板</span
+            ><span class="btn sm">全屏</span>
+            <span class="grow"></span>
+            <span class="tag">● 直连</span>
+            <span class="btn sm">断开</span>
+          </div>
+
+          <span class="pin" style="left: 24px; top: 44px">1</span>
+          <span class="pin" style="left: 270px; top: 300px">2</span>
+          <span class="pin" style="left: 600px; top: 398px">3</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 🔴
+            <b>首连提示行 = 把主主张从文案变成事实的唯一时机</b
+            >。直连时说"不消耗免费中继时长"；中继时说"在消耗免费中继时长"。两种文案都必须有。
+          </li>
+          <li>
+            <b>②</b> 等比缩放 +
+            两侧留白。<b>不得默认全屏</b>（窗口化启动），<b>不得修改被控端分辨率</b>（D9
+            体验红线 C1）。
+          </li>
+          <li>
+            <b>③</b>
+            连接模式指示器在会话工具栏<b>常驻</b>，且与"画质"等技术状态同属一行
+            —— 技术状态与商业计数分列，不绑在一起。
+          </li>
+          <li>
+            顶部提示行是<b>常驻一行</b>而不是 Toast：需要被反复看到（Toast 3
+            秒会消失，主主张就丢了）。
+          </li>
+        </ul>
+      </figure>
+    </div>
+
+    <h2>2 · 免费中继时长指示器（组件三态）</h2>
+
+    <div class="flow">
+      <!-- ============ W1-04 ============ -->
+      <figure class="frame" id="w1-04">
+        <figcaption>
+          <span class="fid">W1-04</span
+          ><b>免费中继余量 · 三态（默认折叠 → 阈值出现 → 展开明细）</b> · 层①
+          红线执行体 · P0　|　来源 商业化 §13.2#2 · §13.4 红线①
+        </figcaption>
+        <div class="screen" style="width: 830px; height: 346px">
+          <div class="bar" style="background: #fafafa">
+            <b>组件规格：免费中继时长指示器</b> <span class="grow"></span
+            ><span class="tiny muted">组件 · 只出现在控制端</span>
+          </div>
+          <div class="pad" style="display: flex; gap: 14px">
+            <div class="box" style="width: 250px; padding: 11px">
+              <div class="tiny muted" style="margin-bottom: 8px">
+                态 A · 默认（未触及阈值）
+              </div>
+              <div
+                class="bar"
+                style="
+                  border: 1px solid var(--line2);
+                  border-radius: 4px;
+                  background: #fff;
+                "
+              >
+                <span class="tag">● 中继</span>
+                <span class="grow"></span>
+                <span class="tiny muted">—</span>
+              </div>
+              <div class="tiny muted" style="margin-top: 9px">
+                只显示链路类型，<b>不显示任何计数</b>。<br />
+                用户日常连接根本不会注意到它的存在。
+              </div>
+            </div>
+
+            <div class="box" style="width: 250px; padding: 11px">
+              <div class="tiny muted" style="margin-bottom: 8px">
+                态 B · 触及阈值（用掉约八成）
+              </div>
+              <div
+                class="bar"
+                style="
+                  border: 1px solid var(--ink2);
+                  border-radius: 4px;
+                  background: #fafafa;
+                "
+              >
+                <span class="tag on">● 中继</span>
+                <span class="tiny">免费时长剩余约 xx 分钟</span>
+                <span class="grow"></span>
+                <span class="tiny">▾</span>
+              </div>
+              <div class="ph w100" style="margin-top: 8px; height: 5px"></div>
+              <div class="tiny muted" style="margin-top: 9px">
+                仅在<b>逼近阈值时</b>才出现数字。<br />
+                ⚠️ 不是一进会话就贴脸显示。
+              </div>
+            </div>
+
+            <div class="box" style="width: 250px; padding: 10px">
+              <div class="tiny muted" style="margin-bottom: 8px">
+                态 C · 展开明细（用户主动点开）
+              </div>
+              <div
+                class="stack tiny"
+                style="
+                  border: 1px solid var(--line);
+                  padding: 9px;
+                  background: #fff;
+                "
+              >
+                <div class="spread">
+                  <span class="muted">本次会话已用（中继）</span
+                  ><span>xx 分钟</span>
+                </div>
+                <div class="spread">
+                  <span class="muted">本期免费中继时长剩余</span
+                  ><span>约 xx 分钟</span>
+                </div>
+                <div class="spread">
+                  <span class="muted">下次重置</span><span>x 月 x 日</span>
+                </div>
+                <div class="ph w65"></div>
+                <div class="hstack">
+                  <span class="btn sm">查看明细</span
+                  ><span class="btn sm">尝试直连</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <span class="pin" style="left: 24px; top: 58px">1</span>
+          <span class="pin" style="left: 290px; top: 120px">2</span>
+          <span class="pin" style="left: 566px; top: 120px">3</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 🔴
+            对外措辞统一为「<b>免费中继时长</b>」，不用「额度」（额度是财务语言，会让人以为在管钱包）。
+          </li>
+          <li>
+            <b>②</b> ⚠️
+            严格遵守：<b>技术状态常驻、商业计数折叠</b>。若余量常驻贴脸并与引导视觉绑定，指示器就从「告知」变成「催费」，透明度资产降级成广告位（红线①）。
+          </li>
+          <li>
+            <b>③</b>
+            明细里的两个按钮都要<b>中性</b>：不能说"升级可获更多"，只能说"尝试直连"（直连是免费方案，这才是产品价值点）。
+          </li>
+          <li>
+            🔴 <b>所有数字后端下发</b>（2 GB / 分钟换算随 TURN
+            报价可能变），前端不得硬编码（§13.5）。
+          </li>
+        </ul>
+      </figure>
+    </div>
+
+    <h2>3 · 降级链四态</h2>
+
+    <h3 id="w1-05" style="margin-top: 6px">
+      W1-05 · 🔴 降级链四态（缺任意一态 = 违反「禁止静默降码率」）
+    </h3>
+    <div class="legend">
+      按顺序看：<b>A 预警</b> → <b>B 转直连（自动，用户无需操作）</b> →
+      <b>C 码率已降（必须明示到具体档位）</b> →
+      <b>D 终止前告知（给倒计时与选择）</b>。
+      四态都<b>不出现金额</b>，只说明「发生了什么」和「下一步做什么」。
+    </div>
+    <div class="flow">
+      <figure class="frame">
+        <figcaption>态 A · 预警（余量进入低位）</figcaption>
+        <div class="screen" style="width: 392px; height: 230px">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">远程桌面 — 我的台式机</span>
+          </div>
+          <div class="banner">
+            <span class="tiny"
+              ><b>免费中继时长剩余约 xx 分钟</b> · 用尽后将自动尝试直连</span
+            >
+            <span class="grow"></span>
+            <span class="tiny">▾</span><span class="btn sm">了解</span>
+          </div>
+          <div class="pad">
+            <div class="ph-img" style="height: 118px">画面继续正常显示</div>
+            <div class="tiny muted" style="margin-top: 8px">
+              横幅<b>不遮挡画面</b>、不打断操作、可手动收起。
+            </div>
+          </div>
+          <span class="pin" style="left: 16px; top: 38px">1</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b>
+            预警是<b>信息</b>不是<b>推销</b>：只说事实与下一步，<b>无按钮指向购买</b>。
+          </li>
+        </ul>
+      </figure>
+
+      <figure class="frame">
+        <figcaption>态 B · 转直连（中继已停）</figcaption>
+        <div class="screen" style="width: 392px; height: 230px">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">远程桌面 — 我的台式机</span>
+          </div>
+          <div class="banner">
+            <span class="tiny"><b>中继已暂停 · 已切换为直连</b></span>
+            <span class="grow"></span><span class="tag on">● 直连</span>
+          </div>
+          <div class="pad">
+            <div class="ph-img" style="height: 118px">
+              画面继续（短暂重连约 1 秒）
+            </div>
+            <div class="tiny muted" style="margin-top: 8px">
+              直连成功 = <b>不再消耗免费中继时长</b>，用户无需做任何事。
+            </div>
+          </div>
+          <span class="pin" style="left: 16px; top: 38px">1</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 自动降级必须<b>明说发生了什么</b>，不得静默切换链路。
+          </li>
+          <li>直连失败 → 进入 W1-07 引导页（不是弹窗广告，是操作指引）。</li>
+        </ul>
+      </figure>
+
+      <figure class="frame">
+        <figcaption>态 C · 🔴 码率已降（最关键的一态）</figcaption>
+        <div class="screen" style="width: 392px; height: 230px">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">远程桌面 — 我的台式机</span>
+          </div>
+          <div class="banner">
+            <span class="tiny"><b>画质已降低</b>：1080p/30 → 720p/30</span>
+            <span class="grow"></span><span class="btn sm">原因</span>
+          </div>
+          <div class="pad">
+            <div class="ph-img" style="height: 118px">画面（已降清晰度）</div>
+            <div class="tiny muted" style="margin-top: 8px">
+              展开「原因」→「中继时长已用尽，改走直连后当前网络带宽不足，已自动下调画质以保证可操作」+
+              [尝试恢复画质]
+            </div>
+          </div>
+          <span class="pin" style="left: 16px; top: 38px">1</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 🔴
+            <b>这一态就是「禁止静默降码率」的唯一执行体。</b>把它去掉 =
+            已拍板决策被违反，不是"少个提示"。
+          </li>
+          <li>
+            提示必须写明<b>降到了什么档位</b>（1080p→720p），不能只说"画质已调整"。
+          </li>
+          <li>必须给「尝试恢复画质」，否则用户只能被动接受。</li>
+        </ul>
+      </figure>
+
+      <figure class="frame">
+        <figcaption>态 D · 终止前告知（→ 仅查看）</figcaption>
+        <div class="screen" style="width: 392px; height: 230px">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">远程桌面 — 我的台式机</span>
+          </div>
+          <div class="banner">
+            <span class="tiny"
+              ><b>本次会话将在 30 秒后结束</b
+              >，之后画面会保持更新但无法操作</span
+            >
+          </div>
+          <div class="pad">
+            <div class="ph-img" style="height: 96px">画面</div>
+            <div class="hstack" style="margin-top: 9px">
+              <span class="btn sm solid">继续以「仅查看」保持</span>
+              <span class="btn sm">立即结束</span>
+              <span class="grow"></span
+              ><span class="tiny muted">不消耗免费中继时长</span>
+            </div>
+          </div>
+          <span class="pin" style="left: 16px; top: 38px">1</span>
+        </div>
+        <ul class="notes">
+          <li><b>①</b> 终止前必须<b>给倒计时与选择</b>，不得突然黑屏。</li>
+          <li>
+            「仅查看」是<b>兜底体验</b>而不是惩罚，文案要平实。<span class="no"
+              >禁用</span
+            >任何"开通会员可继续操作"的措辞（那是红线⑤的变体）。
+          </li>
+        </ul>
+      </figure>
+    </div>
+
+    <h2>4 · 仅查看 · 转直连引导 · 显示设置 · 断连后</h2>
+
+    <div class="flow">
+      <!-- ============ W1-06 ============ -->
+      <figure class="frame" id="w1-06">
+        <figcaption>
+          <span class="fid">W1-06</span><b>「仅查看」遮罩（控制端）</b> · 层①
+          红线执行体 · P0　|　来源 商业化 §13.2#4 · §13.4 红线②
+        </figcaption>
+        <div class="screen screen--win" style="height: 400px">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">远程桌面 — 我的台式机</span>
+          </div>
+          <div
+            class="pad"
+            style="height: calc(100% - 28px); position: relative"
+          >
+            <div class="ph-img" style="height: 270px">
+              画面仍在实时更新（灰化表示不可操作）
+            </div>
+            <div class="overlay-msg" style="top: 0; height: 270px">
+              <div
+                class="box"
+                style="
+                  background: #fff;
+                  border-style: solid;
+                  padding: 16px;
+                  width: 400px;
+                  text-align: center;
+                "
+              >
+                <b>画面仍在，操作已暂停</b>
+                <div class="ph w85" style="margin: 9px auto"></div>
+                <div class="tiny muted">
+                  原因：免费中继时长已用尽，且当前网络暂时无法直连
+                </div>
+                <div
+                  class="hstack"
+                  style="margin-top: 12px; justify-content: center"
+                >
+                  <span class="btn sm solid">再试一次直连</span>
+                  <span class="btn sm">查看原因</span>
+                </div>
+                <div class="tiny muted" style="margin-top: 10px">
+                  对方设备上也会同步显示一条状态提示
+                </div>
+              </div>
+            </div>
+          </div>
+          <span class="pin" style="left: 120px; top: 150px">1</span>
+          <span class="pin" style="left: 120px; top: 282px">2</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b>
+            必须说清「<b>画面还在，只是不能操作</b>」——否则用户以为断线了，会反复重连。
+          </li>
+          <li>
+            <b>②</b> 🔴
+            <b>本屏严禁出现金额 / 余额 / 充值 / 价格 / 购买按钮</b>（红线②：计费
+            UI 只出现在控制端 ≠ 任何界面都能计费；遮罩属状态提示）。
+          </li>
+          <li>「再试一次直连」是<b>免费动作</b>，必须是主按钮。</li>
+          <li>
+            被控端对应提示见
+            <a href="w2-被控端.html#w2-04">W2-04</a>（中性、无金额）。
+          </li>
+        </ul>
+      </figure>
+
+      <!-- ============ W1-07 ============ -->
+      <figure class="frame" id="w1-07">
+        <figcaption>
+          <span class="fid">W1-07</span><b>「转直连」引导页</b> · 层②
+          主主张可见化 · P0　|　来源 商业化 §13.2#5 · §8
+          第②步（全文唯一被称为「产品价值点」的一步）
+        </figcaption>
+        <div class="screen screen--win" style="height: 400px">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">换一种连法，通常可以继续免费用</span>
+          </div>
+          <div
+            class="pad"
+            style="
+              height: calc(100% - 28px);
+              display: flex;
+              flex-direction: column;
+              gap: 10px;
+            "
+          >
+            <div class="box--fill box" style="padding: 11px">
+              <div class="hstack">
+                <b>你现在走的是中继</b><span class="grow"></span
+                ><span class="tag">● 中继</span>
+              </div>
+              <div class="ph w75" style="margin-top: 7px"></div>
+              <div class="tiny muted" style="margin-top: 6px">
+                中继会经过我们的服务器转发，因此占用免费中继时长。
+              </div>
+            </div>
+
+            <div class="hstack" style="justify-content: center">
+              <span class="tiny muted"
+                >↓　换成直连（点对点，不经过服务器）</span
+              >
+            </div>
+
+            <div class="hstack" style="gap: 10px; align-items: flex-start">
+              <div class="box" style="flex: 1; padding: 10px">
+                <div class="ph-img" style="height: 52px; margin-bottom: 7px">
+                  手机热点
+                </div>
+                <div class="tiny"><b>把两端接到同一网络</b></div>
+                <div class="tiny muted">手机开热点，两台设备都连上</div>
+              </div>
+              <div class="box" style="flex: 1; padding: 10px">
+                <div class="ph-img" style="height: 52px; margin-bottom: 7px">
+                  路由器
+                </div>
+                <div class="tiny"><b>在路由器上开启 UPnP</b></div>
+                <div class="tiny muted">多数家用路由器默认关闭</div>
+              </div>
+              <div class="box" style="flex: 1; padding: 10px">
+                <div class="ph-img" style="height: 52px; margin-bottom: 7px">
+                  防火墙
+                </div>
+                <div class="tiny"><b>放行本应用的联网权限</b></div>
+                <div class="tiny muted">安全软件误拦截很常见</div>
+              </div>
+            </div>
+
+            <div class="hstack" style="margin-top: auto">
+              <span class="btn solid">重新尝试直连</span>
+              <span class="btn">查看用量明细</span>
+              <span class="grow"></span>
+              <span class="tiny muted">直连同样加密，不经过任何服务器转发</span>
+            </div>
+          </div>
+          <span class="pin" style="left: 24px; top: 52px">1</span>
+          <span class="pin" style="left: 24px; top: 200px">2</span>
+          <span class="pin" style="left: 24px; top: 342px">3</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 先把"你现在在哪"说清楚（中继 /
+            直连），用户才可能理解为什么要换。
+          </li>
+          <li>
+            <b>②</b>
+            三条建议必须是<b>普通用户能自己做</b>的动作，不是"请联系网络管理员"。这是全文唯一称得上"产品价值点"的一步
+            —— 它此前<b>没有任何界面</b>，本屏补上。
+          </li>
+          <li>
+            <b>③</b> 🔴 措辞纪律：<b>不得出现「购买 / 升级 / 开通会员可继续」</b
+            >。这一步的价值恰恰在于"不用花钱也能继续用"，写成促销就自我否定。
+          </li>
+          <li>
+            若判定直连在当前网络不可行（如企业网封 UDP），此页降级为"说明现状 +
+            提供仅查看"，不要空转。
+          </li>
+        </ul>
+      </figure>
+
+      <!-- ============ W1-08 ============ -->
+      <figure class="frame" id="w1-08">
+        <figcaption>
+          <span class="fid">W1-08</span><b>显示设置（缩放模式）</b> · 层①
+          红线执行体 · P0　|　来源 v2 §1 D9 · E6 体验红线 C1
+        </figcaption>
+        <div class="screen screen--panel">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">显示设置</span>
+          </div>
+          <div class="pad stack" style="height: calc(100% - 28px)">
+            <div>
+              <span class="label">缩放模式</span>
+              <div class="stack tiny" style="border: 1px solid var(--line)">
+                <div class="item sel">
+                  <span style="width: 14px">◉</span
+                  ><span
+                    ><b>适应窗口</b><br /><span class="muted"
+                      >保持比例，两侧留白（默认）</span
+                    ></span
+                  >
+                </div>
+                <div class="item">
+                  <span style="width: 14px">○</span
+                  ><span
+                    ><b>原始像素 1:1</b><br /><span class="muted"
+                      >画面可能超出窗口，可滚动查看</span
+                    ></span
+                  >
+                </div>
+                <div class="item">
+                  <span style="width: 14px">○</span
+                  ><span
+                    ><b>拉伸铺满</b><br /><span class="muted"
+                      >会变形 —— 仅在你明确需要时选择</span
+                    ></span
+                  >
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <span class="label">多显示器</span>
+              <div class="input">
+                显示器 1 ▾　<span class="grow"></span
+                ><span class="tiny">P0 支持切换，P1 支持同时显示</span>
+              </div>
+            </div>
+
+            <div>
+              <span class="label">画质</span>
+              <div class="input">
+                自适应 ▾<span class="grow"></span
+                ><span class="tiny muted">被降档时会在会话内明确告知</span>
+              </div>
+            </div>
+
+            <div class="box--fill box tiny pad" style="padding: 9px">
+              🔴
+              启动方式固定为<b>窗口化</b>，不得默认全屏；离开全屏后回到窗口化。
+            </div>
+            <div class="grow"></div>
+            <div class="hstack" style="justify-content: flex-end">
+              <span class="btn">取消</span><span class="btn solid">保存</span>
+            </div>
+          </div>
+          <span class="pin" style="left: 392px; top: 104px">1</span>
+          <span class="pin" style="left: 392px; top: 332px">2</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b>
+            三种缩放模式都必须有；默认「适应窗口」。<b>"拉伸"必须显式警告会变形</b>，否则用户选了以后会以为是我们画质差。
+          </li>
+          <li>
+            <b>②</b>
+            不得默认全屏（C1）——这条写进设置页作为固定行为说明，避免后续被"优化掉"。
+          </li>
+          <li>「多显示器」P0 只需能切换；同时显示属 P1。</li>
+        </ul>
+      </figure>
+
+      <!-- ============ W1-09 ============ -->
+      <figure class="frame" id="w1-09">
+        <figcaption>
+          <span class="fid">W1-09</span><b>断连后（❌ 无促销弹窗）</b> · 层①
+          红线执行体 · P0　|　来源 商业化 §13.4 红线⑤
+        </figcaption>
+        <div class="screen screen--desk" style="height: 360px">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">远程桌面</span>
+          </div>
+          <div class="body">
+            <aside class="side">
+              <div class="hstack" style="margin-bottom: 12px">
+                <span class="ico"></span><b>远程桌面</b>
+              </div>
+              <div class="tiny">
+                <div class="item sel" style="border: 0; padding: 6px 8px">
+                  我的设备
+                </div>
+                <div class="item" style="border: 0; padding: 6px 8px">
+                  操作日志
+                </div>
+                <div class="item" style="border: 0; padding: 6px 8px">设置</div>
+              </div>
+            </aside>
+            <main class="grow" style="display: flex; flex-direction: column">
+              <div class="bar">
+                <b>我的设备</b><span class="grow"></span>
+                <span class="input" style="width: 130px">搜索设备</span>
+              </div>
+              <div class="pad grow">
+                <div class="box" style="width: 176px; padding: 11px">
+                  <div class="ph-img" style="height: 60px; margin-bottom: 9px">
+                    显示器
+                  </div>
+                  <div class="hstack">
+                    <b>我的台式机</b><span class="grow"></span
+                    ><span class="tag on">在线</span>
+                  </div>
+                  <div class="hstack" style="margin-top: 9px">
+                    <span class="btn sm solid">连接</span
+                    ><span class="btn sm">更多</span>
+                  </div>
+                </div>
+              </div>
+              <div class="bar bar--bottom" style="background: #fafafa">
+                <span class="tiny">会话已结束 · 本次使用中继 xx 分钟</span>
+                <span class="tiny muted" style="text-decoration: underline"
+                  >查看明细</span
+                >
+                <span class="grow"></span>
+                <span class="tag">● 最近一次连接：中继</span>
+              </div>
+              <div
+                class="stripe"
+                style="
+                  height: 34px;
+                  border-top: 1px solid var(--line2);
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                "
+              >
+                <span class="tiny muted"
+                  >⚠️ 此处被刻意留空：断连瞬间不得出现促销 / 弹窗 /
+                  优惠横幅</span
+                >
+              </div>
+            </main>
+          </div>
+          <span class="pin" style="left: 196px; top: 268px">1</span>
+          <span class="pin" style="left: 836px; top: 268px">2</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 断连后只给<b>一行中性事实</b>（用了多少）+
+            一个不显眼的「查看明细」。不做弹窗、不做倒计时、不做优惠。
+          </li>
+          <li>
+            <b>②</b> ⚠️
+            斜纹区是<b>故意留空的位置标注</b>，用来提醒开发与设计：这里什么都不放。把
+            D1 的透明度资产在这一刻换成促销，等于自己把它转成负债（红线⑤）。
+          </li>
+          <li>「查看明细」用下划线文字链接而不是按钮 —— 视觉权重必须低。</li>
+        </ul>
+      </figure>
+    </div>
+
+    <p class="pager">
+      下一页：<a href="w2-被控端.html">W2 · 被控端 →</a>　·　返回
+      <a href="index.html">索引</a>
+    </p>
+  </body>
+</html>

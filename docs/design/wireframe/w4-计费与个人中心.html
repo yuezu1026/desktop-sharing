@@ -1,0 +1,890 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>W4 · 计费与个人中心（低保真）</title>
+    <link rel="stylesheet" href="wireframe.css" />
+  </head>
+  <body>
+    <nav class="topbar">
+      <a href="index.html">索引</a>
+      <a href="w1-控制端-连接与额度.html">W1 控制端·连接与额度</a>
+      <a href="w2-被控端.html">W2 被控端</a>
+      <a href="w3-账号与设备管理.html">W3 账号与设备</a>
+      <a href="w4-计费与个人中心.html" aria-current="page">W4 计费与个人中心</a>
+      <a href="w5-合规实名与运营台.html">W5 合规·实名·运营台</a>
+      <a href="w6-移动端手持.html">W6 移动端手持</a>
+    </nav>
+
+    <h1>W4 · 计费与个人中心</h1>
+    <p class="lede">
+      这是<b>合规密度最高</b>的一页。三条硬约束贯穿始终：
+      <b>① iOS 版必须单独一套</b>（零站外支付引导）；
+      <b>② 免费给的东西必须显式写「免费」</b>（否则钩子反向失效）；
+      <b>③ 取消续费不得比开通更难</b>。
+    </p>
+
+    <div class="legend">
+      🔴
+      <b>数值纪律：</b
+      >本页所有价格与额度均为<b>示意占位</b>，实际由<b>定价版本管理（D14）后端下发</b>；
+      且 <code>成本测算表</code> §10.2 的 TURN
+      报价到手前，<b>对外材料不得出现具体额度数字</b>。
+    </div>
+
+    <h2>1 · 购买页（非 iOS / iOS 两套对照）</h2>
+
+    <div class="flow">
+      <!-- ============ W4-01 ============ -->
+      <figure class="frame" id="w4-01">
+        <figcaption>
+          <span class="fid">W4-01</span><b>购买页 · 最小版（非 iOS）</b> · 层③
+          常规商业化界面 · P0　|　来源 商业化 §13.2#7
+        </figcaption>
+        <div class="screen screen--desk" style="height: 500px">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">个人版</span>
+          </div>
+          <div
+            class="pad"
+            style="height: calc(100% - 28px); display: flex; gap: 16px"
+          >
+            <div class="grow stack">
+              <div class="box--fill box" style="padding: 12px">
+                <div class="hstack">
+                  <b>个人版</b><span class="grow"></span>
+                  <span class="tag on">年付</span><span class="tag">月付</span>
+                </div>
+                <div class="hstack" style="margin-top: 8px">
+                  <b style="font-size: 22px">¥158</b
+                  ><span class="tiny muted">/ 年（约 ¥13.2 / 月）</span>
+                  <span class="grow"></span
+                  ><span class="tiny muted">价格与权益由服务端下发</span>
+                </div>
+              </div>
+
+              <div class="box" style="padding: 11px">
+                <b>买的是什么？</b>
+                <div class="tiny" style="margin-top: 6px; line-height: 1.8">
+                  买的是<b>更多的中继时长</b>，<b>不是解锁功能</b>。<br />
+                  「手机被控」「直连不限时长」「150
+                  台设备」在免费版里就有，付费后也不变。
+                </div>
+              </div>
+
+              <div class="box" style="padding: 11px">
+                <b>个人版包含</b>
+                <div class="tiny" style="margin-top: 6px">
+                  <div class="item" style="border: 0; padding: 4px 0">
+                    · 更大的中继时长额度（数值以后端下发为准）
+                  </div>
+                  <div class="item" style="border: 0; padding: 4px 0">
+                    · 更高的中继带宽优先权
+                  </div>
+                  <div class="item" style="border: 0; padding: 4px 0">
+                    · 全部免费版能力（不减少、不加锁）
+                  </div>
+                </div>
+              </div>
+
+              <div class="box" style="padding: 11px">
+                <b>支付方式</b>
+                <div class="hstack" style="margin-top: 7px">
+                  <span class="btn sm">微信支付</span
+                  ><span class="btn sm">支付宝</span>
+                </div>
+                <div class="tiny muted" style="margin-top: 8px">
+                  支持开具发票 · 是否有企业抬头可在支付前填写
+                </div>
+              </div>
+
+              <div class="grow"></div>
+              <span class="btn solid block" style="min-height: 32px"
+                >立即开通</span
+              >
+              <div class="tiny muted" style="text-align: center">
+                开通即表示同意《自动续费服务协议》
+              </div>
+            </div>
+
+            <div style="width: 290px" class="stack">
+              <div class="box" style="padding: 11px">
+                <b>续费说明（必须就地写清）</b>
+                <div class="tiny" style="margin-top: 7px; line-height: 1.8">
+                  · 年付：到期前需你确认，<b>不会自动扣费</b><br />
+                  · 月付 ¥24：到期自动续费（连续包月）<br />
+                  · 自动续费扣费前 <b>5 天</b>会提醒你<br />
+                  · 可随时取消，取消后当期仍可用
+                </div>
+                <div class="hstack" style="margin-top: 10px">
+                  <span class="btn sm">管理自动续费</span>
+                  <span class="tiny muted">（与开通同一层级）</span>
+                </div>
+              </div>
+
+              <div class="box" style="padding: 11px">
+                <b>还没决定？</b>
+                <div class="tiny" style="margin-top: 7px">
+                  免费版长期可用。若你的两台设备在网络条件合适时能走直连，<b>不用付费也能一直用</b>。
+                </div>
+                <div class="hstack" style="margin-top: 9px">
+                  <span class="btn sm">查看权益对比</span
+                  ><span class="btn sm">了解直连</span>
+                </div>
+              </div>
+
+              <div class="box tiny" style="padding: 9px; border-style: dashed">
+                提示：中继时长不足时，优先引导用户「转直连」，不是优先卖货（见
+                W1-07）。
+              </div>
+            </div>
+          </div>
+          <span class="pin" style="left: 204px; top: 176px">1</span>
+          <span class="pin" style="left: 840px; top: 326px">2</span>
+          <span class="pin" style="left: 24px; top: 56px">3</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 🔴
+            <b>开门见山说清"买的是中继时长，不是解锁功能"</b
+            >。这是本产品与竞品最大的差别，也是避免"付费后发现功能没变"客诉的关键。
+          </li>
+          <li>
+            <b>②</b>
+            自动续费条款<b>就地明示</b>，且「管理自动续费」与开通按钮同级可见（红线：取消不得比开通更难）。
+          </li>
+          <li>
+            <b>③</b> 价格与权益全部<b>后端下发</b>（D14 版本化），前端不得硬编码
+            —— 调价、活动价、渠道分价都靠这一条活下来。
+          </li>
+          <li>
+            免费版说明放在购买页里是<b>有意的</b>：它降低决策压力，也让"直连不花钱"这条主主张在付款前就说清楚。
+          </li>
+        </ul>
+      </figure>
+
+      <!-- ============ W4-02 ============ -->
+      <figure class="frame" id="w4-02">
+        <figcaption>
+          <span class="fid">W4-02</span
+          ><b>购买页 · iOS 版对照（🔴 零站外支付引导）</b> · 层① 合规硬项 ·
+          P0　|　来源 E6 <b>A5</b> · 商业化 §13.4 红线④（App Store 3.1.1）
+        </figcaption>
+        <div class="screen screen--desk" style="height: 500px">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px"
+              >个人版 · iOS 版（同一个页面的另一套实现）</span
+            >
+          </div>
+          <div
+            class="pad"
+            style="height: calc(100% - 28px); display: flex; gap: 16px"
+          >
+            <div style="width: 360px" class="stack">
+              <div class="box--fill box" style="padding: 12px">
+                <div class="hstack">
+                  <b>个人版</b><span class="grow"></span
+                  ><span class="tag on">年付</span><span class="tag">月付</span>
+                </div>
+                <div class="hstack" style="margin-top: 8px">
+                  <b style="font-size: 20px">¥158</b>
+                  <span class="tiny muted">/ 年</span><span class="grow"></span
+                  ><span class="tiny muted">含税</span>
+                </div>
+              </div>
+              <div class="box" style="padding: 11px">
+                <b>买的是什么？</b>
+                <div class="tiny" style="margin-top: 6px">
+                  买的是更多的中继时长，不是解锁功能。（与 W4-01 同）
+                </div>
+              </div>
+              <div class="box" style="padding: 11px">
+                <span class="label">支付方式</span>
+                <div class="hstack">
+                  <span class="btn sm">通过 App Store 购买</span>
+                </div>
+                <div class="tiny muted" style="margin-top: 8px">
+                  订阅由 Apple 管理；取消或变更请在「设置 → Apple ID →
+                  订阅」中操作。
+                </div>
+              </div>
+              <div class="grow"></div>
+              <span class="btn solid block" style="min-height: 32px"
+                >继续（由 App Store 处理）</span
+              >
+            </div>
+
+            <div class="grow stack">
+              <div class="box" style="padding: 11px">
+                <b>🔴 iOS 与非 iOS 的差异清单（开发按此实现）</b>
+              </div>
+              <table class="tbl" style="border: 1px solid var(--line)">
+                <thead>
+                  <tr>
+                    <th style="width: 150px">元素</th>
+                    <th style="width: 110px">iOS 版</th>
+                    <th>说明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>「前往网页购买」类文案</td>
+                    <td><span class="tag">❌ 禁止</span></td>
+                    <td>不得出现官网、扫码、跳转浏览器</td>
+                  </tr>
+                  <tr>
+                    <td>「网页版更便宜 / 更划算」</td>
+                    <td><span class="tag">❌ 禁止</span></td>
+                    <td>跨渠道比价一律不得出现</td>
+                  </tr>
+                  <tr>
+                    <td>价格数字</td>
+                    <td><span class="tag">△ 允收</span></td>
+                    <td>可展示 App Store 定价，<b>不得与站外价格并列</b></td>
+                  </tr>
+                  <tr>
+                    <td>权益对比表</td>
+                    <td><span class="tag">△ 单独一套</span></td>
+                    <td>iOS 版不含跨平台比价（见 W4-03 备注）</td>
+                  </tr>
+                  <tr>
+                    <td>取消订阅</td>
+                    <td><span class="tag on">✅ 必给</span></td>
+                    <td>必须显式给出 Apple 操作路径指引</td>
+                  </tr>
+                  <tr>
+                    <td>客服 / 发票</td>
+                    <td><span class="tag">△ 允收</span></td>
+                    <td>可提供发票入口，但不得指向站外支付</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="box tiny" style="padding: 9px; border-style: dashed">
+                验收方式（A5）：iOS 包内全文检索，<b>不得命中</b>「前往网页购买
+                / 去官网 / 更便宜 / 扫码开通」等词。
+              </div>
+            </div>
+          </div>
+          <span class="pin" style="left: 24px; top: 246px">1</span>
+          <span class="pin" style="left: 400px; top: 100px">2</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 🔴 iOS 版唯一的支付入口是 App
+            Store，<b>连一句"也可以去官网"都不行</b>。违反 = 拒审。
+          </li>
+          <li>
+            <b>②</b> 权益对比表 <b>iOS 与非 iOS 各一套</b> ——
+            这是最容易漏、且一旦漏了就要<b>整页返工</b>的地方（红线④ 原话）。
+          </li>
+          <li>
+            iOS 侧订阅状态<b>以 Apple 收据为准</b>，本地缓存不可信（见 W4-04）。
+          </li>
+        </ul>
+      </figure>
+    </div>
+
+    <h2>2 · 权益对比表与个人中心</h2>
+
+    <div class="flow">
+      <!-- ============ W4-03 ============ -->
+      <figure class="frame" id="w4-03">
+        <figcaption>
+          <span class="fid">W4-03</span><b>权益对比表（4 档 × 权益）</b> · 层③
+          常规商业化 · P1　|　来源 商业化 §13.3 · §13.4 红线③ · D15
+        </figcaption>
+        <div class="screen screen--desk" style="height: 520px">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">权益对比 · 非 iOS 版</span>
+          </div>
+          <div class="pad" style="height: calc(100% - 28px)">
+            <table class="tbl" style="border: 1px solid var(--line)">
+              <thead>
+                <tr>
+                  <th style="width: 230px">权益</th>
+                  <th>免费版</th>
+                  <th>个人版 · 年付</th>
+                  <th>个人版 · 月付</th>
+                  <th>插件</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <b>手机被控</b
+                    ><span class="tiny muted">（对手 ¥25/月）</span>
+                  </td>
+                  <td><b>✅ 免费</b></td>
+                  <td>✅</td>
+                  <td>✅</td>
+                  <td>✅</td>
+                </tr>
+                <tr>
+                  <td><b>直连时长</b></td>
+                  <td><b>不限时长</b></td>
+                  <td>不限时长</td>
+                  <td>不限时长</td>
+                  <td>不限时长</td>
+                </tr>
+                <tr>
+                  <td>
+                    <b>中继时长</b
+                    ><span class="tiny muted">（唯一付费点）</span>
+                  </td>
+                  <td>
+                    xx / 月<br /><span class="tiny muted">（后端下发）</span>
+                  </td>
+                  <td>xx / 月</td>
+                  <td>xx / 月</td>
+                  <td>—</td>
+                </tr>
+                <tr>
+                  <td>画质档位</td>
+                  <td>4 Mbps / 30fps / 1080p</td>
+                  <td>同</td>
+                  <td>同</td>
+                  <td>同</td>
+                </tr>
+                <tr>
+                  <td>通道数 / 会话数</td>
+                  <td colspan="4" class="muted">
+                    ⚠️ 未定案 —— 定案前此格不得填数、不得作主张
+                  </td>
+                </tr>
+                <tr>
+                  <td>价格</td>
+                  <td><b>¥0</b></td>
+                  <td><b>¥158/年</b></td>
+                  <td><b>¥24/月</b></td>
+                  <td class="muted">P1</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="box--fill box" style="padding: 11px; margin-top: 12px">
+              <b>🔴 免费版优势行（必须并列写出，且紧邻两条真优势）</b>
+              <div class="tiny" style="margin-top: 7px; line-height: 1.9">
+                · 免费版设备数 <b>150 台</b>　|　ToDesk 免费版 <b>100 台</b>、其
+                ¥158/年 专业版 <b>150 台</b><br />
+                ·
+                写法要求：与「手机被控免费」「直连不限时长」<b>同屏并列</b>；<b>不得单独成标语</b>、不得写成"设备数是我们优势"
+              </div>
+            </div>
+          </div>
+          <span class="pin" style="left: 250px; top: 96px">1</span>
+          <span class="pin" style="left: 24px; top: 334px">2</span>
+          <span class="pin" style="left: 24px; top: 404px">3</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 🔴
+            <b>「手机被控」在免费版栏必须显式写「✅ 免费」</b
+            >。若把这一行放在付费档下、免费档留空，用户会以为"免费版没有它" ⇒
+            我们花了成本送出去，用户却以为没送（钩子反向失效）。
+          </li>
+          <li>
+            <b>②</b> 🔴 <b>设备数不得出现在付费档权益列下</b>（两档都是 150
+            台，付费档写它就是给用户"付费才给 150
+            台"的错觉）。因此它必须写成<b>免费版优势行</b>。
+          </li>
+          <li>
+            <b>③</b> 同时<b>不得回避</b>这一行 —— 用户会自己去 ToDesk 页面看到
+            150 台，回避等于把解释权让给对手。做法 =
+            <b>并列两家数值 + 紧邻两条真优势 + 不当主标语</b>（D15 口径）。
+          </li>
+          <li>
+            通道数 /
+            会话数<b>未定案</b>：未定案前不得主张（这是最容易在文案里偷偷填成优势的地方）。
+          </li>
+          <li>iOS 版本页<b>另做一套</b>：不含跨渠道比价。</li>
+        </ul>
+      </figure>
+
+      <!-- ============ W4-04 ============ -->
+      <figure class="frame" id="w4-04">
+        <figcaption>
+          <span class="fid">W4-04</span
+          ><b>个人中心 · 订阅状态（iOS / 非 iOS 两套）</b> · 层③ 常规界面 ·
+          P1　|　来源 账号设计 §4.1
+        </figcaption>
+        <div class="screen screen--panel">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">个人中心</span>
+          </div>
+          <div
+            class="pad"
+            style="
+              height: calc(100% - 28px);
+              display: flex;
+              flex-direction: column;
+              gap: 10px;
+            "
+          >
+            <div class="box--fill box" style="padding: 11px">
+              <div class="hstack">
+                <span class="ico"></span>
+                <span
+                  ><b>个人版 · 年付</b><br /><span class="tiny muted"
+                    >138****6721</span
+                  ></span
+                >
+                <span class="grow"></span><span class="tag on">生效中</span>
+              </div>
+            </div>
+
+            <div class="stack tiny" style="border: 1px solid var(--line)">
+              <div class="item">
+                <span class="muted">当前档位</span><span class="grow"></span
+                ><span>个人版（年付）</span>
+              </div>
+              <div class="item">
+                <span class="muted">到期时间</span><span class="grow"></span
+                ><span>2027-03-01</span>
+              </div>
+              <div class="item">
+                <span class="muted">自动续费</span><span class="grow"></span
+                ><span class="tag">未开启</span>
+              </div>
+              <div class="item">
+                <span class="muted">下次扣费</span><span class="grow"></span
+                ><span>—</span>
+              </div>
+            </div>
+
+            <div class="box" style="padding: 10px">
+              <span class="label">iOS 版差异（同一页面的另一套）</span>
+              <div class="tiny">
+                <div class="item" style="border: 0; padding: 4px 0">
+                  · 订阅状态<b>以 Apple 收据为准</b>，不读本地缓存
+                </div>
+                <div class="item" style="border: 0; padding: 4px 0">
+                  · 「管理自动续费」指向 Apple 订阅页，<b>不在 App 内处理</b>
+                </div>
+                <div class="item" style="border: 0; padding: 4px 0">
+                  · 需处理"收据未同步"的中间态（显示"正在与 App Store 确认"）
+                </div>
+              </div>
+            </div>
+
+            <div class="hstack">
+              <span class="btn sm">用量明细</span
+              ><span class="btn sm">账单与发票</span>
+              <span class="btn sm">管理自动续费</span>
+            </div>
+          </div>
+          <span class="pin" style="left: 390px; top: 236px">1</span>
+          <span class="pin" style="left: 24px; top: 92px">2</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 🔴 iOS 侧订阅状态<b>必须以后端校验 Apple 收据的结果为准</b
+            >；本地缓存会撒谎（用户在 Apple 侧退订了，我方 App
+            还显示"生效中"，就是投诉来源）。
+          </li>
+          <li>
+            <b>②</b> 四项信息缺一不可：档位 / 到期时间 / 是否自动续费 /
+            下次扣费金额与日期。<b
+              >"下次扣多少钱"是最容易被漏掉、也最容易被投诉的一项。</b
+            >
+          </li>
+        </ul>
+      </figure>
+
+      <!-- ============ W4-05 ============ -->
+      <figure class="frame" id="w4-05">
+        <figcaption>
+          <span class="fid">W4-05</span><b>用量明细页（🔑 反客诉主体）</b> · 层③
+          常规界面 · P1　|　来源 账号设计 §4.2 · 商业化 §13.3
+        </figcaption>
+        <div class="screen screen--desk" style="height: 460px">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">用量明细</span>
+          </div>
+          <div class="bar">
+            <b>中继用量</b><span class="grow"></span>
+            <span class="hstack tiny"
+              ><span class="tag on">本月</span><span class="tag">上月</span
+              ><span class="tag">自定义</span></span
+            >
+            <span class="btn sm">导出</span>
+          </div>
+          <div class="pad" style="padding-bottom: 0">
+            <div class="hstack" style="gap: 10px">
+              <div class="box--fill box grow" style="padding: 9px">
+                <span class="tiny muted">本期已用（中继）</span>
+                <div><b>xx 分钟</b></div>
+              </div>
+              <div class="box--fill box grow" style="padding: 9px">
+                <span class="tiny muted">本期剩余</span>
+                <div><b>约 xx 分钟</b></div>
+              </div>
+              <div class="box--fill box grow" style="padding: 9px">
+                <span class="tiny muted">直连时长（不计费）</span>
+                <div><b>xx 小时</b></div>
+              </div>
+            </div>
+          </div>
+          <table class="tbl" style="margin-top: 12px">
+            <thead>
+              <tr>
+                <th style="width: 160px">时间</th>
+                <th style="width: 110px">连接方式</th>
+                <th style="width: 90px">时长</th>
+                <th style="width: 110px">流量</th>
+                <th style="width: 110px">扣除</th>
+                <th>对端设备</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>09-14 10:02–10:41</td>
+                <td><span class="tag on">直连</span></td>
+                <td>39 分钟</td>
+                <td>—</td>
+                <td class="muted">0（直连不计费）</td>
+                <td>我的台式机</td>
+              </tr>
+              <tr>
+                <td>09-13 21:10–21:32</td>
+                <td><span class="tag">中继</span></td>
+                <td>22 分钟</td>
+                <td>0.66 GB</td>
+                <td>22 分钟</td>
+                <td>爸爸的笔记本</td>
+              </tr>
+              <tr>
+                <td>09-12 20:05–20:08</td>
+                <td><span class="tag">中继</span></td>
+                <td>3 分钟</td>
+                <td>0.09 GB</td>
+                <td>3 分钟</td>
+                <td>爸爸的笔记本</td>
+              </tr>
+              <tr>
+                <td colspan="6" class="muted tiny">
+                  …（按时间倒序，每笔中继会话一行）
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="bar bar--bottom">
+            <span class="tiny muted"
+              >本页与客服操作台读的是<b>同一份权威数据</b>（账号设计 §5.1）——
+              避免"用户看到 22 分钟、客服看到 26 分钟"。</span
+            >
+          </div>
+          <span class="pin" style="left: 24px; top: 150px">1</span>
+          <span class="pin" style="left: 400px; top: 250px">2</span>
+          <span class="pin" style="left: 24px; top: 424px">3</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 三个数字必须同屏：<b
+              >中继已用 / 中继剩余 / 直连时长（不计费）</b
+            >。第三个是本产品最有说服力的数字，也是最容易被漏掉的一个。
+          </li>
+          <li>
+            <b>②</b> 每一笔中继会话都要有：时间 / 时长 / 流量 / 扣除量 /
+            <b>连接方式</b>。<b>连接方式</b>这一列是"为什么这次没扣"的直接证据。
+          </li>
+          <li>
+            <b>③</b> 🔴
+            必须与后台操作台<b>同源同一份数据</b>。这不是体验优化，而是"计量争议时能否自证"的基础设施。
+          </li>
+          <li>
+            P0 不做本页（P1），但<b>P0 的数据结构必须现在就是对的</b>，否则 P1
+            上线时历史数据无法回溯。
+          </li>
+        </ul>
+      </figure>
+
+      <!-- ============ W4-06 ============ -->
+      <figure class="frame" id="w4-06">
+        <figcaption>
+          <span class="fid">W4-06</span
+          ><b>账单 / 发票 / 退款状态（含五条联动）</b> · 层③ 常规界面 ·
+          P1　|　来源 账号设计 §4.3 · §4.3.1
+        </figcaption>
+        <div class="screen screen--desk" style="height: 460px">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">账单与发票</span>
+          </div>
+          <div class="tabs" style="padding-left: 12px">
+            <span class="tab on">订单</span><span class="tab">发票</span
+            ><span class="tab">退款</span>
+          </div>
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th style="width: 170px">时间</th>
+                <th style="width: 180px">商品</th>
+                <th style="width: 100px">金额</th>
+                <th style="width: 120px">渠道</th>
+                <th style="width: 110px">状态</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>2026-03-01 10:20</td>
+                <td>个人版 · 年付</td>
+                <td>¥158.00</td>
+                <td>微信支付</td>
+                <td><span class="tag on">已支付</span></td>
+                <td>
+                  <span class="btn sm">开发票</span>
+                  <span class="btn sm">申请退款</span>
+                </td>
+              </tr>
+              <tr>
+                <td>2026-02-01 09:11</td>
+                <td>个人版 · 月付</td>
+                <td>¥24.00</td>
+                <td>支付宝</td>
+                <td><span class="tag">退款中</span></td>
+                <td><span class="btn sm">查看进度</span></td>
+              </tr>
+              <tr>
+                <td>2026-01-01 08:02</td>
+                <td>个人版 · 月付</td>
+                <td>¥24.00</td>
+                <td>支付宝</td>
+                <td><span class="tag">已退款</span></td>
+                <td><span class="btn sm">查看</span></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="pad" style="padding-top: 12px">
+            <div class="box" style="padding: 11px">
+              <b>🔴 退款与额度 / 订阅的联动（开发按此实现，不是客服裁量）</b>
+              <div class="tiny" style="margin-top: 7px; line-height: 1.9">
+                ① 可退前提：<b>7 天内 且 中继用量为 0</b
+                >（硬判定，非人工判断）<br />
+                ② 退款成功后<b>立即回收</b>：订阅终止、未用完额度立即作废 ——
+                <span class="no">不得</span>"钱退了额度还留着"<br />
+                ③ 已消耗的流量不追偿（订单备注保留消耗记录）<br />
+                ④
+                <span class="no">不得</span
+                >用额度补偿替代退款（退款只能用钱；额度补偿只适用于我方故障）<br />
+                ⑤ 同账号
+                <b>180 天内最多 1 次</b>「未使用可退」，重复请求转人工审核
+              </div>
+            </div>
+            <div class="tiny muted" style="margin-top: 10px">
+              退款执行走渠道商户后台，用户侧只保留「查看退款状态」入口。
+            </div>
+          </div>
+          <span class="pin" style="left: 560px; top: 130px">1</span>
+          <span class="pin" style="left: 24px; top: 276px">2</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 「申请退款」必须可见（不能只留客服电话）——
+            但被拒时要给出<b>硬判定理由</b>（"已超过 7
+            天"或"已有中继用量"），不写"审核不通过"。
+          </li>
+          <li>
+            <b>②</b> 🔴 五条联动必须落在系统里，而不是客服的脑子里。尤其第 ②④
+            条：<b>钱退了额度还留着</b>是资金漏洞，<b>用额度抵退款</b>是投诉放大器。
+          </li>
+          <li>发票是"必须支持"，不是"可选"（账号设计 §4.3）。</li>
+        </ul>
+      </figure>
+
+      <!-- ============ W4-07 ============ -->
+      <figure class="frame" id="w4-07">
+        <figcaption>
+          <span class="fid">W4-07</span
+          ><b>取消续费路径（🔴 不得比开通更难）</b> · 层① 合规硬项 · P0　|　来源
+          账号设计 §4.4
+        </figcaption>
+        <div class="screen screen--desk" style="height: 440px">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">管理自动续费</span>
+          </div>
+          <div
+            class="pad"
+            style="height: calc(100% - 28px); display: flex; gap: 16px"
+          >
+            <div class="box" style="width: 380px; padding: 13px">
+              <b>当前：个人版 · 月付 ¥24，每月自动续费</b>
+              <div class="tiny" style="margin-top: 9px; line-height: 1.9">
+                · 下次扣费：<b>2026-04-01</b>（还有 17 天）<br />
+                · 取消后：<b>当前周期可用到 2026-03-31</b>，之后不再扣费<br />
+                · 取消不影响已购买时长，也不影响设备与数据
+              </div>
+              <div
+                style="height: 1px; background: var(--line2); margin: 14px 0"
+              ></div>
+              <div class="hstack">
+                <span class="btn solid">取消自动续费</span>
+                <span class="btn">继续订阅</span>
+              </div>
+              <div class="tiny muted" style="margin-top: 10px">
+                ⚠️ 「取消」为实心主按钮、「继续订阅」为描边次按钮 ——
+                <b>不得反过来</b>。
+              </div>
+            </div>
+
+            <div class="grow stack">
+              <div class="box" style="padding: 11px">
+                <b>路径深度对照（P0 验收）</b>
+                <div class="tiny" style="margin-top: 8px">
+                  <div class="item" style="border: 0; padding: 4px 0">
+                    开通：个人中心 → 订阅 → 选择档位 → 支付　<b>3 步</b>
+                  </div>
+                  <div class="item" style="border: 0; padding: 4px 0">
+                    取消：个人中心 → 订阅 → 取消自动续费　<b>3 步</b>
+                  </div>
+                </div>
+                <div class="tiny muted" style="margin-top: 6px">
+                  取消的步数<b>不得超过</b>开通。
+                </div>
+              </div>
+              <div class="box" style="padding: 11px">
+                <b>🔴 不得藏在深层菜单</b>
+                <div class="tiny" style="margin-top: 8px">
+                  取消入口<b>不得</b>放在：帮助中心、FAQ、客服工单、"更多设置 →
+                  高级 → 账户 → 订阅管理"里。<br />
+                  必须与「订阅」同级，且在下单页（W4-01）就已给出入口。
+                </div>
+              </div>
+              <div class="box" style="padding: 11px">
+                <b>iOS 版怎么办</b>
+                <div class="tiny" style="margin-top: 8px">
+                  本页在 iOS 版<b>不出现取消按钮</b>，改为显式指引： 「设置 →
+                  Apple ID → 订阅 → 选择本订阅 → 取消」。<br />
+                  指引必须能<b>一次看懂</b>，不能只写"请前往 App Store 管理"。
+                </div>
+              </div>
+            </div>
+          </div>
+          <span class="pin" style="left: 24px; top: 196px">1</span>
+          <span class="pin" style="left: 420px; top: 100px">2</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 🔴
+            取消与继续<b>并列同屏、权重不反转</b>。任何把"继续订阅"做成主按钮的设计都属暗黑模式。
+          </li>
+          <li>
+            <b>②</b> 步数对照写进页面，是为了让这条约束<b>可验收</b> ——
+            否则下次改版就会被"顺手"挪进二级菜单。
+          </li>
+          <li>
+            必须在取消前说清「取消后还能用到哪天」，否则用户以为立刻失效。
+          </li>
+        </ul>
+      </figure>
+
+      <!-- ============ W4-08 ============ -->
+      <figure class="frame" id="w4-08">
+        <figcaption>
+          <span class="fid">W4-08</span><b>续费前 5 日提醒（合规硬项）</b> · 层①
+          合规硬项 · P0　|　来源 E6 <b>A4</b> · 商业化 §13.2#8
+        </figcaption>
+        <div class="screen screen--desk" style="height: 400px">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">通知与消息（自有渠道）</span>
+          </div>
+          <div
+            class="pad"
+            style="height: calc(100% - 28px); display: flex; gap: 16px"
+          >
+            <div class="box" style="width: 400px; padding: 13px">
+              <div class="hstack">
+                <b>你的订阅将在 5 天后继续</b><span class="grow"></span
+                ><span class="tiny muted">2026-03-27</span>
+              </div>
+              <div class="tiny" style="margin-top: 10px; line-height: 1.9">
+                个人版 · 月付将在 <b>2026-04-01</b> 自动续费
+                <b>¥24.00</b>。<br />
+                如需停止，可在到期前随时取消，取消后当前周期仍可使用。
+              </div>
+              <div class="hstack" style="margin-top: 14px">
+                <span class="btn">管理自动续费</span
+                ><span class="btn">查看账单</span>
+              </div>
+              <div class="hstack" style="margin-top: 12px">
+                <span class="tag on">App 内消息</span
+                ><span class="tag on">邮件</span
+                ><span class="tag">（可选）短信</span>
+              </div>
+            </div>
+
+            <div class="grow stack">
+              <div class="box" style="padding: 11px">
+                <b>为什么必须做</b>
+                <div class="tiny" style="margin-top: 7px">
+                  连续包月属自动续费，扣费前须显著提醒（合规硬项 A4）。<b
+                    >不做 = P0 上线即违规。</b
+                  >
+                </div>
+              </div>
+              <div class="box" style="padding: 11px">
+                <b>⚠️ 与"促销弹窗"的区别（红线⑤）</b>
+                <div class="tiny" style="margin-top: 7px">
+                  本提醒是<b>中性合规告知</b>：只说时间、金额、怎么取消。<br />
+                  <span class="no">不得</span
+                  >夹带"续费立减""升级年付更划算""最后机会"等推销内容。
+                </div>
+              </div>
+              <div class="box" style="padding: 11px">
+                <b>iOS 版</b>
+                <div class="tiny" style="margin-top: 7px">
+                  iOS 侧仍发 App 内消息（自有渠道），但「管理自动续费」指向
+                  Apple 订阅页。
+                </div>
+              </div>
+            </div>
+          </div>
+          <span class="pin" style="left: 24px; top: 60px">1</span>
+          <span class="pin" style="left: 24px; top: 180px">2</span>
+          <span class="pin" style="left: 440px; top: 196px">3</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b>
+            提醒必须包含三件事：<b>什么时候扣、扣多少、怎么取消</b>。少任何一件，这个提醒就没起到作用。
+          </li>
+          <li>
+            <b>②</b> 提醒里必须有直达的「管理自动续费」按钮 ——
+            让用户在被告知的那一刻就能行动。
+          </li>
+          <li>
+            <b>③</b> 🔴
+            这是<b>合规告知</b>，不是营销位。一旦夹带促销，就从"我们提醒你"变成"我们又来卖东西了"。
+          </li>
+          <li>
+            时点：扣费前 <b>5 日</b>（自有渠道，不依赖 App Store 的提醒）。
+          </li>
+        </ul>
+      </figure>
+    </div>
+
+    <p class="pager">
+      ← 上一页：<a href="w3-账号与设备管理.html">W3 · 账号与设备管理</a
+      >　·　下一页：<a href="w5-合规实名与运营台.html"
+        >W5 · 合规 · 实名 · 运营台 →</a
+      >　·　返回 <a href="index.html">索引</a>
+    </p>
+  </body>
+</html>
