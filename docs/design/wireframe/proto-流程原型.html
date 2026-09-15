@@ -795,12 +795,12 @@
           h +=
             '<div class="bar" style="background:#fafafa">' +
             tag("● 对方正在查看本机画面", true) +
-            '<span class="grow"></span><span class="tiny muted">只读</span></div>';
+            '<span class="grow"></span><span class="tiny muted">仅查看</span></div>';
           h += '<div class="pane-slot"><div class="pad stack grow">';
           h +=
             '<div class="box box--fill" style="padding:10px"><b>对方现在只能看，不能操作</b><div class="tiny muted" style="margin-top:5px">你的鼠标、键盘不会被对方使用。若想结束，点「断开」。</div></div>';
           h +=
-            '<div class="ph-img" style="height:80px">本机桌面（只读查看中）</div>';
+            '<div class="ph-img" style="height:80px">本机桌面（仅查看中）</div>';
           h +=
             '<div class="hstack"><span class="btn block solid" onclick="go(\'hostDisconnect\')">断开连接</span></div>';
           h +=
@@ -832,7 +832,7 @@
           confirm: "等待本机确认",
           connected: "正在被控制",
           "request-ctl": "收到恢复控制请求",
-          viewonly: "被查看（只读）",
+          viewonly: "被查看（仅查看）",
           ended: "已断开",
         };
         document.getElementById("h-state").textContent = hn[st.host] || st.host;

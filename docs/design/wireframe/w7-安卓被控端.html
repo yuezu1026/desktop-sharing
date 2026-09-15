@@ -27,7 +27,9 @@
       当被控端有<b>三个不可回避的差异</b>：① 免 Root
       能力<b>必须由人在手机旁逐项授权</b>；② 系统<b>强制要求前台服务通知</b>；③
       <b>各厂商 ROM 的省电策略</b>决定「被连接」能不能持久。
-      <br />本页 <b>6 个条目 / 6 张图</b>，<b>全部为 P0</b>。
+      <br />本页 <b>7 个条目 / 7 张图</b>，<b>全部为 P0</b>（其中
+      <a href="#w7-07">W7-07</a>「收到连接请求」由 `[D27]`
+      跨帧一致性收口补入）。
     </p>
 
     <div class="legend">
@@ -153,7 +155,7 @@
         <div class="screen screen--mob">
           <div class="bar">
             <b>远程桌面 · 本机</b><span class="grow"></span
-            ><span class="tag on">● 允许被连接</span>
+            ><span class="btn sm solid" data-noop>● 允许被连接</span>
           </div>
           <div class="pad" style="padding: 10px">
             <div class="box" style="padding: 12px">
@@ -251,6 +253,15 @@
           </li>
           <li>
             被连接时的「正在被控制」常驻提示见 <a href="#w7-03">W7-03</a>；本屏只在状态位留一个入口。
+          </li>
+          <li>
+            🔴 <b>`[D27]` 补漏（README §11.11.2 `R26`）</b
+            >：顶部那个「● 允许被连接」此前是<b>纯文本 tag</b> ——
+            <b>长得像状态、却点不动</b>。现已改为<b>可点总开关</b>（`.btn.solid`，与原
+            <a href="w2-被控端.html#w2-09">W2-09</a>
+            托盘 / 主界面总开关<b>同一状态</b>），并明确两件事：① 它<b>就是总开关</b>（点击即切换）；
+            ② 「有人请求连接时怎么办」的界面此前<b>整块缺失</b>，现由
+            <a href="#w7-07">W7-07</a> 承担（手机侧<b>每次</b>人工确认）。
           </li>
         </ul>
       </figure>
@@ -613,6 +624,111 @@
           <li>
             分档结论必须<b>可回退</b>：系统更新后分档可能变化 ⇒
             文案里注明「随系统版本更新」，避免用户拿旧结论当承诺。
+          </li>
+        </ul>
+      </figure>
+
+      <!-- ============ W7-07 ============ -->
+      <figure class="frame" id="w7-07">
+        <figcaption>
+          <span class="fid">W7-07</span
+          ><b>收到连接请求（🔴 手机侧必须每次人工确认）</b> · 层① 红线执行体 ·
+          P0　|　来源 v2 §3.6 界面口径 · 账号设计 §2.6 · README §11.11.2
+          <b>R26</b> · `[D27]` 新增
+        </figcaption>
+        <div class="screen screen--mob">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">远程桌面 — 有人请求控制本机</span>
+          </div>
+          <div class="pad stack" style="height: calc(100% - 28px); gap: 7px">
+            <div class="box--fill box" style="padding: 9px">
+              <b>有人请求控制这台手机</b>
+              <div class="tiny muted" style="margin-top: 4px">
+                识别码与临时密码已通过校验，<b>接下来需要你亲自确认</b>。
+              </div>
+            </div>
+
+            <div class="box" style="padding: 9px">
+              <span class="label">谁在连</span>
+              <div class="item" style="border: 0; padding: 4px 0">
+                <span class="tiny">账号 138****6721（张三）</span>
+              </div>
+              <div class="item" style="border: 0; padding: 4px 0">
+                <span class="tiny">设备：我的台式机 · Windows 11</span>
+              </div>
+              <div class="item" style="border: 0; padding: 4px 0">
+                <span class="tiny">来自 北京</span>
+              </div>
+              <div class="box--fill box" style="padding: 6px; margin-top: 4px">
+                <span class="tiny"
+                  ><b>上次连接：3 天前 · 已连过 2 次</b
+                  >（<span class="no">不是</span>第一次，也不是陌生来源）</span
+                >
+              </div>
+            </div>
+
+            <div class="box" style="padding: 9px">
+              <span class="label">允许后对方可以</span>
+              <div class="tiny" style="line-height: 1.7; margin-top: 3px">
+                ① 看到本机屏幕<br />
+                ② 操作本机（Android 11+ 需无障碍服务已授权）<br />
+                ③ 在你允许时传文件
+              </div>
+            </div>
+
+            <div
+              class="box"
+              style="padding: 9px; border: 2px solid var(--ink)"
+            >
+              <span class="tiny"
+                >🔴 <b>只允许你认识的人</b>。任何自称"客服 / 公检法 /
+                银行"要求你打开屏幕的，都是诈骗 —— 他们不会打这个电话，也不会通过这个入口找你。</span
+              >
+            </div>
+
+            <div class="grow"></div>
+
+            <span class="btn solid block">允许本次</span>
+            <span class="btn block">只允许本次观看（不能操作）</span>
+            <span class="btn block">拒绝</span>
+            <div class="tiny muted">
+              ⚠️ 手机与本机<b>每次</b>都要确认（PC 的"同一账号不再弹"不适用手机）；
+              <span class="no">不得</span>默认勾选「总是允许」。拒绝后<b>不得</b>反复弹窗。
+            </div>
+          </div>
+          <span class="pin" style="left: 300px; top: 118px">1</span>
+          <span class="pin" style="left: 300px; top: 430px">2</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 🔴 本帧补 README §11.11.2 <b>R26</b>
+            的缺口：此前 W7 <b>只有「可被连接」这个被动状态</b>（W7-02 的一个
+            tag），<b>没有"收到请求时要做什么"的界面</b> ⇒
+            而手机侧的确认正是这套能力的<b>安全底线的执行体</b>。
+          </li>
+          <li>
+            <b>②</b> 🔴 <b>必须显示控制方身份 + 是否连过</b>（与 <a
+              href="w2-被控端.html#w2-02"
+              >W2-02</a
+            >
+            同口径）：只说"有人请求连接"等于让用户盲选；而"第一次 / 陌生来源"是诈骗最集中的特征。
+          </li>
+          <li>
+            🔴 <b>反诈文案不得折叠、不得缩成一行小字、不得放在需要滚动才看到的位置</b>（v2
+            §3.6 约束）—— 手机是骗子最常攻击的那个端。
+          </li>
+          <li>
+            🔴 <b>三个选项的权重必须让「拒绝」也有分量</b>：拒绝是常规动作，不是"关闭弹窗"⇒
+            <span class="no">不得</span>把它做成小号 / 灰色 / 角落里的链接（README §11.11.1
+            <b>S2</b>）。
+          </li>
+          <li>
+            ⚠️ 手机被控端<b>不消耗控制端的免费中继时长</b>（结算在被控侧），
+            这一说明在 <a href="#w7-02">W7-02</a> 与 W6-08；本屏
+            <span class="no">不得</span
+            >出现任何计费字样（本页红线）。
           </li>
         </ul>
       </figure>

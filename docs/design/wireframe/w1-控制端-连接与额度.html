@@ -24,9 +24,9 @@
     <h1>W1 · 控制端 · 连接与免费中继时长</h1>
     <p class="lede">
       这是全套线框里<b>最不能省的一组</b>：连接模式指示器是主主张的唯一执行体，降级链四态是「禁止静默降码率」的唯一执行体。
-      <br />本页 <b>13 个条目 / 16 张图</b>（W1-05 一屏四态 ⇒ 1 条 4 图；W1-06 /
+      <br />本页 <b>15 个条目 / 18 张图</b>（W1-05 一屏四态 ⇒ 1 条 4 图；W1-06 /
       W1-06b 为「仅查看」的两种成因，各自独立成条），其中
-      <b>9 个条目属「缺了就是违反已拍板决策」</b>。 <br class="muted" />🔴
+      <b>11 个条目属「缺了就是违反已拍板决策」</b>。 <br class="muted" />🔴
       全页出现的<b>免费中继时长</b>数值均为示意，<b>实际必须后端下发</b>（`商业化与计费设计`
       §13.5：TURN 报价到手前数值会变）。
       <br />术语纪律：免费档配额一律写「<b>免费中继时长</b>」，<span class="no"
@@ -754,7 +754,7 @@
         <figcaption>
           <span class="fid">W1-06b</span
           ><b>「仅查看」遮罩 · 权限式（链路正常，对方收回了操作权）</b> · 层①
-          红线执行体 · P0　|　来源 商业化 §13.2#4 · v2 §2.3 观察模式
+          红线执行体 · P0　|　来源 商业化 §13.2#4 · v2 §2.3.1
         </figcaption>
         <div class="screen screen--win" style="height: 400px">
           <div class="chrome">
@@ -1521,6 +1521,238 @@
               >回到全屏</b
             >（同「断线重连不改变全屏状态」口径）。
           </li>
+        </ul>
+      </figure>
+    </div>
+
+    <h2>
+      6 · 失败态与出路（🔴 `[D27]` 新增 · 补第九轮登记的两处 P0 缺口）
+    </h2>
+
+    <div class="flow">
+      <!-- ============ W1-13 ============ -->
+      <figure class="frame" id="w1-13">
+        <figcaption>
+          <span class="fid">W1-13</span
+          ><b>连接失败 / 超时（🔴 失败态轴的执行体）</b> · 层① 红线执行体 ·
+          P0　|　来源 v2 §1 连接建立策略 · README §11.11.2 <b>R24</b>
+        </figcaption>
+        <div class="screen screen--desk">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">远程桌面 — 连接失败</span>
+          </div>
+          <div
+            class="pad"
+            style="height: calc(100% - 28px); display: flex; gap: 16px"
+          >
+            <div class="grow stack">
+              <div class="box--fill box" style="padding: 14px">
+                <div class="hstack">
+                  <span class="ico"></span
+                  ><b style="font-size: 16px">连不上：对方没有响应</b
+                  ><span class="grow"></span
+                  ><span class="tag">已尝试 2 次 · 共 60 秒</span>
+                </div>
+                <div class="tiny muted" style="margin-top: 8px">
+                  中继与直连两条路都试过了，都没能在 30 秒内建立连接。设备列表里的状态是<b
+                    >上次连接时</b
+                  >的状态，不代表此刻。
+                </div>
+              </div>
+
+              <div class="box" style="padding: 11px">
+                <b>可能的原因（按发生概率排）</b>
+                <div class="item" style="border: 0; padding: 6px 0">
+                  <span class="tiny"
+                    >① 对方设备<b>不在线 / 被控端没在运行</b
+                    >（最常见）</span
+                  ><span class="grow"></span
+                  ><span class="btn sm">复制一句提醒发给他</span>
+                </div>
+                <div class="tiny muted" style="padding-left: 2px">
+                  他在线但刚休眠、刚断网、或退出了被控端，都会是这一种表现。
+                </div>
+                <div class="item" style="border: 0; padding: 6px 0">
+                  <span class="tiny"
+                    >② <b>网络无法穿透</b>（公司网络 / 运营商 NAT / 双重 NAT）</span
+                  ><span class="grow"></span><span class="btn sm">换一条线路重试</span>
+                </div>
+                <div class="item" style="border: 0; padding: 6px 0">
+                  <span class="tiny">③ <b>对方拒绝了这次连接</b></span
+                  ><span class="grow"></span
+                  ><span class="btn sm">不再重试</span>
+                </div>
+                <div class="tiny muted" style="padding-left: 2px">
+                  🔴 与 ② 必须<b>分开表述</b>：被拒绝是对方的决定，反复重试会持续弹窗骚扰对方。
+                </div>
+              </div>
+
+              <div class="box--fill box" style="padding: 10px">
+                <div class="hstack">
+                  <span class="tiny muted">下一步</span
+                  ><span class="btn solid">重试</span
+                  ><span class="btn">换个线路重试</span
+                  ><span class="btn">复制诊断信息</span><span class="grow"></span
+                  ><span class="tiny muted">失败原因会写进诊断，不占界面主位</span>
+                </div>
+              </div>
+
+              <div class="grow"></div>
+              <div
+                class="box tiny"
+                style="padding: 8px; border-style: dashed"
+              >
+                🔴 本屏<span class="no">不得</span>出现：升级会员可提高连接成功率 ·
+                加速通道需开通 · 买流量包优先排队（与 §13.4 红线⑤同源）。
+              </div>
+            </div>
+
+            <div style="width: 268px" class="stack">
+              <div class="box" style="padding: 11px">
+                <b>🔴 不得做的事</b>
+                <div class="tiny" style="margin-top: 6px; line-height: 1.8">
+                  · <b>不得无限自动重试</b>：每次重试都会让对方弹一次确认<br />
+                  · <b>不得显示虚假进度</b>（百分比 / 进度条）：没有真实进度可用<br />
+                  · <b>不得把网络原因说成对方拒绝</b>，也不得反过来
+                </div>
+              </div>
+              <div class="box" style="padding: 11px">
+                <b>「仅查看」在这里不适用</b>
+                <div class="tiny" style="margin-top: 6px; line-height: 1.8">
+                  连接都没建立，<b>没有画面可看</b> ⇒ 不得用「降级为仅查看」掩盖失败（那是
+                  W1-05 态 D 的场景，前提是<b>已经连上</b>）。
+                </div>
+              </div>
+              <div class="box tiny" style="padding: 9px; border-style: dashed">
+                与 <a href="#w1-05">W1-05</a> 降级链的分工：<b>那条链是「连上之后」</b
+                >的续命顺序；<b>本屏是「一开始就连不上」</b>。两者不得互相顶替。
+              </div>
+            </div>
+          </div>
+          <span class="pin" style="left: 24px; top: 56px">1</span>
+          <span class="pin" style="left: 24px; top: 232px">2</span>
+          <span class="pin" style="left: 494px; top: 56px">3</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 🔴 失败态此前<b>整轴缺失</b>（README §11.11.1 <b>S4</b> /
+            §11.11.2 <b>R24</b>）：全稿只画成功路径 ⇒
+            用户遇到"连不上"时唯一的求助方式是找客服。
+          </li>
+          <li>
+            <b>②</b> 🔴 <b>每个原因必须带一个可点的下一步</b>（可复制提醒 / 换线路 /
+            停止重试），<span class="no">不得</span>只丢一个错误码。
+          </li>
+          <li>
+            <b>③</b>
+            <b>设备列表里的状态具有欺骗性</b>：那是上次连接快照 ⇒
+            本屏必须把这件事说明白，否则用户会认为「列表显示在线，却连不上 = 你们坏了」。
+          </li>
+          <li>
+            🔴 <b>不得自动重试</b>：重试必须由用户点击 —— 静默重试在对方侧表现为「一直被弹窗」，
+            这是骚扰，也是反诈提示位被稀释的原因之一。
+          </li>
+          <li>失败文案不得出现任何金额 / 会员 / 购买入口（§13.4 红线⑤）。</li>
+        </ul>
+      </figure>
+
+      <!-- ============ W1-14 ============ -->
+      <figure class="frame" id="w1-14">
+        <figcaption>
+          <span class="fid">W1-14</span
+          ><b>中继时长用尽后的四条路（三条免费在前 · 购买殿后）</b> · 层①
+          红线执行体 · P0　|　来源 商业化 §13.4 红线⑤ · README §11.11.1 <b>S5</b> ·
+          §11.11.2 <b>R25</b>
+        </figcaption>
+        <div class="screen screen--win">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">远程桌面 — 还有什么办法</span>
+          </div>
+          <div class="bar">
+            <b>免费中继时长已用完</b
+            ><span class="grow"></span
+            ><span class="tiny muted"
+              >本屏由用户<b>主动点开</b>（W1-05 态 D / W1-09 的「还有什么办法」），
+              <span class="no">不是</span>自动弹窗</span
+            >
+          </div>
+          <div class="pad stack" style="height: calc(100% - 28px - 34px)">
+            <div class="box--fill box" style="padding: 10px">
+              <b>还有三条路是免费的 —— 只有最后一条要钱</b>
+              <div class="tiny muted" style="margin-top: 5px">
+                中继只是其中一种通道。先把你现在要做的事归类，再决定要不要付钱。
+              </div>
+            </div>
+
+            <div class="stack tiny" style="border: 1px solid var(--line)">
+              <div class="item">
+                <span class="tag on">免费</span
+                ><span
+                  ><b>① 直连（P2P）</b><br /><span class="muted"
+                    >不限时长 · 双方网络能穿透时自动走这条 · 不经我方服务器</span
+                  ></span
+                ><span class="grow"></span><span class="btn sm">重试直连</span>
+              </div>
+              <div class="item">
+                <span class="tag on">免费</span
+                ><span
+                  ><b>② 局域网直连</b><br /><span class="muted"
+                    >同一 Wi-Fi / 同一办公室 · 完全不经互联网</span
+                  ></span
+                ><span class="grow"></span><span class="btn sm">查看如何同网</span>
+              </div>
+              <div class="item">
+                <span class="tag on">免费</span
+                ><span
+                  ><b>③ 让对方来连你（被查看）</b><br /><span class="muted"
+                    >他看你的屏幕不消耗你的时长 · 手机被控也免费</span
+                  ></span
+                ><span class="grow"></span><span class="btn sm">复制识别码给他</span>
+              </div>
+              <div class="item">
+                <span class="tag">付费</span
+                ><span
+                  ><b>④ 购买中继时长</b><br /><span class="muted"
+                    >只有「跨网络 + 你要控制对方 + 对方不在同一网络」才需要</span
+                  ></span
+                ><span class="grow"></span
+                ><span class="btn sm">查看中继时长套餐</span>
+              </div>
+            </div>
+
+            <div class="grow"></div>
+            <div class="box tiny" style="padding: 8px; border-style: dashed">
+              🔴 <b>顺序纪律</b>：三条免费路必须排在购买之前；本屏若被改成「先弹购买、免费路折叠」，
+              即违反 §13.4 红线⑤（断连促销）与主主张（免费额度做到对手收费档位）。
+            </div>
+          </div>
+          <span class="pin" style="left: 24px; top: 92px">1</span>
+          <span class="pin" style="left: 700px; top: 128px">2</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 🔴 本帧是转化链<b>「用尽 → 能不能买」</b>这一半的执行体（README
+            §11.11.1 <b>S5</b>）：此前 W1-05 态 D
+            只告诉用户「要结束了」，<b>没有任何出路</b>。
+          </li>
+          <li>
+            <b>②</b> 🔴 另半边在
+            <a href="w4-计费与个人中心.html#w4-09">W4-09</a>
+            订单确认页：付款前必须写清「这三条路是免费的」（同时关闭「想买时不知免费」）。
+          </li>
+          <li>
+            🔴 <b>本屏必须是用户主动点开的出路页，不是断连瞬间的自动弹窗</b>
+            —— 同一件事，做成弹窗就是红线⑤违规，做成出路页就是主主张的证据。
+          </li>
+          <li>
+            四条路的顺序<b>不得</b>按转化率调整：①~③ 是技术事实（直连不经我方服务器），
+            把它们排到 ④ 之后等于把事实降级成"备选"。
+          </li>
+          <li>本屏金额一律来自 SSOT `成本测算表` §0，且<b>必须后端下发</b>。</li>
         </ul>
       </figure>
     </div>

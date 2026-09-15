@@ -1068,6 +1068,27 @@
               </div>
 
               <div class="box" style="padding: 11px">
+                <b>${R25}</b>
+                <div class="tiny" style="margin-top: 6px; line-height: 1.8">
+                  <div class="item" style="border: 0; padding: 4px 0">
+                    · <b>切直连</b>：不经我们的服务器 ⇒ <b>不限时长</b>、不计量
+                  </div>
+                  <div class="item" style="border: 0; padding: 4px 0">
+                    · <b>同一局域网直连</b>：同 Wi-Fi 下同样不算中继
+                  </div>
+                  <div class="item" style="border: 0; padding: 4px 0">
+                    · <b>手机被控免费</b>：帮爸妈看手机不消耗中继时长
+                  </div>
+                  <div style="margin-top: 4px">
+                    🔴 三条路<b>必须在本页可见</b>（与
+                    <a href="w1-控制端-连接与额度.html#w1-14">W1-14</a>
+                    互为闭环）：用尽时无处可买、想买时不知免费，
+                    转化链就断在两头。
+                  </div>
+                </div>
+              </div>
+
+              <div class="box" style="padding: 11px">
                 <b>🔴 本页不得出现</b>
                 <div class="tiny" style="margin-top: 6px">
                   <div class="item" style="border: 0; padding: 4px 0">
@@ -1111,21 +1132,33 @@
             🔴 本页<b>没有</b>「选支付方式」这一步 —— 渠道在第三方收银台里选，
             我方重复画一遍会造成「以我为准」的错觉（用户在那里改了，我方却还显示旧值）。
           </li>
+          <li>
+            <b>④</b> 🔴 <b>`[D27]` 补漏（README §11.11.2 `R25`）</b
+            >：本页此前<b>只回答「多少钱、怎么付」</b>，不回答
+            <b>「这条免费的路我是不是本来就有」</b> ——
+            结果「想买时不知免费」；而对面
+            <a href="w1-控制端-连接与额度.html#w1-14">W1-14</a>
+            又「用尽时无处可买」。两页各缺一半 ⇒ 转化链双向断裂。现已补上右侧「三条免费路」框，
+            与 <a href="w1-控制端-连接与额度.html#w1-14">W1-14</a>
+            的四条出路<b>逐条对应</b>（其中的「购买」一路就是本页）。
+          </li>
         </ul>
       </figure>
 
-      <!-- ============ W4-10 四态 ============ -->
+      <!-- ============ W4-10 五态（`[D27]` 新增态 E）============ -->
       <h3 id="w4-10" style="margin-top: 6px">
-        W4-10 · 🔴 支付结果四态（缺任意一态 =「钱付了、权益没到」无处可查）
+        W4-10 · 🔴 支付结果五态（缺任意一态 =「钱付了、权益没到」无处可查）
       </h3>
       <div class="legend">
         按顺序看：<b>A 已开通</b> · <b>B 未完成</b> ·
-        <b>C 确认中（回调未达）</b> · <b>D 订单已关闭（超时）</b>。 🔴
+        <b>C 确认中（回调未达）</b> · <b>D 订单已关闭（超时）</b> ·
+        <b>E 查询用尽 → 人工对账（🔴 `[D27]` 新增）</b>。 🔴
         <b>C 是本组的核心</b> ——
-        它是「钱已经出去了、权益还没到」这段真空期的<b>唯一出口</b>。
-        <br />四态各自有锚点，可单独引用： <a href="#w4-10a">A</a> ·
+        它是「钱已经出去了、权益还没到」这段真空期的<b>唯一出口</b>；
+        而 <b>E 是 C 的尾巴</b> —— 没有 E，C 就是无限等待。
+        <br />五态各自有锚点，可单独引用： <a href="#w4-10a">A</a> ·
         <a href="#w4-10b">B</a> · <a href="#w4-10c">C</a> ·
-        <a href="#w4-10d">D</a>。
+        <a href="#w4-10d">D</a> · <a href="#w4-10e">E</a>。
       </div>
 
       <figure class="frame" id="w4-10a">
@@ -1493,6 +1526,118 @@
             「查看账单」是让用户<b>自己核实"真的没扣"</b>的入口（W4-06）——
             比任何解释都有效。
           </li>
+        </ul>
+      </figure>
+
+      <!-- ============ W4-10e（`[D27]` 新增）============ -->
+      <figure class="frame" id="w4-10e">
+        <figcaption>
+          <span class="fid">W4-10e</span
+          ><b>态 E · 查询用尽 → 已转人工对账（资金真空期的终态）</b> · 层①
+          红线执行体 · P0　|　来源 商业化 §13.2#* · `[D25]` · README §11.11.1
+          <b>S5</b> · `[D27]` 新增
+        </figcaption>
+        <div class="screen screen--desk" style="height: 440px">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">支付结果 — 已转人工对账</span>
+          </div>
+          <div
+            class="pad"
+            style="height: calc(100% - 28px); display: flex; gap: 16px"
+          >
+            <div class="grow stack">
+              <div class="box--fill box" style="padding: 13px">
+                <div class="hstack">
+                  <span class="ico"></span
+                  ><b style="font-size: 16px">我们还没拿到结果</b
+                  ><span class="grow"></span
+                  ><span class="tag">订单已锁定 · 不会重复扣款</span>
+                </div>
+                <div class="tiny muted" style="margin-top: 7px">
+                  已自动查询 <b>2 分钟</b>（每 5 秒一次）仍未收到渠道确认，
+                  现转入<b>人工对账</b>。<b>你不需要做任何事。</b>
+                </div>
+              </div>
+
+              <div class="box" style="padding: 11px">
+                <div class="item" style="border: 0; padding: 5px 0">
+                  <span class="tiny muted">订单号</span><span class="grow"></span
+                  ><span class="tiny">RD-2026-0915-7723</span>
+                </div>
+                <div class="item" style="border: 0; padding: 5px 0">
+                  <span class="tiny muted">金额 · 渠道</span
+                  ><span class="grow"></span
+                  ><span class="tiny">¥158.00 · 通过第三方收银台支付</span>
+                </div>
+                <div class="item" style="border: 0; padding: 5px 0">
+                  <span class="tiny muted">处理方式</span><span class="grow"></span
+                  ><span class="tiny">人工对账（我方主动，不需要你申诉）</span>
+                </div>
+                <div class="item" style="border: 0; padding: 5px 0">
+                  <span class="tiny muted">承诺</span><span class="grow"></span
+                  ><span class="tiny"><b>T+1 前</b>落定：开通或原路退回</span>
+                </div>
+              </div>
+
+              <div class="hstack">
+                <span class="btn">查看订单</span
+                ><span class="btn">复制订单号找客服</span><span class="grow"></span
+                ><span class="tiny muted">对账完成后<b>必须</b>主动通知（不等人来问）</span>
+              </div>
+
+              <div class="grow"></div>
+              <div class="box tiny" style="padding: 8px; border-style: dashed">
+                🔴 与 <a href="#w4-10c">W4-10c</a> 的分工：<b>C = 正在查</b>（有进度、无结论）；
+                <b>E = 查完仍无结论</b>（有结论期限、无进度）。
+                <span class="no">不得</span>把 C 做成唯一终态 ——
+                那等于让用户的付款卡在无限等待里。
+              </div>
+            </div>
+
+            <div style="width: 288px" class="stack">
+              <div class="box" style="padding: 11px">
+                <b>🔴 不得做的事</b>
+                <div class="tiny" style="margin-top: 6px; line-height: 1.8">
+                  · <b>不得让用户重新支付</b>（重复扣款的主要来源）<br />
+                  · <b>不得说"支付失败"</b>：结果是<b>未知</b>，不是失败<br />
+                  · <b>不得要求用户提供付款截图</b>作为处理前置<br />
+                  · <b>不得</b>让用户自己联系渠道客服（渠道看不见我方的订单）
+                </div>
+              </div>
+              <div class="box" style="padding: 11px">
+                <b>「钱去哪儿了」必须回答</b>
+                <div class="tiny" style="margin-top: 6px; line-height: 1.8">
+                  钱在<b>渠道侧</b>，不在我方；我方对渠道只有<b>查询</b>权限，
+                  没有"扣款 / 退款"权限 ⇒ 若最终确认<b>未支付</b>，订单自动关闭、不会扣款。
+                  这个顺序（先查、后定）就是本屏存在的理由。
+                </div>
+              </div>
+              <div class="box tiny" style="padding: 9px; border-style: dashed">
+                ⚠️ 本屏仍<span class="no">不得</span>出现任何推荐位 / 升级位；
+                且<b>不得</b>用"重新下单更快"把用户引向二次付款。
+              </div>
+            </div>
+          </div>
+          <span class="pin" style="left: 24px; top: 56px">1</span>
+          <span class="pin" style="left: 500px; top: 250px">2</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 🔴 本态补的是资金真空期的<b>终点</b>（README §11.11.1 <b>S5</b>）：
+            仅有 <a href="#w4-10c">W4-10c</a>（确认中）时，用户<b>不知道要等多久、等不到怎么办</b>。
+          </li>
+          <li>
+            <b>②</b> 🔴 <b>承诺必须有期限</b>（T+1 前落定）且<b>结果必须主动通知</b>：
+            对账是<b>我方</b>的活，不得变成"用户天天来看这一屏"。
+          </li>
+          <li>
+            <b>③</b>
+            本屏是「不得用假进度条」的执行体：查询用尽后<b>不再显示任何进度</b>，
+            改用<b>结论期限</b>代替进度（假进度条一旦走到 100% 就无话可说）。
+          </li>
+          <li>本屏金额与渠道口径必须来自后端订单快照（`[D14]` 价格版本），不得前端拼接。</li>
         </ul>
       </figure>
 

@@ -34,6 +34,7 @@ import {
   findLineRefs,
   STANDARD_WIDTHS,
   norm,
+  lineOf,
 } from "./lib/wireframe-scan.mjs";
 import { impactIsStale } from "./lib/impact-scan.mjs";
 
@@ -704,6 +705,153 @@ if (c14Orphans.length) {
 }
 if (c13Checked === 0) {
   warn("C13", "all wireframe pages", "no front-page count claim found", ">=1", 0);
+}
+
+/* ============================================================
+   ⑩ 术语与危险动作（C16 / C17）—— 第十轮（[D27]）沉淀
+   ------------------------------------------------------------
+   两条「不许有第二个名字 / 第二种做法」的强制约定，落点见 README §6.1 / §6.3：
+     · C16 术语词表：同一概念全稿一名一词（UI 面禁止词见下）——
+           否则用户无法确认「是不是同一件事」（§11.11.2 R20）
+     · C17 危险动作台账：破坏性 / 不可逆动作必须
+           ① 权重 >= 常规动作（.btn.solid，禁止 .btn.sm 承载核弹动作）
+           ② 走同一个二次确认组件（W3-11）
+           ③ 触发按钮带 data-confirm
+           ⇒ README §6.3 台账与 HTML 里的 data-confirm 双向对拍（§11.11.2 R19 / R30）
+   两轴都只匹配词与属性，对格式化器免疫。
+   ============================================================ */
+const TERM_FILES = [
+  ...PAGES.map((p) => p.file),
+  "proto-流程原型.html",
+  "index.html",
+];
+/** UI 面禁止词 => 规范词。README 不在扫描范围（它是宣布禁止词的地方，必须能写出旧词） */
+const TERM_RULES = [
+  { re: /纯\s*观\s*察\s*模\s*式/g, fix: "仅查看" },
+  { re: /观\s*察\s*模\s*式/g, fix: "仅查看" },
+  { re: /仅\s*观\s*看/g, fix: "仅查看" },
+  /* 「只读」本身合法（权限语境：只读角色 / 只读镜像 / 订单视图只读），
+     但它一旦用来指「观看模式」就与「仅查看」撞名 ⇒ 只在非权限语境报错 */
+  { re: /(?<!视图|镜像|财务|权限|台账|索引|审计|订单)只\s*读(?!角色)/g, fix: "仅查看" },
+];
+{
+  const hits = [];
+  for (const file of TERM_FILES) {
+    const html = read(join(WIREFRAME_DIR, file));
+    if (!html) continue;
+    for (const rule of TERM_RULES) {
+      for (const m of html.matchAll(rule.re)) {
+        hits.push({
+          where: `${file}:${lineOf(html, m.index)}`,
+          word: m[0],
+          fix: rule.fix,
+        });
+      }
+    }
+  }
+  if (hits.length) {
+    fail(
+      "C16",
+      "wireframe pages",
+      `${hits.length} forbidden synonym(s) of the canonical term`,
+      "one name per concept (README 6.1)",
+      hits.slice(0, 10),
+    );
+  } else {
+    ok(
+      "C16",
+      `wireframe pages (${TERM_FILES.length} files)`,
+      "one name per concept: no forbidden synonym",
+    );
+  }
+}
+
+/* --- C17 危险动作台账（README §6.3）↔ HTML data-confirm --- */
+{
+  const readmeText = read(README) ?? "";
+  const lines = readmeText.split(/\r?\n/);
+  const start = lines.findIndex((l) => /^#{2,4}\s*6\.3(?![0-9.])/.test(l));
+  /** 台账行：[动作名, 状态原文] */
+  const ledger = [];
+  if (start >= 0) {
+    for (let i = start + 1; i < lines.length; i += 1) {
+      const line = lines[i];
+      if (/^#{2,3}\s/.test(line)) break;
+      if (!line.startsWith("|") || /^\|[\s:|-]+\|$/.test(line)) continue;
+      const cells = line.split("|").slice(1, -1).map((c) => c.trim());
+      if (cells.length < 6) continue;
+      if (/^-+$/.test(cells[0].replace(/\s/g, ""))) continue;
+      ledger.push([cells[1], cells[cells.length - 1]]);
+    }
+  }
+  const landed = new Map();
+  let registered = 0;
+  for (const [action, status] of ledger) {
+    const m = /`data-confirm="([^"]+)"`/.exec(status ?? "");
+    if (m) landed.set(m[1], action.replace(/[*`]/g, "").trim());
+    else registered += 1;
+  }
+  /** HTML：每个 data-confirm 的值 + 承载标签是否够重（.btn.solid） */
+  const found = new Map();
+  const light = [];
+  for (const p of PAGES) {
+    const html = p.html ?? read(join(WIREFRAME_DIR, p.file));
+    if (!html) continue;
+    for (const m of html.matchAll(/data-confirm="([^"]+)"/g)) {
+      const tagStart = html.lastIndexOf("<", m.index);
+      const tag = tagStart >= 0 ? html.slice(tagStart, m.index) : "";
+      if (!/class="[^"]*\bsolid\b/.test(tag)) light.push(`${p.file}:${lineOf(html, m.index)} ${m[1]}`);
+      if (!found.has(m[1])) found.set(m[1], `${p.file}:${lineOf(html, m.index)}`);
+    }
+  }
+  if (!ledger.length) {
+    fail(
+      "C17",
+      "README.md 6.3",
+      "danger-action ledger missing (see README 6.3)",
+      ">=1 row",
+      0,
+    );
+  } else {
+    const onlyHtml = [...found.keys()].filter((v) => !landed.has(v));
+    const onlyLedger = [...landed.keys()].filter((v) => !found.has(v));
+    if (onlyHtml.length) {
+      fail(
+        "C17",
+        "README.md 6.3 <-> wireframe HTML",
+        `data-confirm value(s) with no ledger row: ${onlyHtml.join(", ")}`,
+        "every data-confirm appears in the ledger",
+        onlyHtml.map((v) => found.get(v)),
+      );
+    }
+    if (onlyLedger.length) {
+      fail(
+        "C17",
+        "README.md 6.3 <-> wireframe HTML",
+        `ledger row(s) marked landed but no data-confirm in HTML: ${onlyLedger.join(", ")}`,
+        "every landed row exists in HTML",
+        onlyLedger.map((v) => landed.get(v)),
+      );
+    }
+    if (!onlyHtml.length && !onlyLedger.length) {
+      ok(
+        "C17",
+        "README.md 6.3 <-> wireframe HTML",
+        `${landed.size} landed + ${registered} registered, data-confirm in sync`,
+      );
+    }
+  }
+  if (light.length) {
+    fail(
+      "C17-b",
+      "wireframe pages",
+      `data-confirm on a button lighter than .btn.solid: ${light.join(" | ")}`,
+      "danger action weight >= .btn.solid",
+      light,
+    );
+  } else {
+    ok("C17-b", "wireframe pages", "every data-confirm sits on a .btn.solid button");
+  }
 }
 
 /* ============================================================

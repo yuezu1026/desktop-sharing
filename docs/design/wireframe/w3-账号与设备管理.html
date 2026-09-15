@@ -25,10 +25,12 @@
         >取消授权 ≠ 移除设备</b
       >、
       <b>注销入口要 3 步内可达并给 30 天反悔期</b
-      >。这三件事写错任何一件，都会在真实客诉里放大成合规问题。 <br />本页 10
-      帧，其中 8 帧是合规 / 已拍板决策的执行体；新增的 4 帧来自
+      >。这三件事写错任何一件，都会在真实客诉里放大成合规问题。 <br />本页 12
+      帧（12 个条目），其中 10 帧是合规 / 已拍板决策的执行体；新增的 4 帧来自
       <b>`[D23]` 账号自助管理</b>补稿（账号与安全中转页 / 修改密码 /
-      登录设备管理 / 邮箱注册与绑定）—— 这四件事此前<b>全部无稿</b>。
+      登录设备管理 / 邮箱注册与绑定）—— 这四件事此前<b>全部无稿</b>；又新增
+      <b>2 帧</b>来自 <b>`[D27]` 跨帧一致性收口</b>（核弹动作统一二次确认组件 /
+      账号表单错误态总表）。
     </p>
 
     <div class="flow">
@@ -598,7 +600,7 @@
               </div>
               <div class="hstack" style="margin-top: 14px">
                 <span class="btn">再想想</span><span class="grow"></span
-                ><span class="btn solid">确定，提交注销</span>
+                ><span class="btn solid" data-confirm="提交注销">确定，提交注销</span>
               </div>
               <div class="tiny muted" style="margin-top: 10px">
                 ⚠️ 不得设置"输入留言才能注销"之类的挽留阻碍。
@@ -648,6 +650,12 @@
           <li>
             「一键解绑全部」的确认页复用本屏左侧结构（列出将解除的 N 台设备 +
             影响说明），不另出稿。
+          </li>
+          <li>
+            🔴 <b>本屏的「确定，提交注销」是核弹动作</b> ⇒ 必须走
+            <a href="#w3-11">W3-11</a> 的<b>统一二次确认组件</b>（后果清单 +
+            身份复核），且<span class="no">不得</span>用「输入留言 / 联系客服」充当确认
+            （`[D27]` · README §11.11.2 `R19` / `R30`）。
           </li>
         </ul>
       </figure>
@@ -950,7 +958,9 @@
               不可互相替代）</span
             >
             <span class="grow"></span>
-            <span class="btn sm">退出所有设备</span>
+            <span class="btn solid" data-confirm="退出所有设备"
+              >退出所有设备…</span
+            >
           </div>
           <span class="pin" style="left: 250px; top: 96px">1</span>
           <span class="pin" style="left: 640px; top: 368px">2</span>
@@ -970,6 +980,11 @@
             <b>②</b> 🔴 <b>「退出所有设备」= 账号疑似被盗时的核弹按钮</b>
             （账号设计
             §3.2）：需<b>交叉验证</b>后执行，且执行后<b>保留当前设备</b>。
+            <b>⚠️ `[D27]` 已就地修两处（README §11.11.2 `R30`）</b
+            >：① 本按钮此前是 `.btn.sm` <b>ghost 级权重</b>，与「移除记录」同级 ⇒
+            现已升为 solid；② 此前<b>没有二次确认</b> ⇒ 现统一走
+            <a href="#w3-11">W3-11</a> 二次确认组件（`data-confirm` 供门禁
+            `C17` 对拍 §6.3 台账）。
           </li>
           <li>
             <b>③</b> 🔴 登录地只到<b>城市级</b>（消费级产品不上精确 IP）。
@@ -1094,6 +1109,306 @@
             ⚠️ 本帧修正了此前的<b>不一致</b>：W3-01 登录框写着「手机号 /
             邮箱」， 但注册侧只有手机号、且 v2 §6.2 的三层模型未含邮箱 ⇒ 该
             label 一度是<b>虚假入口</b>。
+          </li>
+        </ul>
+      </figure>
+
+      <!-- ============ W3-11 ============ -->
+      <figure class="frame" id="w3-11">
+        <figcaption>
+          <span class="fid">W3-11</span
+          ><b>核弹动作的统一二次确认组件（跨帧交叉验证）</b> · 层① 红线执行体 ·
+          P0　|　来源 账号设计 §3.2 / §3.4 · README §11.11.2 <b>R19</b> /
+          <b>R30</b> · `[D27]` 新增
+        </figcaption>
+        <div class="screen screen--desk">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">账号与安全 — 二次确认</span>
+          </div>
+          <div class="bar">
+            🔴
+            <b>本组件是全站共用的同一个</b
+            ><span class="grow"></span
+            ><span class="tiny muted"
+              >调用方：<a href="#w3-09">W3-09</a> 退出所有设备 ·
+              <a href="#w3-06">W3-06</a> 一键解绑全部 / 注销账号 ·
+              <a href="#w3-03">W3-03</a> 关闭双重验证 ——
+              <b>不得各写一套</b></span
+            >
+          </div>
+          <div
+            class="pad"
+            style="height: calc(100% - 28px - 34px); display: flex; gap: 16px"
+          >
+            <div class="box" style="width: 372px; padding: 12px">
+              <div class="dlg">
+                <div class="dlg-h">🔴 退出所有设备？</div>
+                <div class="dlg-b stack" style="gap: 8px">
+                  <div class="tiny muted">
+                    这一步会让 <b>3 台设备</b>需要重新登录。请确认这是你要的。
+                  </div>
+                  <div>
+                    <b>会发生什么</b>
+                    <div class="tiny" style="line-height: 1.7; margin-top: 4px">
+                      ① 除<b>当前这台设备</b>外，3 条登录会话<b>立即失效</b><br />
+                      ② 那 3 台设备需<b>重新登录</b>（不是重新绑定）<br />
+                      ③ 双重验证 / 实名状态<b>不受影响</b><br />
+                      ④ <b>不会</b>解除任何设备绑定（设备维度见
+                      <a href="#w3-04">W3-04</a>，两件事不得混）
+                    </div>
+                  </div>
+                  <div class="box--fill box" style="padding: 8px">
+                    <div class="tiny muted">将失效的登录（3）</div>
+                    <div class="tiny" style="margin-top: 3px">
+                      小米 14 · Android　|　Chrome 网页端　|　旧手机 · Android
+                    </div>
+                  </div>
+                  <div class="spread">
+                    <span class="tiny">身份复核（两样都要）</span
+                    ><span class="btn sm">获取验证码</span>
+                  </div>
+                  <div class="hstack">
+                    <span class="input grow">登录密码</span
+                    ><span class="input" style="width: 108px">6 位验证码</span>
+                  </div>
+                  <div class="tiny muted">
+                    🔴 复核是为了<b>防止别人拿着你的手机点这一下</b>；
+                    <span class="no">不得</span
+                    >用「输入留言 / 联系客服」这类流程当确认。
+                  </div>
+                </div>
+                <div class="dlg-f">
+                  <span class="btn">取消</span><span class="grow"></span
+                  ><span class="btn solid" data-confirm="退出所有设备">退出所有设备</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="grow stack">
+              <div class="box" style="padding: 11px">
+                <b>🔴 危险动作台账（机器对拍 §6.3 · 门禁 `C17`）</b>
+                <div class="tiny" style="line-height: 1.9; margin-top: 6px">
+                  · <a href="#w3-09">W3-09</a> 退出所有设备 → 复核：密码 + 验证码 ·
+                  保留当前设备<br />
+                  · <a href="#w3-06">W3-06</a> 一键解绑全部 → 复核：密码 + 验证码 ·
+                  列出 N 台设备<br />
+                  · <a href="#w3-06">W3-06</a> 提交注销 → 复核：密码 + 验证码 · 列出后果<br />
+                  · <a href="#w3-03">W3-03</a> 关闭双重验证 → 复核：密码 + 验证码 ·
+                  警告安全降级
+                </div>
+              </div>
+              <div class="box" style="padding: 11px">
+                <b>🔴 权重纪律（`R19`）</b>
+                <div class="tiny" style="line-height: 1.8; margin-top: 6px">
+                  破坏性 / 不可逆动作的<b>按钮权重 ≥ 常规动作</b>，且：
+                  <br />· <span class="no">不得</span>使用 <code>.btn.sm</code> 或
+                  ghost（虚线灰字）承载核弹动作（W3-09 此前正是这样，已修）<br />·
+                  触发按钮文案<b>必须带省略号或箭头</b>（表示"还有一步"）<br />·
+                  确认按钮必须是 solid 且文案<b>重述动作</b>（写「退出所有设备」，
+                  <span class="no">不写</span>「确定 / 好的」）
+                </div>
+              </div>
+              <div class="box tiny" style="padding: 9px; border-style: dashed">
+                🔴 <b>反向禁令</b>：二次确认是为了<b>说清后果</b>，不是制造阻力 ⇒
+                <span class="no">不得</span>用客服介入 / 人工审核 / 输入理由 / 延迟 N
+                天生效来"劝退"（与 <a href="#w3-06">W3-06</a> A3 同源）。
+              </div>
+            </div>
+          </div>
+          <span class="pin" style="left: 24px; top: 92px">1</span>
+          <span class="pin" style="left: 438px; top: 96px">2</span>
+          <span class="pin" style="left: 438px; top: 300px">3</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 🔴 本帧补的是<b>「危险度 ↔ 按钮权重反向」</b>这一类系统性缺陷
+            （README §11.11.1 <b>S2</b> / §11.11.2 `R19`）：此前全稿
+            <b>没有任何一处定义「什么动作需要二次确认」</b>，于是同一页里
+            「移除记录」和「退出所有设备」长得一样重。
+          </li>
+          <li>
+            <b>②</b> 🔴 <b>「说清后果」替代「你确定吗」</b>：确认页必须逐条列出
+            <b>将要失效的会话 / 设备清单</b>与<b>不受影响的东西</b>
+            —— 只问"你确定吗"等于把判断成本丢回用户。
+          </li>
+          <li>
+            <b>③</b> 🔴 本组件同时是
+            <a href="#w3-06">W3-06</a> 注销页与「一键解绑全部」确认页的<b>同一实现</b>
+            ⇒ 三处措辞不得各写一份（同一概念两个源 = §11.11.1 <b>S1</b>）。
+          </li>
+          <li>
+            <b>④</b> 复核强度与风险等级挂钩：<b>会丢数据 / 会解绑 / 会降安全等级</b>
+            的动作一律「密码 + 验证码」两样；普通动作（如移除一条过期记录）不弹确认，但须可撤销。
+          </li>
+          <li>
+            ⚠️ 危险动作清单落在 README <b>§6.3 危险动作台账</b>（新增），由门禁 `C17`
+            与 HTML 里的 <code>data-confirm</code> 双向对拍。
+          </li>
+        </ul>
+      </figure>
+
+      <!-- ============ W3-12 ============ -->
+      <figure class="frame" id="w3-12">
+        <figcaption>
+          <span class="fid">W3-12</span
+          ><b>账号表单错误态总表（一屏收口 5 处表单的 12 种错误）</b> · 层①
+          红线执行体 · P0　|　来源 账号设计 §2 认证 · README §11.11.1 <b>S4</b> ·
+          §11.11.2 <b>R24</b> · `[D27]` 新增
+        </figcaption>
+        <div class="screen screen--desk" style="height: 720px">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">账号表单 — 错误态规范</span>
+          </div>
+          <div class="bar">
+            <b>12 种错误 · 同一套写法</b><span class="grow"></span
+            ><span class="tiny muted"
+              >覆盖 <a href="#w3-01">W3-01</a> 登录 ·
+              <a href="#w3-02">W3-02</a> 找回密码与恢复码 ·
+              <a href="#w3-08">W3-08</a> 修改密码 ·
+              <a href="#w3-10">W3-10</a> 邮箱绑定与换绑</span
+            >
+          </div>
+          <div
+            class="pad"
+            style="height: calc(100% - 28px - 34px); display: flex; gap: 16px"
+          >
+            <div class="grow" style="min-width: 0">
+              <table class="tbl">
+                <thead>
+                  <tr>
+                    <th style="width: 108px">字段</th>
+                    <th style="width: 132px">触发</th>
+                    <th>界面文案（怎么说）</th>
+                    <th style="width: 150px">出路</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>手机号</td>
+                    <td class="muted">格式错</td>
+                    <td>手机号是 11 位数字，多一位少一位都不行</td>
+                    <td class="muted">就地提示，不弹窗</td>
+                  </tr>
+                  <tr>
+                    <td>手机号</td>
+                    <td class="muted">已注册</td>
+                    <td>这个号码已注册 —— <b>去登录</b> / <b>找回密码</b></td>
+                    <td class="muted">同页切换，不跳走</td>
+                  </tr>
+                  <tr>
+                    <td>验证码</td>
+                    <td class="muted">错 / 过期</td>
+                    <td>验证码不对或已过期，可重新获取（60 秒后可重发）</td>
+                    <td><span class="btn sm">重新获取</span></td>
+                  </tr>
+                  <tr>
+                    <td>密码</td>
+                    <td class="muted">强度不足</td>
+                    <td>至少 8 位，含字母与数字（实时清单逐条打勾）</td>
+                    <td class="muted">实时，不等到提交</td>
+                  </tr>
+                  <tr>
+                    <td>密码</td>
+                    <td class="muted">两次不一致</td>
+                    <td>两次输入不一样（只提示这一条，不说"哪个对"）</td>
+                    <td class="muted">就地提示</td>
+                  </tr>
+                  <tr>
+                    <td>邮箱</td>
+                    <td class="muted">格式错</td>
+                    <td>邮箱地址少了 @ 或后缀，例：name@example.com</td>
+                    <td class="muted">就地提示</td>
+                  </tr>
+                  <tr>
+                    <td>邮箱</td>
+                    <td class="muted">已被占用</td>
+                    <td>这个邮箱已经绑定过另一个账号</td>
+                    <td class="muted">不再提示该账号信息</td>
+                  </tr>
+                  <tr>
+                    <td>邮箱链接</td>
+                    <td class="muted">过期</td>
+                    <td>链接 24 小时后失效 —— <b>重新发一封</b></td>
+                    <td><span class="btn sm">重发邮件</span></td>
+                  </tr>
+                  <tr>
+                    <td>登录</td>
+                    <td class="muted">凭据不匹配</td>
+                    <td>账号或密码不对（<b>合并</b>说法）</td>
+                    <td class="muted">不区分账号是否存在</td>
+                  </tr>
+                  <tr>
+                    <td>登录</td>
+                    <td class="muted">尝试过多</td>
+                    <td>尝试次数过多，5 分钟后可重试</td>
+                    <td class="muted">🔴 不得触登出</td>
+                  </tr>
+                  <tr>
+                    <td>双重验证</td>
+                    <td class="muted">验证码错</td>
+                    <td>验证码不对，<b>还剩 2 次</b>（用完转恢复码）</td>
+                    <td class="muted">给出恢复码入口</td>
+                  </tr>
+                  <tr>
+                    <td>注销</td>
+                    <td class="muted">订阅未到期</td>
+                    <td>先处理订阅再注销（<b>不会</b>自动退款）</td>
+                    <td><span class="btn sm">去处理</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div style="width: 258px" class="stack">
+              <div class="box" style="padding: 11px">
+                <b>🔴 四条写法纪律</b>
+                <div class="tiny" style="line-height: 1.8; margin-top: 6px">
+                  ① 错误必须说<b>怎么改</b>，不是只说"格式错误"<br />
+                  ② 错误一律<b>就地</b>显示在字段旁（Toast 会 3 秒消失，
+                  用户回来时找不到原因）<br />
+                  ③ 同一字段同时只显示<b>一条</b>错误（最先阻断的那条）<br />
+                  ④ 文案<b>不得</b>把责任推给用户
+                </div>
+              </div>
+              <div class="box" style="padding: 11px">
+                <b>🔴 两条安全纪律</b>
+                <div class="tiny" style="line-height: 1.8; margin-top: 6px">
+                  · 登录失败<b>不得</b>区分「账号不存在 / 密码错误」（账号枚举）<br />·
+                  业务校验失败<b>绝不能用 401</b>：前端把 401 当"登录过期" ⇒
+                  要清 token 跳登录页，用户会莫名其妙被登出（v2 已踩过）
+                </div>
+              </div>
+              <div class="box tiny" style="padding: 9px; border-style: dashed">
+                ⚠️ 「已注册 / 已被占用」这两条虽是必要告知，但必须配<b>限频</b>
+                （同一 IP / 设备短时间内反复查询即拦截），否则本表本身就是一个枚举工具。
+              </div>
+            </div>
+          </div>
+          <span class="pin" style="left: 24px; top: 226px">1</span>
+          <span class="pin" style="left: 552px; top: 96px">2</span>
+          <span class="pin" style="left: 552px; top: 268px">3</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 🔴 本帧补的是<b>「失败态整轴缺失」</b>：此前 W3 的 10
+            帧<b>零表单错误态</b>（README §11.11.2 `R24` 记 18 帧零错误态）⇒
+            高保真阶段每处表单都会各自发明一套文案。
+          </li>
+          <li>
+            <b>②</b> 🔴 <b>错误文案是产品的一部分</b>，不是前端的兜底：文案不写清"怎么改"，
+            客服工单就会替我们说 —— 这是〈帮爸妈调手机〉场景里最贵的一种失败。
+          </li>
+          <li>
+            <b>③</b> 🔴 与 <a href="#w3-11">W3-11</a> 的分工：本表管<b>可原地改好的错误</b>
+            （输入问题），W3-11 管<b>不可逆动作</b>（后果问题）。两者都不得用弹窗解决输入问题。
+          </li>
+          <li>
+            ⚠️ 密码 / 验证码类错误<b>不得</b>回显用户输入内容（截屏会泄露），也不得把
+            正确的验证码位数之外的细节写进文案。
           </li>
         </ul>
       </figure>
