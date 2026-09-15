@@ -1,0 +1,87 @@
+{
+  "AGENTS.md": {
+    "lines": 65,
+    "tokens": 1234,
+    "hash": "e03b3102d66108a2"
+  },
+  "docs/成本测算表.md": {
+    "lines": 772,
+    "tokens": 20844,
+    "hash": "8b4c5869b1887472"
+  },
+  "docs/个人消费级远程桌面需求规划.md": {
+    "lines": 121,
+    "tokens": 3488,
+    "hash": "8e613d6d6fb443c8"
+  },
+  "docs/竞品对标表.md": {
+    "lines": 470,
+    "tokens": 13810,
+    "hash": "77dc5f8a2f36bd1b"
+  },
+  "docs/商业化与计费设计.md": {
+    "lines": 747,
+    "tokens": 26397,
+    "hash": "c78479fa47f95439"
+  },
+  "docs/需求规划-v2-P0P3重构.md": {
+    "lines": 1048,
+    "tokens": 36013,
+    "hash": "b13040bf0d0653df"
+  },
+  "docs/需求规划评审意见.md": {
+    "lines": 427,
+    "tokens": 18191,
+    "hash": "4e49fb1225b5c3c5"
+  },
+  "docs/账号与管理系统设计.md": {
+    "lines": 557,
+    "tokens": 17527,
+    "hash": "06e36523beb9f6c0"
+  },
+  "docs/archive/评审意见-决策连带影响.md": {
+    "lines": 174,
+    "tokens": 5811,
+    "hash": "5e21fc4662eb8a75"
+  },
+  "docs/archive/评审意见-全量评审登记.md": {
+    "lines": 74,
+    "tokens": 3879,
+    "hash": "d9d9a9090280b093"
+  },
+  "docs/archive/商业化-附录速查.md": {
+    "lines": 80,
+    "tokens": 2245,
+    "hash": "9ba80caf28c31dc6"
+  },
+  "docs/archive/商业化-回写清单.md": {
+    "lines": 47,
+    "tokens": 2685,
+    "hash": "d6b9ccfc975aaeb4"
+  },
+  "docs/archive/需求规划v2-变更摘要.md": {
+    "lines": 42,
+    "tokens": 11229,
+    "hash": "c236f86a19fd7512"
+  },
+  "docs/archive/账号设计-附录速查.md": {
+    "lines": 67,
+    "tokens": 1813,
+    "hash": "401b3efb5b790bce"
+  },
+  "docs/archive/账号设计-回写清单.md": {
+    "lines": 58,
+    "tokens": 2476,
+    "hash": "54d62686763b5603"
+  },
+  "docs/archive/wireframe-README-评审历史轮次.md": {
+    "lines": 341,
+    "tokens": 12009,
+    "hash": "92b04a8baa147db5"
+  },
+  "docs/design/wireframe/README.md": {
+    "lines": 623,
+    "tokens": 17380,
+    "hash": "585f239f411e05f7"
+  }
+}

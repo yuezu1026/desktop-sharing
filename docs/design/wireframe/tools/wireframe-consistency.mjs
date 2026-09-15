@@ -17,6 +17,7 @@
  */
 
 import { readFileSync, readdirSync, writeFileSync, existsSync } from "node:fs";
+import { spawnSync } from "node:child_process";
 import { join, relative } from "node:path";
 
 import {
@@ -253,6 +254,12 @@ for (const c of claims) {
     ok("C2-seen", `${c.file}:${c.line}`, "current-marker claim found");
 }
 
+// 防「门禁自己失效」：一处 📊 当前值都没有 ⇒ C2 其实什么都没查（PASS 是假象）。
+// 典型诱因：归档 / 搬移把带标记的计数句整段切走，或 findCountClaims 失配。
+if (claims.filter((c) => c.marker === "current").length === 0) {
+  fail("C2-0", "docs/**", "no 📊 current-value claim found", ">=1", 0);
+}
+
 /* ============================================================
    ④ README 条目表 / 层汇总表
    ============================================================ */
@@ -366,8 +373,17 @@ mdFiles.push(README);
 const htmlFiles = [INDEX];
 for (const p of PAGES) htmlFiles.push(join(WIREFRAME_DIR, p.file));
 
+/**
+ * C6-a 豁免（人写的正文里禁行号，机器产物里行号即价值）：
+ *  - docs/OUTLINE.md      = 机器生成目录，行号是它存在的理由；
+ *                           漂移风险由 C11（源 md hash 对拍）兜底，不靠人眼。
+ *  - docs/archive/**.md   = 归档件，顶栏标注「来源原始行号」是溯源证据。
+ */
+const LINE_REF_EXEMPT = /(^|[\\/])(OUTLINE\.md|archive[\\/])/;
+
 const allLineRefs = [];
 for (const p of [...mdFiles, ...htmlFiles]) {
+  if (LINE_REF_EXEMPT.test(p)) continue;
   const t = read(p);
   if (!t) continue;
   for (const h of findLineRefs(t)) allLineRefs.push({ file: rel(p), ...h });
@@ -475,7 +491,32 @@ if (redlineHits.length) {
 }
 
 /* ============================================================
-   ⑧ 落报告
+   ⑧ 目录过期（C11）：docs/OUTLINE.md 必须与源 md 同步
+   ============================================================ */
+/**
+ * L1 渐进披露目录里带**行号与 token 规模** ⇒ 源文档一旦改了而目录没重生成，
+ * 读到的是**过期坐标**，比没有目录更坏（误导比无知贵）。
+ * 用源文件 sha1 对拍兜底（实现与 hash 表都在 tools/doc-outline.mjs）。
+ */
+const OUTLINE_TOOL = join(WIREFRAME_DIR, "tools", "doc-outline.mjs");
+const outlineRun = spawnSync(process.execPath, [OUTLINE_TOOL, "--check"], {
+  encoding: "utf8",
+});
+const outlineOut = `${outlineRun.stdout ?? ""}${outlineRun.stderr ?? ""}`.trim();
+if (outlineRun.status === 0) {
+  ok("C11", "docs/OUTLINE.md", outlineOut || "doc outline up to date");
+} else {
+  fail(
+    "C11",
+    "docs/OUTLINE.md",
+    "doc outline is stale (source md changed since last generation)",
+    "up to date",
+    outlineOut.split("\n").slice(0, 20),
+  );
+}
+
+/* ============================================================
+   ⑨ 落报告
    ============================================================ */
 const counts = { FAIL: 0, WARN: 0, PASS: 0 };
 for (const r of results) counts[r.level] += 1;
