@@ -13,3 +13,7 @@ docs/design/wireframe/tools/*.json
 
 # 文档 —— 表格靠手写对齐（空格数是有意义的），Prettier 会把列宽重排
 docs/**/*.md
+
+# 根级 harness（L0 名片 + .github 指令/流程）—— 同属"人写一次、机器校验"的源材料
+AGENTS.md
+.github/**/*.md

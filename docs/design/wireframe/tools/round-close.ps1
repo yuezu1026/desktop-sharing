@@ -17,7 +17,7 @@
            commit subject on GitHub) and verify the first three bytes
          - write .rounds/last.md (a ~300 token re-entry snapshot for the NEXT
            chat session; see "progressive disclosure" in AGENTS.md)
-         - git add <docs .editorconfig .prettierignore .vscode .gitignore .rounds>
+         - git add <AGENTS.md docs .github .editorconfig .prettierignore .vscode .gitignore .rounds>
          - git commit -F <msgfile>
          - print the short hash
 
@@ -184,7 +184,7 @@ Write-Host ('wrote : ' + $snapshotPath)
 Write-Host ('changed paths : ' + $changed.Count)
 
 Write-Step "git add"
-$targets = @('AGENTS.md', 'docs', '.editorconfig', '.prettierignore', '.vscode', '.gitignore', '.rounds') |
+$targets = @('AGENTS.md', 'docs', '.github', '.editorconfig', '.prettierignore', '.vscode', '.gitignore', '.rounds') |
   Where-Object { Test-Path -LiteralPath (Join-Path $root $_) }
 Push-Location $root
 try {

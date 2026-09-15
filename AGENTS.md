@@ -35,6 +35,7 @@ powershell -NoProfile -File docs\design\wireframe\tools\round-close.ps1 -MsgFile
 - 明细报告落在 `wireframe/tools/*-report.json`（**勿手改、勿提交**）。
 - 提交信息走 `-MsgFile`（UTF-8 **无 BOM**）；**禁** `git commit -m "中文"`（PS 5.1 按 GBK 传参乱码）。
 - 每次收尾自动写 `.rounds/last.md`（**上一轮的 ~300 token 摘要，冷启动时先读它**）。
+- 🔑 **纪律不靠记忆**：按文件类型自动挂载的规则在 `.github/instructions/`（md / 线框 html·css / `tools/*.mjs` / 提交），流程命令在 `.github/prompts/`（VS Code 里敲 `/`）。
 
 ## 3. 文档地图
 
