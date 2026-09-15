@@ -1,0 +1,27 @@
+{
+  // 抗格式器（防漂移 E 段）：关掉"保存时格式化"，避免 HTML/CSS 被重排成
+  // `</span\n>`、属性拆行、`style="color: #1f1f1f"`（冒号后加空格）——
+  // 这些都会让按原文匹配的编辑工具全部失配，每轮白烧一轮 token 去 grep 磁盘真相。
+  "html.format.enable": false,
+  "css.format.enable": false,
+  "scss.format.enable": false,
+  "less.format.enable": false,
+  "editor.formatOnSave": false,
+  "[html]": { "editor.formatOnSave": false, "editor.formatOnPaste": false },
+  "[css]": { "editor.formatOnSave": false, "editor.formatOnPaste": false },
+  "[markdown]": { "editor.formatOnSave": false, "editor.formatOnPaste": false },
+  "[javascript]": { "editor.formatOnSave": false, "editor.formatOnPaste": false },
+
+  // 线框页有大量长行（一句一行的中文说明），关掉软换行对齐类的自动整理
+  "files.trimTrailingWhitespace": false,
+  "files.insertFinalNewline": false,
+
+  // 生成物不必在搜索/资源管理器里抢注意力
+  "search.exclude": {
+    "**/tools/selfcheck-report.json": true,
+    "**/tools/consistency-report.json": true
+  },
+  "files.watcherExclude": {
+    "**/tools/*-report.json": true
+  }
+}

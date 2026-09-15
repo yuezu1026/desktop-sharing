@@ -1,2 +1,4 @@
 # 自检脚本每次运行都会重写这份机器可读报告，属生成物，不入库
 selfcheck-report.json
+# 一致性门禁（wireframe-consistency.mjs）的机器可读报告，同样是生成物
+consistency-report.json

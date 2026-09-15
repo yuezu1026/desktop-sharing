@@ -1,0 +1,15 @@
+# 抗格式器（防漂移 E 段）：这些文件是"人写一次、机器校验"的源材料，
+# 一旦被 Prettier 重排，按原文匹配的编辑会全部失配、每轮都要重新 grep 确认磁盘真相。
+# 线框页 HTML / wireframe.css —— 就是设计稿本身，格式即内容（`</span>` 断行会破坏扫描器正则）
+docs/design/wireframe/*.html
+docs/design/wireframe/*.css
+
+# 一致性工具与共享库 —— 含大量中文正则与对齐注释，重排即失真
+docs/design/wireframe/tools/**/*.mjs
+docs/design/wireframe/tools/**/*.ps1
+
+# 机器可读报告 —— 生成物，格式由脚本决定
+docs/design/wireframe/tools/*.json
+
+# 文档 —— 表格靠手写对齐（空格数是有意义的），Prettier 会把列宽重排
+docs/**/*.md

@@ -1,0 +1,577 @@
+#!/usr/bin/env node
+/**
+ * wireframe-consistency.mjs —— 文档一致性门禁（防「漂移」）
+ *
+ * 设计原则
+ *   1. 真值只有一处：6 个线框页 HTML（帧结构 / 画布尺寸 / 层 / 优先级）。文档里的计数句、
+ *      层汇总表、画布台账都是**被检对象**，不是真值。
+ *   2. 只对「当前值」硬门禁：带 📊 标记的计数句必须与真值逐字相符；
+ *      带 ⏱ 标记的历史值只登记不判定；未标记的计数句报 WARN（提示该补标记）。
+ *   3. stdout 一律 ASCII：终端是 PS 5.1 / GBK，中文会变乱码；细节全部落
+ *      tools/consistency-report.json（UTF-8 无 BOM），用编辑器读。
+ *   4. 任何 FAIL ⇒ EXIT=1 ⇒ 不许提交。
+ *
+ * 用法
+ *   node tools/wireframe-consistency.mjs            # 门禁
+ *   node tools/wireframe-consistency.mjs --report   # 额外把画布台账草稿打出来（ASCII）
+ */
+
+import { readFileSync, readdirSync, writeFileSync, existsSync } from "node:fs";
+import { join, relative } from "node:path";
+
+import {
+  WIREFRAME_DIR,
+  DOCS_DIR,
+  PAGES,
+  scanWireframes,
+  parseEntries,
+  parseLayerTable,
+  parseCanvasLedger,
+  findCountClaims,
+  findLineRefs,
+  norm,
+} from "./lib/wireframe-scan.mjs";
+
+const README = join(WIREFRAME_DIR, "README.md");
+const INDEX = join(WIREFRAME_DIR, "index.html");
+const REPORT = join(WIREFRAME_DIR, "tools", "consistency-report.json");
+
+const results = [];
+const ok = (id, where, msg) => results.push({ id, level: "PASS", where, msg });
+const fail = (id, where, msg, expected, actual) =>
+  results.push({ id, level: "FAIL", where, msg, expected, actual });
+const warn = (id, where, msg, expected, actual) =>
+  results.push({ id, level: "WARN", where, msg, expected, actual });
+
+const read = (p) => (existsSync(p) ? readFileSync(p, "utf8") : null);
+const rel = (p) =>
+  relative(join(WIREFRAME_DIR, "..", "..", ".."), p).replace(/\\/g, "/");
+
+/* ============================================================
+   ① 真值：扫 6 个线框页
+   ============================================================ */
+const scan = scanWireframes();
+/** 6 个页面的全部 HTML id（含 `<h3 id="w1-05">` 这类分组锚点） */
+const allAnchorIds = new Set(scan.pages.flatMap((p) => p.allIds ?? []));
+const truth = {
+  frames: scan.total,
+  perPage: scan.perPage,
+  frameLayer: scan.layerDist,
+  framePrio: scan.prioDist,
+  customHeights: scan.customHeights.length,
+};
+
+const readme = read(README);
+const entries = parseEntries(readme);
+const anchorsTotal = entries.reduce((a, e) => a + e.anchors.length, 0);
+const entryLayerCount = { "①": 0, "②": 0, "③": 0, "④": 0 };
+const entryPrioCount = { P0: 0, P1: 0, P2: 0 };
+for (const e of entries) {
+  if (entryLayerCount[e.layer] !== undefined) entryLayerCount[e.layer] += 1;
+  if (entryPrioCount[e.prio] !== undefined) entryPrioCount[e.prio] += 1;
+}
+truth.entries = entries.length;
+truth.anchors = anchorsTotal;
+truth.entryLayer = entryLayerCount;
+truth.entryPrio = entryPrioCount;
+
+/* ============================================================
+   ② 帧自洽：id 唯一 / 前缀 / fid 与 id 一致 / 子态有父帧 / 锚点可达
+   ============================================================ */
+const seen = new Map();
+for (const f of scan.frames) {
+  if (!f.id) {
+    fail("C10-a", `${f.page}`, "frame has no id", "(id)", null);
+    continue;
+  }
+  if (seen.has(f.id)) fail("C10-b", `${f.page} ${f.id}`, "duplicate frame id");
+  seen.set(f.id, f);
+
+  if (!f.id.startsWith(`${f.page.toLowerCase()}-`)) {
+    fail("C10-c", `${f.page} ${f.id}`, "frame id prefix != page key");
+  }
+  if (f.fid && f.fid.toUpperCase() !== f.id.toUpperCase()) {
+    fail(
+      "C10-d",
+      `${f.page} ${f.id}`,
+      "figcaption .fid != figure id",
+      f.id.toUpperCase(),
+      f.fid,
+    );
+  }
+  if (f.isSubState) {
+    const parent = f.id.replace(/[a-z]$/, "");
+    // 父级可以是帧（w1-06b 的父是 w1-06），也可以是分组标题（w1-05a 的父是 `<h3 id="w1-05">`），
+    // 所以查「页面里的全部 id」而不是「帧 id」。
+    if (!allAnchorIds.has(parent)) {
+      fail(
+        "C9",
+        `${f.page} ${f.id}`,
+        "sub-state frame has no parent anchor",
+        parent,
+        null,
+      );
+    }
+  }
+}
+
+for (const e of entries) {
+  for (const a of e.anchors) {
+    if (!allAnchorIds.has(a)) {
+      fail(
+        "C3-b",
+        `README.md:${e.line}`,
+        `entry #${e.num} anchor not found in any page`,
+        a,
+        null,
+      );
+    }
+  }
+}
+
+/* ============================================================
+   ③ 计数句：📊 硬门禁 / ⏱ 免检 / 未标记 WARN
+   ============================================================ */
+const countDocs = [
+  { path: README, label: "README.md" },
+  { path: INDEX, label: "index.html" },
+  {
+    path: join(DOCS_DIR, "账号与管理系统设计.md"),
+    label: "账号与管理系统设计.md",
+  },
+  { path: join(DOCS_DIR, "商业化与计费设计.md"), label: "商业化与计费设计.md" },
+];
+
+const claims = [];
+for (const d of countDocs) {
+  const text = read(d.path);
+  if (text === null) continue;
+  for (const c of findCountClaims(text))
+    claims.push({ ...c, file: d.label, path: d.path });
+}
+
+const checkPair = (file, line, marker, label, expected, actual) => {
+  if (expected === null || expected === undefined) return;
+  if (expected === actual) {
+    ok(
+      "C2",
+      `${file}:${line}`,
+      `${label} = ${actual} (${marker ?? "unmarked"})`,
+    );
+    return;
+  }
+  if (marker === "current") {
+    // 📊 = 当前值 ⇒ 必须与 6 个线框页 HTML 实测一致（硬门禁）
+    fail("C2", `${file}:${line}`, `${label} current-marker`, expected, actual);
+  } else if (marker === "history") {
+    // ⏱ = 历史值 ⇒ 本来就不该等于当前值，差异是「设计如此」，只留痕不报警
+    ok(
+      "C2",
+      `${file}:${line}`,
+      `${label} history kept at ${actual} (current ${expected}) — by design`,
+    );
+  } else {
+    // 未标记 ⇒ 无法判断这句该不该跟着改（本轮新计数句一律必须打 📊 或 ⏱）
+    warn("C2", `${file}:${line}`, `${label} unmarked`, expected, actual);
+  }
+};
+
+for (const c of claims) {
+  const isCurrent = c.marker === "current";
+  if (c.marker === null) {
+    warn(
+      "C2-marker",
+      `${c.file}:${c.line}`,
+      "count sentence has no 📊/⏱ marker",
+      "📊 or ⏱",
+      null,
+    );
+  }
+  if (c.kind === "full") {
+    checkPair(c.file, c.line, c.marker, "entries", c.entries, truth.entries);
+    checkPair(c.file, c.line, c.marker, "frames", c.frames, truth.frames);
+    if (c.layers) {
+      checkPair(
+        c.file,
+        c.line,
+        c.marker,
+        "layer-1",
+        c.layers[0],
+        truth.entryLayer["①"],
+      );
+      checkPair(
+        c.file,
+        c.line,
+        c.marker,
+        "layer-2",
+        c.layers[1],
+        truth.entryLayer["②"],
+      );
+      checkPair(
+        c.file,
+        c.line,
+        c.marker,
+        "layer-3",
+        c.layers[2],
+        truth.entryLayer["③"],
+      );
+    }
+    if (c.prios) {
+      checkPair(c.file, c.line, c.marker, "P0", c.prios[0], truth.entryPrio.P0);
+      checkPair(c.file, c.line, c.marker, "P1", c.prios[1], truth.entryPrio.P1);
+    }
+  } else if (c.kind === "pair") {
+    // 形如「计数 **55 ⇒ 59** 条目 / **58 ⇒ 65** 帧」：只判定箭头右侧（目标值）
+    checkPair(
+      c.file,
+      c.line,
+      c.marker,
+      "entries-target",
+      c.entries,
+      truth.entries,
+    );
+    checkPair(
+      c.file,
+      c.line,
+      c.marker,
+      "frames-target",
+      c.frames,
+      truth.frames,
+    );
+    if (c.layersTo) {
+      checkPair(
+        c.file,
+        c.line,
+        c.marker,
+        "layer-1-target",
+        c.layersTo[0],
+        truth.entryLayer["①"],
+      );
+    }
+  }
+  if (isCurrent)
+    ok("C2-seen", `${c.file}:${c.line}`, "current-marker claim found");
+}
+
+/* ============================================================
+   ④ README 条目表 / 层汇总表
+   ============================================================ */
+const layerTable = parseLayerTable(readme);
+for (const k of ["①", "②", "③"]) {
+  if (layerTable[k] !== truth.entryLayer[k]) {
+    fail(
+      "C4",
+      "README.md §1 layer table",
+      `layer ${k} mismatch`,
+      truth.entryLayer[k],
+      layerTable[k],
+    );
+  } else ok("C4", "README.md §1 layer table", `layer ${k} = ${layerTable[k]}`);
+}
+if (layerTable["④"] !== 7) {
+  warn(
+    "C4-b",
+    "README.md §1 layer table",
+    "layer ④ (explicitly-not-doing) != 7",
+    7,
+    layerTable["④"],
+  );
+}
+
+/* ============================================================
+   ⑤ 画布台账（README §6.2）
+   ============================================================ */
+const ledger = parseCanvasLedger(readme) ?? {
+  line: null,
+  text: "",
+  items: [],
+  free: [],
+};
+if (ledger.line === null) {
+  fail(
+    "C5-0",
+    "README.md",
+    "canvas ledger section (6.2) not found",
+    "### 6.2",
+    null,
+  );
+}
+const actualCustom = new Map();
+for (const f of scan.customHeights)
+  actualCustom.set(f.id.toLowerCase(), f.inlineHeight);
+const declared = new Map();
+for (const it of ledger.items) declared.set(it.id.toLowerCase(), it.height);
+
+const missing = [...actualCustom.keys()].filter((k) => !declared.has(k));
+const extra = [...declared.keys()].filter((k) => !actualCustom.has(k));
+const wrong = [...actualCustom.keys()]
+  .filter((k) => declared.has(k) && declared.get(k) !== actualCustom.get(k))
+  .map((k) => ({
+    id: k,
+    declared: declared.get(k),
+    actual: actualCustom.get(k),
+  }));
+
+const whereLedger = `README.md:${ledger.line ?? "?"} canvas ledger`;
+if (missing.length) {
+  fail(
+    "C5",
+    whereLedger,
+    `missing ${missing.length} frames`,
+    "all custom-height frames",
+    missing,
+  );
+} else {
+  ok("C5", whereLedger, `covers all ${actualCustom.size} custom-height frames`);
+}
+if (extra.length)
+  fail("C5-b", whereLedger, `stale entries ${extra.length}`, "(none)", extra);
+if (wrong.length) fail("C5-c", whereLedger, "height mismatch", "(none)", wrong);
+
+/* 自由画布（非标准宽度的组件级 / 子态帧）单独一行，同样必须完整 */
+const actualFree = new Map();
+for (const f of scan.frames)
+  if (!f.isStandardWidth && f.inlineHeight !== null)
+    actualFree.set(f.id.toLowerCase(), `${f.width}x${f.inlineHeight}`);
+const declaredFree = new Map();
+for (const it of ledger.free)
+  declaredFree.set(it.id.toLowerCase(), `${it.width}x${it.height}`);
+const freeMissing = [...actualFree.keys()].filter((k) => !declaredFree.has(k));
+const freeWrong = [...actualFree.keys()]
+  .filter(
+    (k) => declaredFree.has(k) && declaredFree.get(k) !== actualFree.get(k),
+  )
+  .map((k) => ({
+    id: k,
+    declared: declaredFree.get(k),
+    actual: actualFree.get(k),
+  }));
+if (freeMissing.length || freeWrong.length) {
+  fail("C5-d", whereLedger, "free-canvas frames missing/mismatch", "(none)", {
+    freeMissing,
+    freeWrong,
+  });
+} else {
+  ok("C5-d", whereLedger, `free-canvas frames = ${actualFree.size}`);
+}
+
+/* ============================================================
+   ⑥ 引用校验：禁 L### 行号；§x.y 目标必须存在
+   ============================================================ */
+const mdFiles = [];
+for (const name of readdirSync(DOCS_DIR)) {
+  if (name.endsWith(".md")) mdFiles.push(join(DOCS_DIR, name));
+}
+mdFiles.push(README);
+const htmlFiles = [INDEX];
+for (const p of PAGES) htmlFiles.push(join(WIREFRAME_DIR, p.file));
+
+const allLineRefs = [];
+for (const p of [...mdFiles, ...htmlFiles]) {
+  const t = read(p);
+  if (!t) continue;
+  for (const h of findLineRefs(t)) allLineRefs.push({ file: rel(p), ...h });
+}
+if (allLineRefs.length) {
+  fail(
+    "C6-a",
+    `${allLineRefs.length} hits`,
+    "L### line-number refs are forbidden",
+    0,
+    allLineRefs.slice(0, 20),
+  );
+} else ok("C6-a", "docs/**", "no L### line-number refs");
+
+/** 收集每个文档的标题层级编号（### 3.2 之类） */
+const headingNumbers = new Map();
+for (const p of mdFiles) {
+  const t = read(p);
+  const nums = new Set();
+  for (const line of t.split("\n")) {
+    // 「## 3. 标题」「### 3.2 标题」「#### 2.6.1 …」「## 11.7 [D25] …」
+    // 前瞻写成 (?!\d)(?!\.\d)：允许编号后跟「.」句点，只阻止把 1 从 1.1 里截出来
+    const m = /^#{1,6}\s*(?:§\s*)?(\d+(?:\.\d+)*)(?!\d)(?!\.\d)/.exec(line);
+    if (m) nums.add(m[1]);
+  }
+  headingNumbers.set(p, nums);
+}
+
+const sectionRefs = [];
+for (const p of mdFiles) {
+  const t = read(p);
+  t.split("\n").forEach((line, i) => {
+    for (const m of line.matchAll(/§\s*(\d+(?:\.\d+)*)(?!\d)(?!\.\d)/g)) {
+      sectionRefs.push({ file: rel(p), line: i + 1, ref: m[1] });
+    }
+  });
+}
+const anyNumbers = new Set();
+for (const s of headingNumbers.values()) for (const n of s) anyNumbers.add(n);
+const unresolved = sectionRefs.filter((r) => !anyNumbers.has(r.ref));
+if (unresolved.length) {
+  fail(
+    "C6-b",
+    `${unresolved.length} hits`,
+    "section ref target not found in any doc",
+    "(existing §x.y)",
+    unresolved.slice(0, 20),
+  );
+} else ok("C6-b", "docs/**", `all ${sectionRefs.length} section refs resolve`);
+
+/* ============================================================
+   ⑦ 被控端红线：可视文本不得出现计费/金额/推销词
+   ============================================================ */
+/** 自我否定的说明句（禁放区 / 注释）里允许出现禁用词 */
+const NEGATING = /(严禁|不得|禁止|不含|不出现|不属于|不参与|绝无|无任何)/;
+
+/**
+ * 只扫**帧内可见文本**（`.notes` / `.stripe` / `figcaption` 已在 visibleTextOf 里剔除）。
+ * 不做页面级扫描：帧外大多是「被控端绝不出现额度」这类说明句，扫它们只会产生假阳性。
+ */
+const redlineHits = [];
+const w2 = PAGES.find((p) => p.key === "W2");
+let redlineChars = 0;
+if (w2) {
+  const REDLINE_RE =
+    /(余额|充值|会员|套餐|开通|购买|付费|订阅|续费|价格|计费|额度|升级|¥|￥|(?<![一二三四五六七八九十])元(?![气素件]))/g;
+  for (const f of scan.frames.filter((x) => x.page === "W2")) {
+    const text = f.plain;
+    redlineChars += text.length;
+    for (const m of text.matchAll(REDLINE_RE)) {
+      const ctx = text.slice(Math.max(0, m.index - 30), m.index + 30);
+      if (!NEGATING.test(ctx)) {
+        redlineHits.push({
+          where: `${w2.file} ${f.id}`,
+          term: m[0],
+          ctx: norm(ctx),
+        });
+      }
+    }
+  }
+}
+if (redlineHits.length) {
+  fail(
+    "C7",
+    "w2-被控端.html",
+    `red-line words in visible text: ${redlineHits.length}`,
+    0,
+    redlineHits.slice(0, 30),
+  );
+} else if (redlineChars < 500) {
+  // 防「扫了个寂寞」：被控端帧可见文本若短得离谱，说明解析坏了，这项检查本身无意义
+  fail(
+    "C7-0",
+    "w2-被控端.html",
+    `visible text too short (${redlineChars} chars)`,
+    ">=500 chars",
+    redlineChars,
+  );
+} else {
+  ok(
+    "C7",
+    "w2-被控端.html",
+    `no red-line words in ${redlineChars} chars of visible text`,
+  );
+}
+
+/* ============================================================
+   ⑧ 落报告
+   ============================================================ */
+const counts = { FAIL: 0, WARN: 0, PASS: 0 };
+for (const r of results) counts[r.level] += 1;
+
+const report = {
+  generatedAt: new Date().toISOString(),
+  truth,
+  scan: {
+    frameIds: scan.frameIds,
+    customHeights: scan.customHeights.map((f) => ({
+      id: f.id,
+      page: f.page,
+      variant: f.variant,
+      width: f.width,
+      height: f.inlineHeight,
+      stdHeights: f.stdHeights,
+    })),
+  },
+  countClaims: claims.map((c) => ({
+    file: c.file,
+    line: c.line,
+    marker: c.marker,
+    kind: c.kind,
+    text: c.lineText,
+  })),
+  ledger: {
+    line: ledger.line,
+    declared: ledger.items,
+    missing,
+    extra,
+    wrong,
+    freeDeclared: ledger.free,
+    freeActual: [...actualFree.entries()],
+  },
+  refs: {
+    lineRefs: allLineRefs,
+    sectionRefsTotal: sectionRefs.length,
+    unresolved,
+  },
+  redline: { hits: redlineHits, visibleChars: redlineChars },
+  results,
+  counts,
+};
+writeFileSync(REPORT, `${JSON.stringify(report, null, 2)}\n`, "utf8");
+
+/* ---- ASCII-only console ---- */
+const pad = (s, n) => String(s).padEnd(n);
+for (const r of results) {
+  if (r.level === "PASS" && !process.argv.includes("--verbose")) continue;
+  const extra =
+    r.level === "FAIL" && r.expected !== undefined
+      ? `  expect=${JSON.stringify(r.expected)} got=${JSON.stringify(r.actual)}`
+      : "";
+  console.log(
+    `[${pad(r.level, 4)}] ${pad(r.id, 10)} ${pad(r.where, 42)} ${r.msg}${extra}`,
+  );
+}
+console.log("");
+console.log(
+  `truth: entries=${truth.entries} anchors=${truth.anchors} frames=${truth.frames}`,
+);
+console.log(
+  `       entryLayer 1/2/3/4=${truth.entryLayer["①"]}/${truth.entryLayer["②"]}/${truth.entryLayer["③"]}/${truth.entryLayer["④"]}` +
+    `  entryPrio P0/P1=${truth.entryPrio.P0}/${truth.entryPrio.P1}`,
+);
+console.log(
+  `       frameLayer 1/2/3=${truth.frameLayer[0]}/${truth.frameLayer[1]}/${truth.frameLayer[2]}` +
+    `  framePrio P0/P1=${truth.framePrio[0]}/${truth.framePrio[1]}  customHeight frames=${truth.customHeights}`,
+);
+console.log(
+  `counts: FAIL=${counts.FAIL} WARN=${counts.WARN} PASS=${counts.PASS}`,
+);
+console.log(`report: ${rel(REPORT)}`);
+
+if (process.argv.includes("--report")) {
+  console.log("\n--- canvas ledger draft (ASCII) ---");
+  const byPage = {};
+  for (const f of scan.customHeights) (byPage[f.page] ??= []).push(f);
+  for (const [k, list] of Object.entries(byPage)) {
+    console.log(
+      `  ${k}: ${list.map((f) => `${f.id} \`${f.inlineHeight}\``).join(" . ")}`,
+    );
+  }
+  const free = scan.frames.filter(
+    (f) => !f.isStandardWidth && f.inlineHeight !== null,
+  );
+  console.log(
+    `  FREE: ${free.map((f) => `${f.id} \`${f.width}x${f.inlineHeight}\``).join(" . ")}`,
+  );
+  console.log(`  FREE_TOTAL=${free.length}`);
+  const stdDefault = scan.frames.filter(
+    (f) => !f.isCustomHeight && f.isStandardWidth,
+  );
+  console.log(
+    `  STD_DEFAULT=${stdDefault.length}  (${stdDefault.map((f) => f.id).join(", ")})`,
+  );
+}
+
+process.exit(counts.FAIL > 0 ? 1 : 0);

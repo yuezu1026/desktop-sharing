@@ -1,0 +1,42 @@
+# 抗格式器配置（防漂移 E 段）
+# 背景：编辑器里的 HTML/CSS 格式化器会把 style="color:#1f1f1f" 改成 style="color: #1f1f1f"、
+# 把 </span> 断成 </span\n>、把单行 CSS 规则展开成多行 ⇒ 之后按"原本写的文本"做替换全部失配，
+# 每轮都要先 grep 重新确认磁盘原文，白烧 token。
+# 闭环三件套：本文件（缩进/行宽约定）+ .prettierignore（Prettier 整体跳过）
+#            + .vscode/settings.json（关掉 VS Code 内置格式化器的保存时格式化）
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = false
+trim_trailing_whitespace = false
+
+# 线框页与样式：源码即"设计稿"，格式必须原样保真
+[*.html]
+indent_style = space
+indent_size = 2
+max_line_length = off
+
+[*.css]
+indent_style = space
+indent_size = 2
+max_line_length = off
+
+# 工具脚本：ASCII 输出 + 2 空格缩进
+[*.mjs]
+indent_style = space
+indent_size = 2
+charset = utf-8
+
+[*.ps1]
+indent_style = space
+indent_size = 2
+charset = utf-8
+
+# 文档：表格靠手写对齐，禁止重排
+[*.md]
+indent_style = space
+indent_size = 2
+max_line_length = off
+trim_trailing_whitespace = false
