@@ -2,3 +2,5 @@
 selfcheck-report.json
 # 一致性门禁（wireframe-consistency.mjs）的机器可读报告，同样是生成物
 consistency-report.json
+# 帧定位卡（frame.mjs）默认写出的卡片文件，同样是生成物
+frame-dump.md

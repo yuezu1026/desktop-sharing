@@ -136,6 +136,9 @@ export function parsePage(html, pageKey) {
 
     const idM = /id\s*=\s*"([^"]+)"/.exec(attrs);
     const block = m[2];
+    /* 帧原文行范围（1-based，含首尾）—— frame.mjs 靠它「只读这一帧」而不必读整个 HTML */
+    const fromLine = lineOf(html, m.index);
+    const toLine = lineOf(html, m.index + m[0].length - 1);
     const capM = CAPTION_RE.exec(block);
     const caption = capM ? textOf(capM[1]) : "";
     const fidM = FID_RE.exec(block);
@@ -192,6 +195,8 @@ export function parsePage(html, pageKey) {
       pins,
       notes,
       caption,
+      fromLine,
+      toLine,
       plain: visibleTextOf(block),
     });
   }
@@ -270,16 +275,28 @@ export function parseEntries(md) {
 }
 
 /* ---------- README §1 层汇总表解析（①②③④ 数量） ---------- */
-export function parseLayerTable(md) {
-  const rows = {};
-  for (const line of md.split("\n")) {
+/**
+ * 带行号版本（`--fix` 靠它定位要改的单元格）：
+ * 返回 [{ key:"①", n:41, line:30 }]，行格式 `| **① …** | 判据 | 处理 | 41 |`
+ * （末格 = 数量，④ 行为 `7（不做）`）
+ */
+export function parseLayerTableRows(md) {
+  const out = [];
+  md.split("\n").forEach((line, i) => {
     const m = /^\|\s*\*\*([①②③④])[^|]*\|/.exec(line);
-    if (!m) continue;
+    if (!m) return;
     const cells = line.split("|");
     const last = norm(cells[cells.length - 2] ?? "");
     const n = /^(\d+)/.exec(last);
-    if (n) rows[m[1]] = Number(n[1]);
-  }
+    if (n) out.push({ key: m[1], n: Number(n[1]), line: i + 1 });
+  });
+  return out;
+}
+
+/** 便捷版：只需 {①:41, …} */
+export function parseLayerTable(md) {
+  const rows = {};
+  for (const r of parseLayerTableRows(md)) rows[r.key] = r.n;
   return rows;
 }
 
@@ -394,6 +411,56 @@ export function findCountClaims(text) {
       frames: Number(m[4]),
       layersTo: lay ? [Number(lay[2])] : null,
       prios: null,
+    });
+  }
+
+  // 形式三：「N 个界面条目 ⇒ M 张线框图」（正文）之外的**标题型**数字，例：
+  //   `## 1. 结论先行：这个项目一共有 **59 个需要 UI 的位置**`
+  // 🔴 它以前完全没有门禁：改了清单忘改标题，无人察觉。
+  for (const m of text.matchAll(/(\d+)\s*个需要 UI 的位置/g)) {
+    push(m.index, {
+      kind: "title",
+      entries: Number(m[1]),
+      frames: null,
+      layers: null,
+      prios: null,
+      implicit: "current", // 标题里无法放 📊，但它语义上就是当前值
+    });
+  }
+
+  // 形式四：README §6.2 台账的合计句
+  //   `**合计 65 帧** = 44 帧加高（上表）+ 4 帧自由画布（上表末行）+ 17 帧标准默认（…）`
+  // 🔴 同前：四个数以前全靠人工，任何一帧增减都可能漏改。
+  for (const m of text.matchAll(
+    /(\d+)\s*帧\*\*\s*=\s*(\d+)\s*帧加高[\s\S]{0,40}?(\d+)\s*帧自由画布[\s\S]{0,40}?(\d+)\s*帧标准默认/g,
+  )) {
+    push(m.index, {
+      kind: "ledger-total",
+      entries: null,
+      frames: Number(m[1]),
+      layers: null,
+      prios: null,
+      ledger: {
+        custom: Number(m[2]),
+        free: Number(m[3]),
+        standard: Number(m[4]),
+      },
+      implicit: "current",
+    });
+  }
+
+  // 形式五：README §6「画布」行里的行内台账数字
+  //   `… 逐帧台账见 §6.2（44 帧加高 + 4 帧自由画布，机器对拍）…`
+  // 🔴 与形式四同病：它是当前值，但以前没有任何检查盯着它。
+  for (const m of text.matchAll(/(\d+)\s*帧加高\s*\+\s*(\d+)\s*帧自由画布/g)) {
+    push(m.index, {
+      kind: "ledger-inline",
+      entries: null,
+      frames: null,
+      layers: null,
+      prios: null,
+      ledger: { custom: Number(m[1]), free: Number(m[2]) },
+      implicit: "current",
     });
   }
 

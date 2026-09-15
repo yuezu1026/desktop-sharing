@@ -552,9 +552,12 @@ JS 报错 0；横向溢出 0；画布静默裁切 0（八页全部通过 `tools/
 
 ```powershell
 node tools/wireframe-selfcheck.mjs      # ① 几何：静默裁切 / 横向溢出 / 锚点 / 原型 JS
-node tools/wireframe-consistency.mjs    # ② 一致性：计数 / 画布台账 / 引用 / 红线 / 目录过期
+node tools/wireframe-consistency.mjs    # ② 一致性：计数 / 画布台账 / 引用 / 红线 / 目录过期 / 索引过期
 node tools/doc-outline.mjs --check      # ③ 目录过期（② 的 C11 已内含，单独跑用于定位）
 Write-Host "EXIT=$LASTEXITCODE"
+
+# ② 报了「数字 / 台账漂移」？一键回写（回写后自动重生 OUTLINE + IMPACT 并重跑验证）
+node tools/wireframe-consistency.mjs --fix
 ```
 
 - 明细报告（UTF-8 JSON，**勿手改、勿提交**）：`tools/selfcheck-report.json` · `tools/consistency-report.json`
@@ -562,6 +565,9 @@ Write-Host "EXIT=$LASTEXITCODE"
 - 打印台账草稿（改稿后用来同步 §6.2）：`node tools/wireframe-consistency.mjs --report`
 - 展开某文档全部小节（含 `###` 与**行号**）：`node tools/doc-outline.mjs --doc <相对路径>`
 - 打印**完整档**（`##` + 全部 `###` + 行号 + 节 tok，**只打 stdout 不落盘**）：`node tools/doc-outline.mjs --full`
+- 取**单个小节**的行号与 tok（比 `--doc` 更省，改哪节读哪节）：`node tools/doc-outline.mjs --section <相对路径> <x.y> [--text]`
+- 定位线框帧（打印该帧的 HTML + 同步点清单，比整页少 ~90% token）：`node tools/frame.mjs --list` / `node tools/frame.mjs <帧id> --brief`
+- 重生 / 校验**决策影响面索引**（`D##` → 文件:行号）：`node tools/impact-index.mjs`（`--print` 只打摘要、`--check` 只判过期）
 - 改过任何 md 后重生成目录：`node tools/doc-outline.mjs`
 
 ### 12.2 门禁覆盖的漂移类
@@ -577,6 +583,7 @@ Write-Host "EXIT=$LASTEXITCODE"
 | ⑦ | 画布台账漂移 | `C5` / `C5-0` / `C5-b` / `C5-c` / `C5-d` | 帧内 inline `height` 与 §6.2 台账不符 / 台账漏帧或多项 ⇒ **FAIL** |
 | ⑧ | **被控端红线**（W2 禁放余额 · 充值 · 会员 · 价格 · 计费…） | `C7` / `C7-0` | W2 帧可见文本命中红线词（**±30 字上下文含否定词则豁免**，如「不显示价格」）⇒ **FAIL**；可见文本 < 500 字（解析崩了）⇒ `C7-0` **FAIL** |
 | ⑨ | **目录过期**（渐进披露 L1 层） | `C11` | `docs/OUTLINE.md` 与源 md 的 sha1 对不上（改了文档忘了重生成目录）⇒ **FAIL**。修复：`node tools/doc-outline.mjs` |
+| ⑩ | **索引过期**（决策影响面） | `C12` | `docs/IMPACT.md` 与「重新扫描 `[Dxx]` 引用」的结果对不上（行号漂了）⇒ **FAIL**。修复：`node tools/impact-index.mjs`（或 `--fix`） |
 
 ### 12.3 📊 / ⏱ 标记约定
 
@@ -613,9 +620,10 @@ powershell -NoProfile -File docs\design\wireframe\tools\round-close.ps1 -MsgFile
 
 | 层 | 文件 | 规模 | 何时读 |
 |---|---|--:|---|
-| **L0** | `AGENTS.md`（仓库根） | ~1.2k | 🔑 **冷启动必读**：铁律 / 门禁命令 / 文档地图 / 决策编号。**禁止往里加内容**（一臃肿就变成第二个 README，那正是它存在的理由） |
+| **L0** | `AGENTS.md`（仓库根） | ~1.3k | 🔑 **冷启动必读**：铁律 / 门禁命令 / 文档地图 / 决策编号。**禁止往里面加啰嗦**（一臃肿就变成第二个 README，那正是它存在的理由）；只允许增补**工具入口 / 纪律**级别的 1~2 行 |
 | **L0.5** | `.rounds/last.md` | ~0.3k | 接着上一轮继续干活时先读 |
 | **L1** | `docs/OUTLINE.md`（机器生成 · **精简档**） | ~2.5k | 知道要什么、但不知道去哪查时：**先在这里定位**。只答「读哪个文件 / 有哪些章」⇒ **不写行号、不列普通 `###`**（行号会漂移，`###` 每轮只增不减会让目录自我膨胀） |
+| **L1-决策** | `docs/IMPACT.md`（机器生成 · 决策影响面） | ~4k | 🔑 **改任何已拍板 `D##` 前必读**：该决策落在哪些文件哪些行（省掉一轮 `grep`）。只登记**位置**不登记内容；🔴 改完文档必须重生（`C12` 会拦） |
 | **L1+** | `… --doc <路径>` / `… --full`（**只打 stdout**） | 按需 | 需要**行号**取单文档（`--doc`）；需要**全部 `###` + 节 tok**取完整档（`--full`） |
 | **L2** | 原文定点读 60~150 行 | 1.5~3k | 用 `--doc <路径>` 拿到行号（或 `grep_search` 章节标题）后照读 |
 | **L3** | 原文全文 | 3.5~36k | 只在改整篇时 |

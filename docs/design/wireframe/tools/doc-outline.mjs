@@ -6,6 +6,7 @@
 //   node tools/doc-outline.mjs --print   只打印精简档到 stdout，不写文件
 //   node tools/doc-outline.mjs --full    打印**完整档**（`##` + 大 `###` + 行号 + 节 tok）到 stdout，不落盘
 //   node tools/doc-outline.mjs --doc <相对路径>   单文档全展开（含每节行号与 tok）
+//   node tools/doc-outline.mjs --section <相对路径> <节号>   单节定位（行范围 + 直接子节；加 --text 打正文）
 //
 // 两档分野：日常只读精简档（≈2k tok，回答「读哪个文件 / 有哪些章」）；
 // 行号、节 tok、`###` 大节这些会漂移 / 会膨胀的信息，只在显式索取时才展开。
@@ -92,6 +93,8 @@ function collectFiles() {
       }
       if (!ent.name.endsWith(".md")) continue;
       if (p === OUTLINE) continue; // 自我引用排除
+      // 决策影响面索引 = 查阅用生成物，不是「文档地图」成员；它由 C12 单独校验
+      if (ent.name === "IMPACT.md") continue;
       out.push(scanFile(p));
     }
   };
@@ -327,6 +330,44 @@ if (args.includes("--doc")) {
   console.log(`${f.rel}  lines=${f.lines} tokens=${f.tokens}`);
   for (const h of f.heads) {
     console.log(`${"  ".repeat(h.level - 2)}${h.num ?? "-"} | L${h.from}-${h.to} | ${h.tokens} | ${h.title}`);
+  }
+  process.exit(0);
+}
+
+if (args.includes("--section")) {
+  const i = args.indexOf("--section");
+  const want = args[i + 1];
+  const rawNum = args[i + 2];
+  if (!want || !rawNum) {
+    console.log("usage: node tools/doc-outline.mjs --section <doc-rel-path> <x.y> [--text]");
+    process.exit(1);
+  }
+  const f = files.find((x) => x.rel === want || x.rel.endsWith(want));
+  if (!f) {
+    console.log(`not found: ${want}`);
+    process.exit(1);
+  }
+  const num = String(rawNum).replace(/^§\s*/, "");
+  const hit = f.heads.find((h) => h.num === num);
+  if (!hit) {
+    console.log(`section not found: §${num} in ${f.rel}`);
+    console.log(`available: ${f.heads.filter((h) => h.num).map((h) => h.num).join(", ")}`);
+    process.exit(1);
+  }
+  // 🔴 行范围是「本节含全部子节」：Read<from..to> 一次拿全，比自己拼子节更安全。
+  console.log(
+    `${f.rel}  section=§${hit.num}  lines=${hit.from}-${hit.to}  (${hit.to - hit.from + 1} lines / ~${hit.tokens} tok)  level=${hit.level}  file_lines=${f.lines}`,
+  );
+  console.log(`  title: ${hit.title}`);
+  const kids = f.heads.filter(
+    (k) => k.level === hit.level + 1 && k.from > hit.from && k.to <= hit.to,
+  );
+  for (const k of kids) {
+    console.log(`  sub §${k.num ?? "-"}  lines=${k.from}-${k.to}  ~${k.tokens} tok  ${k.title}`);
+  }
+  if (args.includes("--text")) {
+    const all = fs.readFileSync(f.abs, "utf8").split(/\r?\n/);
+    process.stdout.write(all.slice(hit.from - 1, hit.to).join("\n") + "\n");
   }
   process.exit(0);
 }

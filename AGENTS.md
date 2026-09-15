@@ -21,7 +21,8 @@
 ```powershell
 cd docs\design\wireframe                  # 🔴 脚本在 tools\ 下，cwd 必须是这里
 node tools/wireframe-selfcheck.mjs        # 几何：静默裁切 / 溢出 / 锚点 / 原型 JS
-node tools/wireframe-consistency.mjs      # 一致性：计数 / 台账 / 引用 / 红线 / 目录过期
+node tools/wireframe-consistency.mjs      # 一致性：计数 / 台账 / 引用 / 红线 / 目录过期 / 索引过期
+node tools/wireframe-consistency.mjs --fix  # 上一条报数字/台账漂移？一键回写（顺带重生 OUTLINE + IMPACT）
 ```
 
 跑完并提交（推荐一条命令）：
@@ -30,7 +31,7 @@ node tools/wireframe-consistency.mjs      # 一致性：计数 / 台账 / 引用
 powershell -NoProfile -File docs\design\wireframe\tools\round-close.ps1 -MsgFile .\.git-msg.txt -Commit
 ```
 
-- 覆盖 8 类漂移（计数 / 几何 / 术语 / 数值 / 引用 / 格式器 / 台账 / 被控端红线）+ `C11` 目录过期 ⇒ 见 `wireframe/README.md` §12。
+- 覆盖 8 类漂移（计数 / 几何 / 术语 / 数值 / 引用 / 格式器 / 台账 / 被控端红线）+ `C11` 目录过期 + `C12` 索引过期 ⇒ 见 `wireframe/README.md` §12。
 - 明细报告落在 `wireframe/tools/*-report.json`（**勿手改、勿提交**）。
 - 提交信息走 `-MsgFile`（UTF-8 **无 BOM**）；**禁** `git commit -m "中文"`（PS 5.1 按 GBK 传参乱码）。
 - 每次收尾自动写 `.rounds/last.md`（**上一轮的 ~300 token 摘要，冷启动时先读它**）。
@@ -46,6 +47,7 @@ powershell -NoProfile -File docs\design\wireframe\tools\round-close.ps1 -MsgFile
 | `docs/商业化与计费设计.md` | 26k | 计费 / 免费额度 / 付费墙 / §13.x 界面清单与红线 |
 | `docs/账号与管理系统设计.md` | 18k | 账号体系 / 设备管理 / 权限 / 运营台 |
 | `docs/需求规划评审意见.md` | 18k | 评审台账（§10 = 🔴 **活跃待办**，改稿前必看） |
+| `docs/IMPACT.md` | ~4k | 🔑 **改任何已拍板 `D##` 前查落点**（文件:行号，生成物 + `C12` 门禁） |
 | `docs/竞品对标表.md` | 14k | 竞品数据 / 矩阵 / 待核实项 |
 | `docs/design/wireframe/README.md` | 17k | 线框规格与纪律（§5 通行规范 / §6 计数台账 / §12 门禁 / §11.4+§11.5.2 活跃缺口） |
 | `docs/archive/*.md` | 42k | 📦 **历史，默认不读**（评审过程 / 回写清单 / 变更摘要） |

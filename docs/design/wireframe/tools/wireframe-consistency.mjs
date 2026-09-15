@@ -19,6 +19,7 @@
 import { readFileSync, readdirSync, writeFileSync, existsSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { join, relative } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import {
   WIREFRAME_DIR,
@@ -27,11 +28,14 @@ import {
   scanWireframes,
   parseEntries,
   parseLayerTable,
+  parseLayerTableRows,
   parseCanvasLedger,
   findCountClaims,
   findLineRefs,
+  STANDARD_WIDTHS,
   norm,
 } from "./lib/wireframe-scan.mjs";
+import { impactIsStale } from "./lib/impact-scan.mjs";
 
 const README = join(WIREFRAME_DIR, "README.md");
 const INDEX = join(WIREFRAME_DIR, "index.html");
@@ -75,6 +79,15 @@ truth.entries = entries.length;
 truth.anchors = anchorsTotal;
 truth.entryLayer = entryLayerCount;
 truth.entryPrio = entryPrioCount;
+// README §6.2 台账合计句的三个分量（自由画布 = 非标准宽度）
+truth.freeFrames = scan.frames.filter(
+  (f) => f.width !== null && !STANDARD_WIDTHS.has(f.width),
+).length;
+truth.ledger = {
+  custom: truth.customHeights,
+  free: truth.freeFrames,
+  standard: truth.frames - truth.customHeights - truth.freeFrames,
+};
 
 /* ============================================================
    ② 帧自洽：id 唯一 / 前缀 / fid 与 id 一致 / 子态有父帧 / 锚点可达
@@ -141,6 +154,11 @@ const countDocs = [
     label: "账号与管理系统设计.md",
   },
   { path: join(DOCS_DIR, "商业化与计费设计.md"), label: "商业化与计费设计.md" },
+  // 🔴 归档也要扫：归档里只应出现 ⏱ 历史值，一旦有人写 📊 当前值就会被当场拦下。
+  {
+    path: join(DOCS_DIR, "archive", "wireframe-README-评审历史轮次.md"),
+    label: "archive/wireframe-README-评审历史轮次.md",
+  },
 ];
 
 const claims = [];
@@ -148,7 +166,13 @@ for (const d of countDocs) {
   const text = read(d.path);
   if (text === null) continue;
   for (const c of findCountClaims(text))
-    claims.push({ ...c, file: d.label, path: d.path });
+    claims.push({
+      ...c,
+      // implicit = 「结构性数字」（标题里的总数、台账合计句），语义上默认就是当前值
+      marker: c.marker ?? c.implicit ?? null,
+      file: d.label,
+      path: d.path,
+    });
 }
 
 const checkPair = (file, line, marker, label, expected, actual) => {
@@ -249,6 +273,63 @@ for (const c of claims) {
         truth.entryLayer["①"],
       );
     }
+  } else if (c.kind === "title") {
+    // 「## 1. …一共有 **59 个需要 UI 的位置**」——此前完全无门禁
+    checkPair(
+      c.file,
+      c.line,
+      c.marker,
+      "entries-title",
+      c.entries,
+      truth.entries,
+    );
+  } else if (c.kind === "ledger-total") {
+    // 「**合计 65 帧** = 44 帧加高 + 4 帧自由画布 + 17 帧标准默认」——此前完全无门禁
+    checkPair(c.file, c.line, c.marker, "frames-total", c.frames, truth.frames);
+    if (c.ledger) {
+      checkPair(
+        c.file,
+        c.line,
+        c.marker,
+        "ledger-custom",
+        c.ledger.custom,
+        truth.ledger.custom,
+      );
+      checkPair(
+        c.file,
+        c.line,
+        c.marker,
+        "ledger-free",
+        c.ledger.free,
+        truth.ledger.free,
+      );
+      checkPair(
+        c.file,
+        c.line,
+        c.marker,
+        "ledger-standard",
+        c.ledger.standard,
+        truth.ledger.standard,
+      );
+    }
+  } else if (c.kind === "ledger-inline") {
+    // README §6「画布」行：「44 帧加高 + 4 帧自由画布」——此前完全无门禁
+    checkPair(
+      c.file,
+      c.line,
+      c.marker,
+      "ledger-custom-inline",
+      c.ledger.custom,
+      truth.ledger.custom,
+    );
+    checkPair(
+      c.file,
+      c.line,
+      c.marker,
+      "ledger-free-inline",
+      c.ledger.free,
+      truth.ledger.free,
+    );
   }
   if (isCurrent)
     ok("C2-seen", `${c.file}:${c.line}`, "current-marker claim found");
@@ -516,7 +597,36 @@ if (outlineRun.status === 0) {
 }
 
 /* ============================================================
-   ⑨ 落报告
+   ⑨ 决策影响面索引过期（C12）：docs/IMPACT.md 必须与源引用同步
+   ============================================================ */
+/**
+ * 改一个已拍板决策（`[Dxx]`）之前要先看它的全部落点，而索引里的价值就在**行号新鲜**。
+ * 源 md 里增删一行，下游全部行号漂 ⇒ 这里用「重扫描 vs 磁盘」对拍兜底。
+ * 比对时抹掉行内空白（VS Code 的 md 格式化器会在中英文间补空格，否则假 FAIL）。
+ */
+const impact = impactIsStale();
+if (impact.have === null) {
+  fail(
+    "C12",
+    "docs/IMPACT.md",
+    "decision impact index is missing",
+    "docs/IMPACT.md present",
+    ["run: node tools/impact-index.mjs"],
+  );
+} else if (impact.stale) {
+  fail(
+    "C12",
+    "docs/IMPACT.md",
+    "decision impact index is stale (line numbers moved)",
+    "up to date",
+    ["run: node tools/impact-index.mjs  (or --fix)"],
+  );
+} else {
+  ok("C12", "docs/IMPACT.md", "decision impact index up to date");
+}
+
+/* ============================================================
+   ⑩ 落报告
    ============================================================ */
 const counts = { FAIL: 0, WARN: 0, PASS: 0 };
 for (const r of results) counts[r.level] += 1;
@@ -613,6 +723,211 @@ if (process.argv.includes("--report")) {
   console.log(
     `  STD_DEFAULT=${stdDefault.length}  (${stdDefault.map((f) => f.id).join(", ")})`,
   );
+}
+
+/* ============================================================
+   ⑯ --fix：把「可推导的手写点」按真值回写
+   ------------------------------------------------------------
+   只动「能由真值算出来的数字」，绝不动：正文 / 历史值（⏱）/ 条目表 / 帧原文 / 说明文字。
+   改完以子进程重跑一遍（不带 --fix）做真实验证 ⇒ 一条命令就能看到收敛结果。
+   ============================================================ */
+if (process.argv.includes("--fix")) {
+  /** 在「3 行窗口」上做「保留分隔符」的数字替换（md/html 都可能折行，不能假设同行） */
+  const fixCountText = (c, s) => {
+    const L = truth.entryLayer;
+    const P = truth.entryPrio;
+    if (c.kind === "full") {
+      s = s.replace(
+        /(\d+)(\s*个界面条目\s*⇒\s*)(\d+)(\s*张线框图)/,
+        (_m, _a, s1, _b, s2) =>
+          `${truth.entries}${s1}${truth.frames}${s2}`,
+      );
+      s = s.replace(
+        /(①\s*)\d+(\s*\/\s*②\s*)\d+(\s*\/\s*③\s*)\d+/,
+        (_m, a, b, d) => `${a}${L["①"]}${b}${L["②"]}${d}${L["③"]}`,
+      );
+      s = s.replace(
+        /(P0\s*)\d+(\s*\/\s*P1\s*)\d+/,
+        (_m, a, b) => `${a}${P.P0}${b}${P.P1}`,
+      );
+    } else if (c.kind === "pair") {
+      s = s.replace(
+        /(⇒\s*)\d+(\s*\*\*\s*条目)/,
+        (_m, a, b) => `${a}${truth.entries}${b}`,
+      );
+      s = s.replace(
+        /(⇒\s*)\d+(\s*\*\*\s*帧)/,
+        (_m, a, b) => `${a}${truth.frames}${b}`,
+      );
+      if (c.layersTo) {
+        s = s.replace(
+          /(⇒\s*)\d+(\s*\*\*\s*)\d+(\s*\/\s*)/,
+          (_m, a, b, d) => `${a}${L["①"]}${b}${truth.frames}${d}`,
+        );
+      }
+    } else if (c.kind === "ledger-inline") {
+      s = s.replace(
+        /(\d+)(\s*帧加高\s*\+\s*)(\d+)(\s*帧自由画布)/,
+        (_m, _a, s1, _b, s2) =>
+          `${truth.ledger.custom}${s1}${truth.ledger.free}${s2}`,
+      );
+    } else if (c.kind === "title") {
+      s = s.replace(
+        /(\d+)(\s*个需要 UI 的位置)/,
+        (_m, _a, b) => `${truth.entries}${b}`,
+      );
+    } else if (c.kind === "ledger-total") {
+      s = s.replace(
+        /(\d+)(\s*帧\*\*\s*=\s*)(\d+)(\s*帧加高[\s\S]{0,40}?)(\d+)(\s*帧自由画布[\s\S]{0,40}?)(\d+)(\s*帧标准默认)/,
+        (_m, _a, s1, _b, s2, _c, s3, _d, s4) =>
+          `${truth.frames}${s1}${truth.ledger.custom}${s2}${truth.ledger.free}${s3}${truth.ledger.standard}${s4}`,
+      );
+    }
+    return s;
+  };
+
+  const byFile = new Map();
+  const queue = (path, fromLine, toLine, before, after) => {
+    if (before === after || before === undefined) return;
+    const arr = byFile.get(path) ?? [];
+    arr.push({ fromLine, toLine, before, after });
+    byFile.set(path, arr);
+  };
+
+  /* ① 计数句（含标题型 / 台账合计型）：3 行窗口，容忍折行 */
+  for (const c of claims) {
+    const text = read(c.path);
+    if (text === null) continue;
+    const lines = text.split("\n");
+    const from = Math.max(1, c.line - 1);
+    const to = Math.min(lines.length, c.line + 1);
+    const before = lines.slice(from - 1, to).join("\n");
+    queue(c.path, from, to, before, fixCountText(c, before));
+  }
+
+  /* ② README §1 层汇总表末格（④ 是「明确不做」的计数，语义不同，不动） */
+  {
+    const lines = readme.split("\n");
+    for (const r of parseLayerTableRows(readme)) {
+      if (r.key === "④") continue;
+      const want = truth.entryLayer[r.key];
+      const line = lines[r.line - 1];
+      if (line === undefined || r.n === want) continue;
+      queue(
+        README,
+        r.line,
+        r.line,
+        line,
+        line.replace(/\|\s*\d+\s*\|\s*$/, (m) => m.replace(/\d+/, String(want))),
+      );
+    }
+  }
+
+  /* ③ README §6.2 画布台账：按端重建加高帧行 / 自由画布行 / 标准默认列表 */
+  {
+    const lines = readme.split("\n");
+    // 🔴 只大写首字母 w：子态后缀必须保持小写（台账写 `W1-06b`，不是 `W1-06B`）
+    const uid = (id) => id.replace(/^w/, "W");
+    const fmtCustom = (f) => `${uid(f.id)} \`${f.inlineHeight}\``;
+    const byPage = {};
+    for (const f of scan.customHeights) (byPage[f.page] ??= []).push(f);
+    const free = scan.frames.filter(
+      (f) => !f.isStandardWidth && f.inlineHeight !== null,
+    );
+    const stdDefault = scan.frames.filter(
+      (f) => !f.isCustomHeight && f.isStandardWidth,
+    );
+    lines.forEach((line, i) => {
+      const label = /^\|\s*([^|]+?)\s*\|/.exec(line)?.[1];
+      // 加高帧行：`| W1 控制端 | W1-03 `470` · … |`
+      if (label && /^W[1-6]\b/.test(label) && /`\d+`/.test(line)) {
+        const list = (byPage[label.slice(0, 2)] ?? []).map(fmtCustom).join(" · ");
+        const after = `| ${label} | ${list} |`;
+        if (after !== line) queue(README, i + 1, i + 1, line, after);
+        return;
+      }
+      // 自由画布行
+      if (label && label.startsWith("**自由画布**") && /\d+×\d+/.test(line)) {
+        const list = free
+          .map((f) => `${uid(f.id)} ${f.width}×${f.height}`)
+          .join(" · ");
+        const after = `| ${label} | ${list} |`;
+        if (after !== line) queue(README, i + 1, i + 1, line, after);
+        return;
+      }
+      // 标准默认帧列表行（以 W1-01 开头）
+      if (/^W1-01\s·/.test(line)) {
+        const after = stdDefault.map((f) => uid(f.id)).join(" · ");
+        if (after !== line) queue(README, i + 1, i + 1, line, after);
+      }
+    });
+  }
+
+  const applyFile = (path, edits) => {
+    const all = read(path).split("\n");
+    const taken = [];
+    let applied = 0;
+    let skipped = 0;
+    for (const e of edits.slice().sort((a, b) => b.fromLine - a.fromLine)) {
+      // 窗口重叠 ⇒ 留给下一轮（避免用「已过期的原文」去匹配）
+      if (taken.some((t) => e.fromLine <= t.to + 1 && e.toLine >= t.from - 1)) {
+        skipped++;
+        continue;
+      }
+      if (all.slice(e.fromLine - 1, e.toLine).join("\n") !== e.before) {
+        skipped++;
+        continue;
+      }
+      all.splice(
+        e.fromLine - 1,
+        e.toLine - e.fromLine + 1,
+        ...e.after.split("\n"),
+      );
+      taken.push({ from: e.fromLine, to: e.toLine });
+      applied++;
+    }
+    if (applied > 0) writeFileSync(path, all.join("\n"), "utf8");
+    return { applied, skipped };
+  };
+
+  let appliedTotal = 0;
+  let skippedTotal = 0;
+  for (const [path, edits] of byFile) {
+    const r = applyFile(path, edits);
+    appliedTotal += r.applied;
+    skippedTotal += r.skipped;
+    if (r.applied > 0)
+      console.log(
+        `[FIX ] ${rel(path).padEnd(42)} applied=${r.applied} skipped=${r.skipped}`,
+      );
+  }
+  console.log(`fix: applied=${appliedTotal} skipped=${skippedTotal}`);
+  if (skippedTotal > 0)
+    console.log("NOTE: skipped usually means overlapping windows - re-run once.");
+
+  // 🔴 被改的文档进了 docs/OUTLINE.md 的源 hash 表：不重生成就会让 C11 假 FAIL
+  // 🔴 行号动了则 docs/IMPACT.md 也会过期 ⇒ 即使没改数字（applied=0）也要重生
+  if (appliedTotal > 0 || impact.stale) {
+    console.log("regenerating docs/OUTLINE.md ...");
+    const g = spawnSync(
+      process.execPath,
+      [join(WIREFRAME_DIR, "tools", "doc-outline.mjs")],
+      { stdio: "ignore" },
+    );
+    if (g.status !== 0) console.log("WARN: doc-outline.mjs exited non-zero");
+    console.log("regenerating docs/IMPACT.md ...");
+    const i = spawnSync(
+      process.execPath,
+      [join(WIREFRAME_DIR, "tools", "impact-index.mjs")],
+      { stdio: "ignore" },
+    );
+    if (i.status !== 0) console.log("WARN: impact-index.mjs exited non-zero");
+    console.log("re-running checks to verify ...\n");
+    const r = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], {
+      stdio: "inherit",
+    });
+    process.exit(r.status ?? 1);
+  }
 }
 
 process.exit(counts.FAIL > 0 ? 1 : 0);
