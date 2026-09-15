@@ -560,7 +560,8 @@ Write-Host "EXIT=$LASTEXITCODE"
 - 明细报告（UTF-8 JSON，**勿手改、勿提交**）：`tools/selfcheck-report.json` · `tools/consistency-report.json`
 - 真值快照（调试用，只读，打印 65 帧全清单、每页帧数、图比条目差值、全部计数句）：`node tools/lib/wireframe-scan.mjs`
 - 打印台账草稿（改稿后用来同步 §6.2）：`node tools/wireframe-consistency.mjs --report`
-- 展开某文档全部小节（含 `###`）：`node tools/doc-outline.mjs --doc <相对路径>`
+- 展开某文档全部小节（含 `###` 与**行号**）：`node tools/doc-outline.mjs --doc <相对路径>`
+- 打印**完整档**（`##` + 全部 `###` + 行号 + 节 tok，**只打 stdout 不落盘**）：`node tools/doc-outline.mjs --full`
 - 改过任何 md 后重生成目录：`node tools/doc-outline.mjs`
 
 ### 12.2 门禁覆盖的漂移类
@@ -614,8 +615,9 @@ powershell -NoProfile -File docs\design\wireframe\tools\round-close.ps1 -MsgFile
 |---|---|--:|---|
 | **L0** | `AGENTS.md`（仓库根） | ~1.2k | 🔑 **冷启动必读**：铁律 / 门禁命令 / 文档地图 / 决策编号。**禁止往里加内容**（一臃肿就变成第二个 README，那正是它存在的理由） |
 | **L0.5** | `.rounds/last.md` | ~0.3k | 接着上一轮继续干活时先读 |
-| **L1** | `docs/OUTLINE.md`（机器生成） | ~4.9k | 知道要什么、但不知道去哪查时：**先在这里定位** |
-| **L2** | 原文定点读 60~150 行 | 1.5~3k | 目录给出 `L###` 行范围后照读 |
+| **L1** | `docs/OUTLINE.md`（机器生成 · **精简档**） | ~2.5k | 知道要什么、但不知道去哪查时：**先在这里定位**。只答「读哪个文件 / 有哪些章」⇒ **不写行号、不列普通 `###`**（行号会漂移，`###` 每轮只增不减会让目录自我膨胀） |
+| **L1+** | `… --doc <路径>` / `… --full`（**只打 stdout**） | 按需 | 需要**行号**取单文档（`--doc`）；需要**全部 `###` + 节 tok**取完整档（`--full`） |
+| **L2** | 原文定点读 60~150 行 | 1.5~3k | 用 `--doc <路径>` 拿到行号（或 `grep_search` 章节标题）后照读 |
 | **L3** | 原文全文 | 3.5~36k | 只在改整篇时 |
 | **归档** | `docs/archive/*.md` | 42k 合计 | **默认不读**，只在追溯历史决策细节时打开 |
 

@@ -37,7 +37,7 @@ powershell -NoProfile -File docs\design\wireframe\tools\round-close.ps1 -MsgFile
 
 ## 3. 文档地图
 
-🔑 **不知道去哪查 ⇒ 先读 `docs/OUTLINE.md`**（全文档标题树 + 行号 + token 规模，机器生成）**，再不行 grep。**
+🔑 **不知道去哪查 ⇒ 先读 `docs/OUTLINE.md`**（L1 **精简档**：文档速查 + 章级地图，**~2.5k tok**；**要行号**加 `--doc <路径>`，**要完整档**加 `--full`）**，再不行 grep。**
 
 | 文档 | ⏱ | 何时读 |
 |---|---|---|

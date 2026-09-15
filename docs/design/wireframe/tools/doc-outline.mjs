@@ -1,10 +1,14 @@
 // doc-outline.mjs — 渐进披露 L1 层：文档目录生成 + 过期门禁
 //
 // 用法：
-//   node tools/doc-outline.mjs           生成 docs/OUTLINE.md + tools/outline-hashes.json
-//   node tools/doc-outline.mjs --check   对拍源文件 hash，过期即 exit 1（门禁）
-//   node tools/doc-outline.mjs --print   只打印到 stdout，不写文件
-//   node tools/doc-outline.mjs --doc <相对路径>   展开某文档的全部小节（含 ###）
+//   node tools/doc-outline.mjs           生成**精简档** docs/OUTLINE.md + tools/outline-hashes.json
+//   node tools/doc-outline.mjs --check   对拍源文件 hash，过期即 exit 1（门禁 C11）
+//   node tools/doc-outline.mjs --print   只打印精简档到 stdout，不写文件
+//   node tools/doc-outline.mjs --full    打印**完整档**（`##` + 大 `###` + 行号 + 节 tok）到 stdout，不落盘
+//   node tools/doc-outline.mjs --doc <相对路径>   单文档全展开（含每节行号与 tok）
+//
+// 两档分野：日常只读精简档（≈2k tok，回答「读哪个文件 / 有哪些章」）；
+// 行号、节 tok、`###` 大节这些会漂移 / 会膨胀的信息，只在显式索取时才展开。
 //
 // 🔴 设计约束：stdout 只输出 ASCII（PowerShell 5.1 的中文会 GBK 碎掉）；
 //    文件一律以 UTF-8 无 BOM 写入（Node 默认行为）。
@@ -134,22 +138,26 @@ function scanFile(p) {
 
 const fmt = (n) => n.toLocaleString("en-US");
 
-function renderOutline(files) {
+/**
+ * 完整档（`--full`，**只打 stdout、不落盘**）——逃生舱。
+ * 默认档（精简档）刻意不写行号、不列 `###`；需要行号 / 节 tok / `###` 大节时才展开这一档。
+ */
+function renderOutlineFull(files) {
   const docs = files.filter((f) => !f.archived);
   const archived = files.filter((f) => f.archived);
   const docTokens = docs.reduce((a, f) => a + f.tokens, 0);
   const arcTokens = archived.reduce((a, f) => a + f.tokens, 0);
 
   const L = [];
-  L.push("# 文档目录 · 渐进披露索引");
+  L.push(
+    "# 文档目录 · 渐进披露索引（L1 · 完整档）",
+  );
   L.push("");
   L.push(
-    "> 🤖 由 `node tools/doc-outline.mjs` 机器生成，**勿手改**。改任何 md 后必须重跑，否则 `node tools/doc-outline.mjs --check` 会 FAIL。",
+    "> 🤖 由 `node tools/doc-outline.mjs --full` 机器生成（**只打 stdout**）。日常用精简档 `docs/OUTLINE.md`。",
   );
   L.push(
-    `> 🔑 **读法**：本文件是「L1 目录层」。**先在这里定位 → 再定点读原文的 60~150 行**。通读本目录（约 ${fmt(
-      estTokens(L.join("\n")) + 3000,
-    )} tok）远便宜于通读任何一份原文。`,
+    " > 🔑 **读法**：**先在这里定位 → 再定点读原文的 60~150 行**，远便宜于通读任何一份原文。",
   );
   L.push("");
   L.push("## 0. 一屏速查");
@@ -212,6 +220,99 @@ function renderOutline(files) {
   return L.join("\n");
 }
 
+/** 状态徽标：只留 emoji + 紧跟的短词（完整说明见 `--full`），例：`🔴SSOT` / `🔴活跃` */
+function badgeOf(rel, num) {
+  const s = SECTION_STATUS[`${rel}::${num}`];
+  if (!s) return "";
+  const m = /^(\S+)\s*\*\*([^*]+)\*\*/.exec(s);
+  return m ? `${m[1]}${m[2]}` : s.split(/\s/)[0];
+}
+
+/**
+ * 🔴 人工标注过的节点（📊 与 `SECTION_STATUS` 同源的人工判断）—— 精简档**只为它们破例**。
+ * 精简档规则：**列全部 `##` + 只列人工标了 🔴 的 `###`**。
+ * 理由：`###` 每轮只增不减（会令 L1 自我膨胀）；而人工标 🔴 的（活跃待办 / SSOT）恰恰是最该被看见的。
+ */
+const isKeyNode = (rel, h) => h.level === 2 || Boolean(badgeOf(rel, h.num).includes("🔴"));
+
+/** 精简档的「何时读」：只取首句（完整判断见 `--full`），避免同一句在每个文档重复铺开 */
+function shortWhen(rel) {
+  const full = WHEN_TO_READ[rel];
+  if (!full) return "—";
+  return full.split("。")[0] + "。";
+}
+
+/**
+ * 精简档（默认落盘 `docs/OUTLINE.md`）——只回答两个问题：
+ *   ① 读哪个文件？ ② 这个文件有哪些章？
+ *
+ * 刻意**不写行号**：行号经任何一次编辑就漂移（与本仓库 `C6-a`「正文禁写 L###」同源）；
+ *   需要行号时 `--doc <路径>` 一次就能拿到（含每节 tok），比读目录后在脑中做行号加减更可靠也更便宜。
+ * 刻意**不列普通 `###`**：见 `isKeyNode`。
+ */
+function renderOutlineLite(files) {
+  const docs = files.filter((f) => !f.archived);
+  const archived = files.filter((f) => f.archived);
+  const docTokens = docs.reduce((a, f) => a + f.tokens, 0);
+  const arcTokens = archived.reduce((a, f) => a + f.tokens, 0);
+
+  const L = [];
+  L.push("# 文档目录 · 渐进披露索引（L1 · 精简档）");
+  L.push("");
+  L.push(
+    "> 🤖 机器生成（`node tools/doc-outline.mjs`），**勿手改**；改任何 md 后必须重跑，否则 `--check` FAIL（门禁 `C11`）。",
+  );
+  L.push(
+    "> 🧰 **取行号**：`… --doc <路径>`（单文档全展开，含节 tok）· **取完整档**（`##` + 全部 `###` + 行号 + 节 tok）：`… --full`（只打 stdout，不落盘）。",
+  );
+  L.push("");
+  L.push("## 0. 读哪个文件");
+  L.push("");
+  L.push(`| 文档 | 行 | token | 何时读 |`);
+  L.push(`|---|--:|--:|---|`);
+  for (const f of docs) {
+    L.push(`| \`${f.rel}\` | ${fmt(f.lines)} | ${fmt(f.tokens)} | ${shortWhen(f.rel)} |`);
+  }
+  if (archived.length) {
+    L.push(
+      `| 📦 \`docs/archive/\` (${archived.length} 份，**默认不读**) | ${fmt(
+        archived.reduce((a, f) => a + f.lines, 0),
+      )} | ${fmt(arcTokens)} | 只在追溯历史决策细节时打开 |`,
+    );
+  }
+  L.push("");
+  L.push(`> 正文合计 **${fmt(docTokens)}** tok · 归档 ${fmt(arcTokens)} tok（已移出正文）。`);
+  L.push("");
+  L.push(`## 1. 有哪些章（列全部 \`##\`；\`###\` 只列人工标 🔴 的关键节点，其余用 \`--full\`）`);
+  L.push("");
+  for (const f of docs) {
+    const rows = f.heads.filter((h) => isKeyNode(f.rel, h));
+    if (!rows.length) {
+      L.push(`- \`${f.rel}\` — （无 \`##\` 级小节）`);
+      continue;
+    }
+    const parts = rows.map((h) => {
+      const name = h.title.replace(/^\d+(?:\.\d+)*\.?\s*/, "");
+      const b = h.level === 3 ? "└" : "";
+      return `\`${h.num ?? "—"}\`${b} ${name}${badgeOf(f.rel, h.num)}`;
+    });
+    L.push(`- \`${f.rel}\` — ${parts.join(" · ")}`);
+  }
+  if (archived.length) {
+    L.push("");
+    L.push("## 2. 📦 归档（默认不读）");
+    L.push("");
+    L.push(
+      "> 从正文**原样搬出**的历史 / 速查段落；正文保留 `§` 编号与指针，因而既有引用仍可解析。",
+    );
+    L.push("");
+    for (const f of archived) {
+      L.push(`- \`${f.rel}\` — ${fmt(f.lines)} 行 / ${fmt(f.tokens)} tok`);
+    }
+  }
+  return L.join("\n");
+}
+
 // ---- CLI ----
 const args = process.argv.slice(2);
 const files = collectFiles();
@@ -261,12 +362,18 @@ if (args.includes("--check")) {
   process.exit(0);
 }
 
-const outlineText = renderOutline(files);
+const outlineText = renderOutlineLite(files);
 const hashMap = {};
 for (const f of files) hashMap[f.rel] = { lines: f.lines, tokens: f.tokens, hash: f.hash };
 
+// 完整档 = 逃生舱，只打 stdout、**不落盘**（落盘会跟精简档打架，也让 C11 失去单一目标）
+if (args.includes("--full")) {
+  process.stdout.write(renderOutlineFull(files) + "\n");
+  process.exit(0);
+}
+
 if (args.includes("--print")) {
-  console.log(outlineText);
+  process.stdout.write(outlineText + "\n");
   process.exit(0);
 }
 
