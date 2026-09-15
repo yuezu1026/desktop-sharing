@@ -34,6 +34,12 @@
       >；<b>W6-05 ~ W6-08（外接大屏 / 桌面模式）为 P1</b>（v2 §2.3.2
       增强路径）；<b>W6-09（沉浸式手持）为 P0</b>（`[D22]`
       补稿，含横屏子态 W6-09a，见本页末尾）。
+      <br />🔴 <b>触屏命中区 ≥ 44×44px</b>（README §6「命中区」行）：
+      本页画布里的按钮高度<b>不代表真实命中区</b>（低保真取整），
+      真实命中区在高保真阶段必须复核 —— 尤其 [W6-02](#w6-02)
+      底部 4 键与 [W6-05](#w6-05) 两个模态按钮（`R14`）。
+      <br />🔴 <b>数值一律后端下发</b>：本页出现的设备数上限、分辨率、接口能力
+      均出自服务端 / 设备上报（`R17`，详见各帧注）。
     </div>
 
     <div class="flow">
@@ -121,6 +127,11 @@
           <li>
             列表只显示在线 / 离线两种视觉差异 +
             一个状态点，不用颜色以外的方式区分（色盲可用性）。
+          </li>
+          <li>
+            🔴 「6 / 150」里的 <b>150 = 设备数上限，由后端下发</b>（SSOT `P15`；
+            免费 / 付费档位不同）⇒ <span class="no">不得</span
+            >在前端硬编码，也不得把它写进文案（`R17`；与 W1-01 / W4-03 同口径）。
           </li>
         </ul>
       </figure>
@@ -474,6 +485,18 @@
             每次插屏都弹一次的提示，等于把增强功能做成骚扰。
           </li>
           <li>
+            🆕 🔴 <b>「记住我的选择」必须有撤销路径</b>：勾选后本弹层不再出现，
+            用户得能改回来 ⇒ 开关落在 <a href="#w6-07">W6-07</a> 新增的
+            「外接显示器」组（开 / 关 / 每次问我），默认 = <b>每次问我</b>（`R12`）。
+          </li>
+          <li>
+            🔴 「外接显示器 1 · 1920×1080 · USB-C 有线直出」三串数据<b
+              >全部由设备上报</b
+            >（分辨率 / 接口 / 是否支持 DP Alt Mode），<span class="no">不得</span
+            >在客户端写死，也不得拿它当付费卖点（机型能力表归
+            <a href="#w6-08">W6-08</a>；`R17`）。
+          </li>
+          <li>
             <b>②</b> 🔴 这一屏只切换<b>控制端的界面布局</b>；<b
               >不得顺带修改被控端的屏幕分辨率 / DPI</b
             >
@@ -525,11 +548,11 @@
                 <div class="item" style="border: 0; padding: 6px 7px">
                   会话 · 办公室 Mac
                 </div>
-                <div class="item" style="border: 0; padding: 6px 7px">
-                  文件传输
+                <div class="item muted" style="border: 0; padding: 6px 7px">
+                  文件传输 <span class="tiny">P1</span>
                 </div>
-                <div class="item" style="border: 0; padding: 6px 7px">
-                  剪贴板同步
+                <div class="item muted" style="border: 0; padding: 6px 7px">
+                  剪贴板同步 <span class="tiny">P1</span>
                 </div>
               </div>
               <div class="label" style="margin-top: 12px">指针</div>
@@ -660,6 +683,10 @@
           <li>
             「文件传输 / 剪贴板同步」在本稿中<b>未出稿</b>（见 README
             §7），此处仅表示它们在大屏形态下是并列窗口。
+            <br />🆕 🔴 <b>因此此处不得画成可点入口</b>（`R13`）：已改为
+            <b>标灰 + P1 标记</b>（<code>class="item muted"</code>）—— 与
+            [W2-08](w2-被控端.html#w2-08) note⑤「不做假按钮」是同一条纪律：
+            画面上看起来能点、实际没画的功能，比不画它更糟。
           </li>
           <li>
             ℹ️ 本帧<b>不设图注编号</b>：四处要点（窗口化 / 光标 / 右键菜单 /
@@ -675,7 +702,7 @@
           层③ 常规界面 · P1　|　来源 v2 §2.3.2「输入」要求 · 与
           <a href="w1-控制端-连接与额度.html#w1-08">W1-08</a> 显示设置同族
         </figcaption>
-        <div class="screen screen--panel" style="height: 560px">
+        <div class="screen screen--panel" style="height: 620px">
           <div class="chrome">
             <span class="dot"></span><span class="dot"></span
             ><span class="dot"></span>
@@ -742,6 +769,14 @@
               </div>
             </div>
 
+            <div>
+              <span class="label">外接显示器</span>
+              <div class="input">
+                自动进入大屏布局：每次问我 ▾<span class="grow"></span
+                ><span class="tiny muted">开 / 关 / 每次问我</span>
+              </div>
+            </div>
+
             <div class="box--fill box tiny" style="padding: 9px">
               🔴 本页只改<b>控制端</b>的映射与缩放；<b
                 >不得修改被控端的屏幕分辨率 / DPI</b
@@ -771,6 +806,12 @@
             与 <a href="w1-控制端-连接与额度.html#w1-08">W1-08</a> 的分工：W1-08
             管<b>手持 / 窗口态</b>的缩放三选一，
             本页管<b>外接态</b>的键鼠与缩放；两页的「拉伸会变形」警告口径必须一致。
+          </li>
+          <li>
+            🆕 🎯 <b>「外接显示器」组 = <a href="#w6-05">W6-05</a>「记住我的选择」的撤销路径</b
+            >（`R12`）：弹层勾选后不再自动出现，用户只能在这里改；
+            三态语义 = <b>开</b>（插入即切大屏）/ <b>关</b>（永不切，也不问）/
+            <b>每次问我</b>（默认 = 首插必问）。<b>未出稿</b> ⇒ 本轮只为占位 + 定语义。
           </li>
           <li>
             「多显示器」切换仍归

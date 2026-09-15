@@ -153,6 +153,11 @@
           <li>
             状态必须能一眼看出"现在有没有人在看我屏幕"——这是用户最关心的事。
           </li>
+          <li>
+            🆕 🔴 <b>「常用开关」不定义任何默认值</b>（`R11`）：它们只是设置页
+            （<a href="#w2-05">W2-05</a> / <a href="#w2-06">W2-06</a>）
+            同一状态的快捷入口 —— 在主屏改也会同步改设置页，反之亦然。
+          </li>
         </ul>
       </figure>
 
@@ -347,6 +352,10 @@
                 <div class="item" style="border: 0; padding: 6px 0">
                   <span>允许对方操作键鼠</span><span class="grow"></span
                   ><span class="tag on">开</span>
+                </div>
+                <div class="tiny muted" style="margin-top: 6px">
+                  ⚠️ 在本屏的改动<b>只影响本次会话</b>，<span class="no">不改变</span
+                  >设置页里的默认值（唯一源 = <a href="#w2-05">W2-05</a>；`R11`）。
                 </div>
               </div>
             </div>
@@ -553,6 +562,20 @@
             >，写进设置页作为固定期望，防止被后续"优化"掉。
           </li>
           <li>本页<b>不含</b>任何计费相关开关（被控端不参与计费）。</li>
+          <li>
+            🆕 🔴 <b>开关唯一源（`R11`）</b>：本页 = <b>默认偏好</b>的 SSOT
+            （键鼠 / 文件 / 隐私屏）；<a href="#w2-03">W2-03</a> =
+            <b>仅本次会话的临时值</b>；<a href="#w2-01">W2-01</a> 的「常用开关」与
+            <a href="#w2-06">W2-06</a> 的列表 = <b>同一状态的快捷入口</b>
+            ⇒ 四处是<b>同一状态的不同视图</b>，<span class="no">不得</span
+            >各记一份（README §11.11.1 <b>S1</b>）。
+          </li>
+          <li>
+            🆕 🔴 <b>音频不放在本页</b>（原 `R10` 建议此处增一行，现改为不放）：
+            若在此再造一个音频开关，就会出现<b>第三个源</b>，恰好撞上 `R11`。
+            音频默认值唯一源 = <a href="#w2-11">W2-11</a>（设置 — 音频与对讲），
+            会话中运行态 = <a href="#w2-08">W2-08</a>。
+          </li>
         </ul>
       </figure>
 
@@ -579,6 +602,9 @@
               </div>
               <div class="item" style="border: 0; padding: 6px 8px">
                 性能与隐私
+              </div>
+              <div class="item" style="border: 0; padding: 6px 8px">
+                音频与对讲
               </div>
               <div class="item" style="border: 0; padding: 6px 8px">安全</div>
               <div class="item" style="border: 0; padding: 6px 8px">网络</div>
@@ -643,6 +669,16 @@
           </li>
           <li>
             「宽限期/自动断开时长」这类选项 P1 再补（P0 保持可选项目尽可能少）。
+          </li>
+          <li>
+            🆕 🔴 <b>本页是「总览 / 快捷入口」而非第二个源</b>（`R11`）：这里的开关与
+            <a href="#w2-05">W2-05</a> / <a href="#w2-11">W2-11</a>
+            里的是<b>同一状态</b>，不得各记一份；改任何一处两边都得变。
+          </li>
+          <li>
+            🆕 🔴 <b>音频入口已补入侧栏「音频与对讲」</b>（`R10`）：
+            该设置页已出稿 = <a href="#w2-11">W2-11</a>。此前总览里找不到它，
+            而「对方能不能听到本机声音」是<b>P0 隐私开关</b>，必须在总览可发现。
           </li>
         </ul>
       </figure>

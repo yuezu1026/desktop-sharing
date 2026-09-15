@@ -24,8 +24,9 @@
     <h1>W1 · 控制端 · 连接与免费中继时长</h1>
     <p class="lede">
       这是全套线框里<b>最不能省的一组</b>：连接模式指示器是主主张的唯一执行体，降级链四态是「禁止静默降码率」的唯一执行体。
-      <br />本页 <b>15 个条目 / 18 张图</b>（W1-05 一屏四态 ⇒ 1 条 4 图；W1-06 /
-      W1-06b 为「仅查看」的两种成因，各自独立成条），其中
+      <br />本页 <b>15 个条目 / 19 张图</b>（W1-05 一屏四态 ⇒ 1 条 4 图；W1-06 /
+      W1-06b 为「仅查看」的两种成因，各自独立成条；🔴 W1-01b
+      为<b>空态</b>补稿，与 W1-01 同条 ⇒ 1 条 2 图），其中
       <b>11 个条目属「缺了就是违反已拍板决策」</b>。 <br class="muted" />🔴
       全页出现的<b>免费中继时长</b>数值均为示意，<b>实际必须后端下发</b>（`商业化与计费设计`
       §13.5：TURN 报价到手前数值会变）。
@@ -172,6 +173,99 @@
           <li>
             空态：新账号设备数为 0
             时，此区域整块替换为引导（"在被控设备上安装并登录，设备会自动出现在这里"）。
+          </li>
+        </ul>
+      </figure>
+
+      <!-- ============ W1-01b（R9 补帧：空态） ============ -->
+      <figure class="frame" id="w1-01b">
+        <figcaption>态 B · 空态（注册后 0 台设备 —— 首日必现）</figcaption>
+        <div class="screen screen--desk">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">远程桌面</span>
+          </div>
+          <div class="body">
+            <aside class="side">
+              <div class="hstack" style="margin-bottom: 12px">
+                <span class="ico"></span><b>远程桌面</b>
+              </div>
+              <div class="tiny">
+                <div class="item sel" style="border: 0; padding: 6px 8px">
+                  我的设备
+                </div>
+                <div class="item" style="border: 0; padding: 6px 8px">
+                  文件传输
+                </div>
+                <div class="item" style="border: 0; padding: 6px 8px">
+                  操作日志
+                </div>
+                <div class="item" style="border: 0; padding: 6px 8px">设置</div>
+              </div>
+            </aside>
+            <main class="grow" style="display: flex; flex-direction: column">
+              <div class="bar">
+                <b>我的设备</b><span class="grow"></span>
+                <span class="input" style="width: 140px">搜索设备</span>
+                <span class="btn sm">+ 添加设备</span>
+              </div>
+
+              <div
+                class="pad grow"
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                  justify-content: center;
+                  gap: 9px;
+                "
+              >
+                <div class="ph-img" style="width: 118px; height: 62px">
+                  设备图示
+                </div>
+                <b>还没有可连接的设备</b>
+                <div
+                  class="tiny muted"
+                  style="max-width: 400px; text-align: center"
+                >
+                  在你要被控的电脑或手机上<b>安装客户端并用同一个账号登录</b>，设备会自动出现在这里。
+                </div>
+                <div class="box" style="width: 400px; padding: 10px">
+                  <div class="tiny">
+                    <b>三步</b>：① 在被控设备上装客户端 → ② 用同一个账号登录 →
+                    ③ 回到这里点「连接」
+                  </div>
+                  <div class="tiny muted" style="margin-top: 6px">
+                    不需要事先抄识别码 —— 登录同一账号即自动配对（家庭场景最短路径）。
+                  </div>
+                </div>
+                <div class="stripe tiny muted" style="padding: 6px 12px">
+                  ⚠️ 此处严禁出现：开通会员可添加更多设备 / 升级解锁无人值守 /
+                  免费版仅限 N 台
+                </div>
+              </div>
+            </main>
+          </div>
+          <span class="pin" style="left: 212px; top: 120px">1</span>
+          <span class="pin" style="left: 300px; top: 306px">2</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 🔴 <b>空态是首日必现状态</b>：装完打开是空的，是最容易卸载的一刻
+            ⇒ 此区域整块替换为<b>引导</b>（原 W1-01 note④ 只有文字，无界面证据；`R9`）。
+          </li>
+          <li>
+            <b>②</b> 三条引导必须是<b>动作</b>（装 / 登录 / 回来点连接），
+            且给出<b>最短路径</b>：登录同一账号即自动出现设备，不必先抄识别码。
+          </li>
+          <li>
+            🔴 空态<b>不得出现任何付费入口</b>（红线①：状态常驻、商业折叠）——
+            尤其不得写「免费版仅限 N 台设备」（设备数上限由后端下发，见 W1-01）。
+          </li>
+          <li>
+            本帧<b>不显示</b>连接模式指示器：无会话时它没有可陈述的事实
+            （`[D22]` 只要求「沉浸式期间不得消失」，不要求在空态伪造一个）。
           </li>
         </ul>
       </figure>

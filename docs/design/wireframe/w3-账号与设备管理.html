@@ -302,8 +302,9 @@
 
             <div class="grow"></div>
             <div class="hstack">
-              <span class="btn">关闭双重验证</span><span class="grow"></span
-              ><span class="btn solid">保存</span>
+              <span class="btn solid" data-confirm="关闭双重验证"
+                >关闭双重验证…</span
+              ><span class="grow"></span><span class="btn solid">保存</span>
             </div>
           </div>
           <span class="pin" style="left: 390px; top: 100px">1</span>
@@ -318,7 +319,13 @@
             <b>②</b> 备份码必须存在且醒目：2FA
             最常见的客诉是"手机丢了，我自己也进不去"。
           </li>
-          <li>关闭 2FA 需二次验证（本稿未画，开发时按同页内联确认处理）。</li>
+          <li>
+            关闭 2FA 属<b>危险动作</b>（🔴 会降账号安全等级）⇒ 触发按钮已带
+            <code>data-confirm</code>（值 = 台账动作名「关闭双重验证」），二次确认<b
+              >复用 <a href="#w3-11">W3-11</a> 统一组件</b
+            >（后果清单 + 身份复核），<span class="no">不得</span
+            >另写一套（README §6.3 台账 · 门禁 `C17`）。
+          </li>
         </ul>
       </figure>
 
@@ -340,7 +347,7 @@
             <span class="grow"></span>
             <span class="input" style="width: 120px">搜索</span>
             <span class="hstack tiny" style="gap: 4px">
-              <span class="tag on">按最久未连接排序</span
+              <span class="tag on">按最近连接排序</span
               ><span class="tag">按类型</span>
             </span>
           </div>
@@ -416,7 +423,9 @@
               只建立了绑定关系、从未真正连上过；这类设备最容易是被他人误绑，请定期清理。</span
             >
             <span class="grow"></span>
-            <span class="btn sm">一键解绑全部</span>
+            <span class="btn solid" data-confirm="一键解绑全部设备"
+              >一键解绑全部设备…</span
+            >
           </div>
           <span class="pin" style="left: 250px; top: 96px">1</span>
           <span class="pin" style="left: 480px; top: 366px">2</span>
@@ -429,12 +438,20 @@
             它是发现"账号被别人绑了设备"的唯一窗口。
           </li>
           <li>
-            <b>②</b> 「一键解绑全部」放在列表底部、单独一行，走 W3-06
-            的确认流程。
+            <b>②</b> 「一键解绑全部设备」放在列表底部、单独一行 —— 它是<b>核弹动作</b>，
+            触发按钮已改为 <code>.btn.solid</code> 并带 <code>data-confirm</code>（值 =
+            台账动作名），此前是 <code>.btn.sm</code>，权重低于单台「移除」⇒ 正是
+            §11.11.2 `R19` 报出的反向缺陷；二次确认<b
+              >复用 <a href="#w3-06">W3-06</a> 左侧后果清单结构 +
+            <a href="#w3-11">W3-11</a> 组件</b
+            >。
           </li>
           <li>
             <b>③</b>
-            默认按「最久未连接」排序：让异常设备自己浮到最上面，而不是让用户自己找。
+            默认按<b>最近连接</b>（由近及远）排序：正在被连接的排最前，久未连的往下沉。
+            ⚠️ <b>声明必须与首行自洽</b> —— 此前写「按最久未连接排序」却把在线设备排第一，
+            是 `R18` 报出的矛盾；若将来要反过来（异常优先），必须<b>真的倒序排</b>，
+            <span class="no">不得</span>只改文案。
           </li>
           <li>
             「踢下线」只对在线设备出现；<b>踢下线 ≠ 移除</b
@@ -1133,7 +1150,8 @@
             ><span class="grow"></span
             ><span class="tiny muted"
               >调用方：<a href="#w3-09">W3-09</a> 退出所有设备 ·
-              <a href="#w3-06">W3-06</a> 一键解绑全部 / 注销账号 ·
+              <a href="#w3-04">W3-04</a> 一键解绑 ·
+              <a href="#w3-06">W3-06</a> 注销账号 ·
               <a href="#w3-03">W3-03</a> 关闭双重验证 ——
               <b>不得各写一套</b></span
             >
@@ -1192,7 +1210,7 @@
                 <div class="tiny" style="line-height: 1.9; margin-top: 6px">
                   · <a href="#w3-09">W3-09</a> 退出所有设备 → 复核：密码 + 验证码 ·
                   保留当前设备<br />
-                  · <a href="#w3-06">W3-06</a> 一键解绑全部 → 复核：密码 + 验证码 ·
+                  · <a href="#w3-04">W3-04</a> 一键解绑 → 复核：密码 + 验证码 ·
                   列出 N 台设备<br />
                   · <a href="#w3-06">W3-06</a> 提交注销 → 复核：密码 + 验证码 · 列出后果<br />
                   · <a href="#w3-03">W3-03</a> 关闭双重验证 → 复核：密码 + 验证码 ·
@@ -1237,6 +1255,13 @@
             <b>③</b> 🔴 本组件同时是
             <a href="#w3-06">W3-06</a> 注销页与「一键解绑全部」确认页的<b>同一实现</b>
             ⇒ 三处措辞不得各写一份（同一概念两个源 = §11.11.1 <b>S1</b>）。
+            <br />🔑 <b>四个核弹动作的触发按钮位置</b>（`R18` 同批订正）：
+            「退出所有设备」在 <a href="#w3-09">W3-09</a> ·
+            「一键解绑全部设备」在 <a href="#w3-04">W3-04</a> 底部（确认页复用 W3-06
+            左侧结构）· 「提交注销」在 <a href="#w3-06">W3-06</a> ·
+            「关闭双重验证」在 <a href="#w3-03">W3-03</a>。
+            四处均已带 <code>data-confirm</code> + <code>.btn.solid</code>（README §6.3
+            台账 · 门禁 `C17` / `C17-b`）。
           </li>
           <li>
             <b>④</b> 复核强度与风险等级挂钩：<b>会丢数据 / 会解绑 / 会降安全等级</b>
