@@ -975,8 +975,8 @@
     <h2>5. 已知缺口（评审前必读 · 避免重复上报）</h2>
     <p class="lede">
       🔴 <b>下列缺口已被历轮评审登记过</b>，请<b>不要当新发现重复上报</b> ——
-      正文台账在 <a href="README.md">README</a> 的 <code>§11.4</code>（4 项）与
-      <code>§11.5.2</code>（R8–R18，共 11 项）。 本索引此前<b>不携带</b>
+      正文台账在 <a href="README.md">README</a> 的 <code>§11.4</code>（待收 1 项 + 范围声明 1 项）与
+      <code>§11.5.2</code>（R8–R18，共 11 项 · 均标状态）· 跨帧规范在 <code>§6.3</code> / <code>§6.4</code> / <code>§6.5</code>。 本索引此前<b>不携带</b>
       这两处指针，是复评时反复重复上报、白烧 token 的直接原因。
     </p>
     <table class="tbl" style="max-width: 1000px; background: #fff">
@@ -991,37 +991,37 @@
         <tr>
           <td>R8</td>
           <td>全稿</td>
-          <td>缺「加载中 / 请求失败 / 服务端不可达」统一组件规格（<b>已收一半</b>：第八轮补了 W2-10）</td>
+          <td>缺「加载中 / 请求失败 / 服务端不可达」统一规格 ⇒ ✅ <b>规格已收口</b>（README §6.5.3 四态组件：loading / empty / error / offline 各钉四件结构 + 硬约束）；<b>组件帧本身归视觉阶段</b></td>
         </tr>
         <tr>
           <td>R9</td>
           <td>W1-01 / W3-04</td>
-          <td>「注册后 0 台设备」空态只在注释里，没有成帧</td>
+          <td>「注册后 0 台设备」空态只在注释里，没有成帧 ⇒ ✅ <b>已出稿</b>（<a href="w1-控制端-连接与额度.html#w1-01b">W1-01b</a> 态 B · 空态）</td>
         </tr>
         <tr>
           <td>R10</td>
           <td>W2-05 / W2-06</td>
-          <td>音频隐私只有「事后静音」，没有事前开关</td>
+          <td>音频隐私只有「事后静音」，没有事前开关 ⇒ ✅ <b>已收口（改方案）</b>：不增第三处开关，改由 <a href="w2-被控端.html#w2-06">W2-06</a> 侧栏「音频与对讲」入口指向 <a href="w2-被控端.html#w2-11">W2-11</a></td>
         </tr>
         <tr>
           <td>R11</td>
           <td>W2-01 / 03 / 05</td>
-          <td>同一个开关出现在三处，未定义唯一来源</td>
+          <td>同一个开关出现在三处，未定义唯一来源 ⇒ ✅ <b>已收口</b>：<a href="w2-被控端.html#w2-05">W2-05</a> = 默认偏好 SSOT，<a href="w2-被控端.html#w2-03">W2-03</a> = 仅本次会话（四处各补声明）</td>
         </tr>
         <tr>
           <td>R12</td>
           <td>W6-05</td>
-          <td>「记住我的选择」勾选后无撤销路径（可拒绝 ≠ 可撤销）</td>
+          <td>「记住我的选择」勾选后无撤销路径（可拒绝 ≠ 可撤销） ⇒ ✅ <b>已收口</b>：<a href="w6-移动端手持.html#w6-07">W6-07</a> 新增「外接显示器」三态组（默认「每次问我」）</td>
         </tr>
         <tr>
           <td>R13</td>
           <td>W6-06</td>
-          <td>侧栏「文件传输 / 剪贴板同步」是死入口（本稿未出稿）</td>
+          <td>侧栏「文件传输 / 剪贴板同步」是死入口 ⇒ ✅ <b>已收口</b>：改为不可点（<code>.item.muted</code> + <code>P1</code>），与「不做假按钮」同一纪律</td>
         </tr>
         <tr>
           <td>R14</td>
           <td>W6 全页</td>
-          <td>移动端触控目标 &lt; 44px（<code>.btn.sm</code> = 20px）</td>
+          <td>移动端触控目标 &lt; 44px（<code>.btn.sm</code> = 20px） ⇒ ✅ <b>数值已钉</b>（README §6.5.4：触屏实际命中区 ≥ 44×44 / 桌面 ≥ 24×24 + 点名清单）；真机实测归视觉阶段</td>
         </tr>
         <tr>
           <td>R15</td>
@@ -1031,22 +1031,22 @@
         <tr>
           <td>R16</td>
           <td>登记 6 处</td>
-          <td>规格块（给开发的说明）与 UI 文案混排（复评实测 ≫ 6 处）</td>
+          <td>规格块与 UI 文案混排 ⇒ ✅ <b>已收口</b>（<code>[D28]</code>：<code>.spec</code> 样式 + 断言 <code>C18-a</code>/<code>C18-b</code>）</td>
         </tr>
         <tr>
           <td>R17</td>
           <td>W6 全页</td>
-          <td>「必须后端下发、不得硬编码」标注只有 W6-08 有</td>
+          <td>「必须后端下发、不得硬编码」标注只有 W6-08 有 ⇒ ✅ <b>已收口</b>（W6-01 / W6-05 + 页首总声明）</td>
         </tr>
         <tr>
           <td>R18</td>
           <td>W3-04</td>
-          <td>表格声明「按最久未连接排序」，与实际首行不符</td>
+          <td>表格声明「按最久未连接排序」，与实际首行不符 ⇒ ✅ <b>已收口</b>（改声明为「按最近连接排序」）</td>
         </tr>
         <tr>
-          <td>§11.4-1</td>
+          <td>§6.5.1</td>
           <td>全稿</td>
-          <td>无 <code>:focus</code> / <code>:hover</code> / <code>:disabled</code>，伪按钮不可聚焦</td>
+          <td>伪按钮是 <code>&lt;span&gt;</code> ⇒ 不进 Tab 序列（视觉态已补：<code>:hover</code> / <code>:focus-visible</code>；<b>语义化替换归视觉阶段</b>）</td>
         </tr>
       </tbody>
     </table>

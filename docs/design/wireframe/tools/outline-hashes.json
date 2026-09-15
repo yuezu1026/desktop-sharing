@@ -1,8 +1,8 @@
 {
   "AGENTS.md": {
     "lines": 67,
-    "tokens": 1348,
-    "hash": "41cf82036bb53483"
+    "tokens": 1390,
+    "hash": "d3c1c7137f6fa664"
   },
   "docs/成本测算表.md": {
     "lines": 772,
@@ -20,19 +20,19 @@
     "hash": "77dc5f8a2f36bd1b"
   },
   "docs/商业化与计费设计.md": {
-    "lines": 747,
-    "tokens": 26397,
-    "hash": "c78479fa47f95439"
+    "lines": 752,
+    "tokens": 26626,
+    "hash": "a16270171b60df9f"
   },
   "docs/需求规划-v2-P0P3重构.md": {
-    "lines": 1067,
-    "tokens": 36931,
-    "hash": "137847a0f797275f"
+    "lines": 1094,
+    "tokens": 37877,
+    "hash": "ebb7a751bb0a90b2"
   },
   "docs/需求规划评审意见.md": {
-    "lines": 437,
-    "tokens": 22408,
-    "hash": "3f43da3164a3d8ce"
+    "lines": 470,
+    "tokens": 23743,
+    "hash": "627c67d7d406e58b"
   },
   "docs/账号与管理系统设计.md": {
     "lines": 557,
@@ -76,12 +76,12 @@
   },
   "docs/archive/wireframe-README-评审历史轮次.md": {
     "lines": 342,
-    "tokens": 12177,
-    "hash": "a2ae89d2c284d375"
+    "tokens": 12181,
+    "hash": "43a55215e0b52a7c"
   },
   "docs/design/wireframe/README.md": {
-    "lines": 1031,
-    "tokens": 35823,
-    "hash": "01f75a3693c8d6d2"
+    "lines": 1118,
+    "tokens": 38380,
+    "hash": "6cf89dc7c63e7ce1"
   }
 }

@@ -54,8 +54,9 @@ const WHEN_TO_READ = {
 
 /** 章节状态的人工判断（未列出的默认 ✅ 有效） */
 const SECTION_STATUS = {
-  "docs/design/wireframe/README.md::11.4": "🔴 **活跃待办**（高保真阶段收，4 项）",
-  "docs/design/wireframe/README.md::11.5.2": "🔴 **活跃待办**（已登记待高保真阶段收）",
+  "docs/design/wireframe/README.md::11.4": "🔴 **活跃待办**（待收 1 项 + 范围声明 1 项）",
+  "docs/design/wireframe/README.md::11.5.2": "🔴 **活跃待办**（R8–R18 均已标状态）",
+  "docs/design/wireframe/README.md::6.5": "🔴 **活跃**（跨帧状态 / 组合 / 命中区规范）",
   "docs/design/wireframe/README.md::7": "🔴 **活跃**（未出稿清单，改稿时必看）",
   "docs/design/wireframe/README.md::12": "🔴 **活跃**（门禁纪律，提交前必看）",
   "docs/成本测算表.md::0": "🔴 **SSOT**（数值唯一事实源）",

@@ -11,6 +11,10 @@
   --ink: #2b2b2b;
   --ink2: #5f5f5f;
   --ink3: #8f8f8f;
+  /* 文字用「可读灰」：与 --ink3 同色系但够深，满足 WCAG AA 正文对比度
+     （#6f6f6f 对 #fff = 5.03:1；对 --fill #f5f5f5 = 4.61:1）
+     ⚠️ --ink3 保留给**非文字**用途（虚线、边框、图标描边），不得再用于正文 */
+  --ink3-text: #6f6f6f;
   --line: #bdbdbd;
   --line2: #e4e4e4;
   --fill: #f5f5f5;
@@ -241,7 +245,7 @@ figure.frame > figcaption b {
   gap: 8px;
 }
 .muted {
-  color: var(--ink3);
+  color: var(--ink3-text);
 }
 .tiny {
   font-size: 10.5px;
@@ -360,6 +364,42 @@ figure.frame > figcaption b {
 .btn.block {
   display: flex;
   width: 100%;
+}
+
+/* —— 交互态（2026-09-15 补：README §6.5.1）——
+   ⚠️ 本稿的按钮多为 `<span class="btn">`（伪按钮）⇒ **只有加了 `tabindex="0"` 或换成
+   `<button>` 的元素才会进入键盘序列**；本段只给**视觉态**，语义化替换属视觉阶段。
+   门禁 `C15`（无伪按钮）要求每个 `.btn` 要么可点、要么显式标 `data-noop`。 */
+.btn:hover,
+.btn[tabindex]:focus-visible,
+button.btn:focus-visible {
+  background: var(--fill2);
+}
+.btn.solid:hover,
+.btn.solid[tabindex]:focus-visible,
+button.btn.solid:focus-visible {
+  background: #151515;
+}
+.btn:focus-visible,
+.tag:focus-visible,
+.item[tabindex]:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+.btn[aria-disabled="true"],
+.btn[data-noop] {
+  cursor: default;
+}
+.btn[aria-disabled="true"] {
+  border-style: dotted;
+  color: var(--ink3);
+  background: var(--fill);
+}
+.item:hover {
+  background: var(--fill);
+}
+.input:focus-within {
+  border-color: var(--ink2);
 }
 .input {
   height: 28px;
