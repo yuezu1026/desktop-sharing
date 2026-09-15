@@ -16,6 +16,7 @@
       <a href="w4-计费与个人中心.html">W4 计费与个人中心</a>
       <a href="w5-合规实名与运营台.html">W5 合规·实名·运营台</a>
       <a href="w6-移动端手持.html">W6 移动端手持</a>
+      <a href="w7-安卓被控端.html">W7 安卓被控端</a>
     </nav>
 
     <h1>W2 · 被控端</h1>
@@ -793,6 +794,187 @@
             `GAME` / `UNKNOWN` ⇒
             <b>通话类（微信语音 / 视频通话）采不到</b
             >，界面上不得出现对应开关（不做假按钮）。
+          </li>
+          <li>本屏同样<b>不出现任何金额</b>（§13.4 红线②）。</li>
+        </ul>
+      </figure>
+      <!-- ============ W2-09 ============ -->
+      <figure class="frame" id="w2-09">
+        <figcaption>
+          <span class="fid">W2-09</span><b>通知区常驻图标 + 右键菜单</b> · 层①
+          红线执行体 · P0　|　来源 v2 §3.3 开机自启两链路 · §3.7 常驻进程
+        </figcaption>
+        <div class="screen screen--desk">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">Windows 桌面（示意）</span>
+          </div>
+          <div
+            class="body"
+            style="display: flex; flex-direction: column; position: relative"
+          >
+            <div class="pad grow" style="padding: 10px; display: flex">
+              <div class="ph-img" style="flex: 1; position: relative">
+                <span
+                  class="tiny muted"
+                  style="position: absolute; left: 14px; top: 12px"
+                  >桌面 / 其他工作窗口</span
+                >
+              </div>
+            </div>
+            <div class="bar">
+              <span class="tiny muted">开始</span><span class="grow"></span
+              ><span class="tiny muted">13:20</span>
+              <span class="ico"></span>
+              <span class="ico"></span>
+              <span class="ico"></span>
+            </div>
+            <div
+              class="box"
+              style="
+                position: absolute;
+                right: 12px;
+                bottom: 62px;
+                width: 244px;
+                padding: 6px;
+                background: #fff;
+              "
+            >
+              <div class="tiny muted" style="padding: 4px 8px">远程桌面（本机）</div>
+              <div class="item" style="border: 0; padding: 6px 8px">
+                <span class="tag on">可被连接</span>
+                <span class="tiny">服务态 · 未登录用户也能连</span>
+              </div>
+              <div class="tiny muted" style="padding: 2px 8px 4px">
+                识别码 123 456 789
+              </div>
+              <div class="item" style="border: 0; padding: 6px 8px">
+                <span class="tiny"><b>停止被控</b></span>
+                <span class="grow"></span>
+                <span class="tiny muted">立即断开</span>
+              </div>
+              <div class="item" style="border: 0; padding: 6px 8px">
+                <span class="tiny">复制本机识别码</span>
+              </div>
+              <div class="item" style="border: 0; padding: 6px 8px">
+                <span class="tiny">打开设置与授权自检</span>
+              </div>
+              <div class="item" style="border: 0; padding: 6px 8px">
+                <span class="tiny">退出</span>
+              </div>
+            </div>
+          </div>
+          <span class="pin" style="left: 680px; top: 392px">1</span>
+          <span class="pin" style="left: 564px; top: 250px">2</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 🔴 v2 §3.3 的两条链路（<b>服务态 = 开机即可连</b>（未登录用户）/
+            <b>用户态 = 用户登录后可连</b>）在界面上<b>只有托盘这一个常驻入口</b> ⇒
+            悬停提示与菜单必须能回答「<b>现在到底能不能被连上</b>」，而不是只显示「运行中」。
+          </li>
+          <li>
+            <b>②</b> 🔴 v2 §1 红线「<b>常驻进程 ≤ 3</b>」（服务态 + 用户态 + 提权代理）
+            ⇒ 托盘图标<b>不得</b>暗示还存在第 4 个常驻进程（例：更新组件不得单独注册托盘图标）。
+          </li>
+          <li>
+            <b>③</b>
+            <b>「停止被控」是用户侧硬开关</b>：一键即断、无二次确认、无挽留；停止后图标必须变成<b
+              >明确的中性态</b
+            >（而不是变灰让人猜）。
+          </li>
+          <li>
+            <b>④</b> 🔴
+            本帧<b>不出现任何金额 / 推销</b>（`商业化与计费设计` §13.4 红线②）——被控端托盘尤其不能挂任何付费入口。
+          </li>
+          <li>
+            <b>⑤</b> 托盘菜单里的「停止被控」与 [W2-01](w2-被控端.html#w2-01)
+            主界面总开关是<b>同一个状态</b>（双向同步），不得两处各自记状态。
+          </li>
+        </ul>
+      </figure>
+
+      <!-- ============ W2-10 ============ -->
+      <figure class="frame" id="w2-10">
+        <figcaption>
+          <span class="fid">W2-10</span><b>启动 / 初始化失败态</b> · 层① 红线执行体 ·
+          P0　|　来源 v2 §3.2 权限与系统级访问 · §3.5 客户端维护
+        </figcaption>
+        <div class="screen screen--win">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">远程桌面 · 启动</span>
+          </div>
+          <div class="pad" style="padding: 14px">
+            <div class="hstack">
+              <span class="ico"></span>
+              <span class="grow"
+                ><b>启动未完成</b><br /><span class="tiny muted"
+                  >有 2 项没有就绪，本机暂时无法被连接</span
+                ></span
+              >
+              <span class="tag">被控不可用</span>
+            </div>
+            <div class="box" style="padding: 10px; margin-top: 12px">
+              <div class="item" style="border: 0; padding: 6px 0">
+                <span class="tiny">画面采集（硬件编码器）</span
+                ><span class="grow"></span><span class="tag">就绪</span>
+              </div>
+              <div class="item" style="border: 0; padding: 6px 0">
+                <span class="tiny">系统服务注册</span><span class="grow"></span
+                ><span class="tag">失败</span>
+              </div>
+              <div class="tiny muted" style="padding-left: 2px">
+                需要管理员权限才能注册开机自启服务（用于未登录时也可被连接）。
+              </div>
+              <div class="item" style="border: 0; padding: 6px 0">
+                <span class="tiny">无人值守访问</span><span class="grow"></span
+                ><span class="tag">未生效</span>
+              </div>
+              <div class="tiny muted" style="padding-left: 2px">
+                依赖上一项；修复后自动生效，无需再设置。
+              </div>
+            </div>
+            <div class="hstack" style="margin-top: 12px">
+              <span class="btn solid sm">以管理员身份重启</span>
+              <span class="btn sm">重试</span>
+              <span class="btn sm">复制诊断信息</span>
+              <span class="grow"></span>
+              <span class="tiny muted">不影响控制端功能</span>
+            </div>
+            <div
+              class="box tiny"
+              style="padding: 8px; border-style: dashed; margin-top: 10px"
+            >
+              本机仍可作为<b>控制端</b>去连别的设备；只有「被别人连」暂时不可用。
+            </div>
+          </div>
+          <span class="pin" style="left: 700px; top: 92px">1</span>
+          <span class="pin" style="left: 700px; top: 250px">2</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 🔴 本帧补 README §11.4 登记的第 2 项缺口（缺加载 / 失败 /
+            不可达三态）中被控端侧的<b>启动失败</b>态；控制端侧已由 W1-02 / W1-06b 覆盖。
+          </li>
+          <li>
+            <b>②</b> 🔴
+            <b>每个失败原因必须带下一步动作</b>（可点），<span class="no">不得</span
+            >只丢一个错误码；错误码只能作为「复制诊断信息」的内容，不占界面主位。
+          </li>
+          <li>
+            🔴 文案<span class="no">不得</span>把责任推给用户：不写「你没以管理员身份运行」，写「需要管理员权限才能注册服务
+            [以管理员重启]」。
+          </li>
+          <li>
+            <b>③</b> 🔴
+            <b>必须给出影响范围</b>：「被控不可用 ≠ 产品不可用」（仍可作控制端）——否则用户会直接卸载。
+          </li>
+          <li>
+            <b>④</b> 加载中不得无限转圈：超过 N 秒必须有出口（重试 /
+            放弃），且启动失败<b>不得</b>静默重试到把用户晾着。
           </li>
           <li>本屏同样<b>不出现任何金额</b>（§13.4 红线②）。</li>
         </ul>

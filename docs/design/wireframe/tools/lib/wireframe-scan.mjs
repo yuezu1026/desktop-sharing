@@ -1,7 +1,7 @@
 /* 线框静态扫描器 · tools/lib/wireframe-scan.mjs
  * ---------------------------------------------------------------------------
  * 为什么需要它：
- *   全稿的「真值」是 6 个线框页 HTML 本身（figure.frame / .screen 数得出来）。
+ *   全稿的「真值」是 7 个线框页 HTML 本身（figure.frame / .screen 数得出来）。
  *   README / index.html / 账号设计文档 里的「59 个界面条目 ⇒ 65 张线框图」这类
  *   计数句，都只是【被检对象】。以前靠人肉每轮同步 10+ 处手写点，漏一处就漂移
  *   一次（并且每次评审都要重新数一遍），是本项目最大的 token 黑洞。
@@ -62,7 +62,7 @@ export const STD_HEIGHTS_BY_WIDTH = {
 /** 标准宽度集合；宽度不在此列的 = 自由画布（组件级 / 子状态，例：W1-05a 的 392×236） */
 export const STANDARD_WIDTHS = new Set([830, 760, 430, 330]);
 
-/* ---------- 6 个线框页（顺序 = 端顺序） ---------- */
+/* ---------- 7 个线框页（顺序 = 端顺序） ---------- */
 export const PAGES = [
   { key: "W1", file: "w1-控制端-连接与额度.html" },
   { key: "W2", file: "w2-被控端.html" },
@@ -70,10 +70,11 @@ export const PAGES = [
   { key: "W4", file: "w4-计费与个人中心.html" },
   { key: "W5", file: "w5-合规实名与运营台.html" },
   { key: "W6", file: "w6-移动端手持.html" },
+  { key: "W7", file: "w7-安卓被控端.html" },
 ];
 
 /** 帧编号规范：w1-01 / w4-10a / w1-06b */
-export const FRAME_ID_RE = /^w[1-6]-[0-9]{2}[a-z]?$/;
+export const FRAME_ID_RE = /^w[1-7]-[0-9]{2}[a-z]?$/;
 export const LAYER_CHARS = "①②③④";
 
 /* ---------- 文本工具 ---------- */
@@ -242,7 +243,7 @@ export function scanWireframes(dir = WIREFRAME_DIR) {
 /* ---------- README §2.x 条目表解析 ---------- */
 /** 表头：| # | 界面 | 层 | 优先级 | 归属文档 | 帧 | */
 const ENTRY_ROW_RE = /^\|\s*(\d+[a-z]?)\s*\|/;
-const ANCHOR_RE = /\(([^()#\s]+)#(w[1-6]-[0-9]{2}[a-z]?)\)/g;
+const ANCHOR_RE = /\(([^()#\s]+)#(w[1-7]-[0-9]{2}[a-z]?)\)/g;
 
 /**
  * 解析 README §2.1 ~ §2.7 的「全量 UI 清单」条目行。
@@ -314,12 +315,12 @@ export function parseCanvasLedger(md) {
   const free = [];
   const collect = (line) => {
     for (const m of line.matchAll(
-      /(W[1-6]-[0-9]{2}[a-z]?)[^`\w]{0,8}`(\d+)`/g,
+      /(W[1-7]-[0-9]{2}[a-z]?)[^`\w]{0,8}`(\d+)`/g,
     )) {
       items.push({ id: m[1].toLowerCase(), height: Number(m[2]) });
     }
     for (const m of line.matchAll(
-      /(W[1-6]-[0-9]{2}[a-z]?)[^\w]{0,6}(\d+)\s*×\s*(\d+)/gi,
+      /(W[1-7]-[0-9]{2}[a-z]?)[^\w]{0,6}(\d+)\s*×\s*(\d+)/gi,
     )) {
       free.push({
         id: m[1].toLowerCase(),

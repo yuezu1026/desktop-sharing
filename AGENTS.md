@@ -6,7 +6,7 @@
 ## 0. 定位
 
 - **个人消费级远程桌面**（对标 ToDesk / 向日葵）· 当前 = **P0 低保真线框 + 需求定稿**。
-- 产物 = `docs/**/*.md` 规划文档 + `docs/design/wireframe/**` 静态 HTML 线框（8 页 + 1 原型 · 65 帧）。
+- 产物 = `docs/**/*.md` 规划文档 + `docs/design/wireframe/**` 静态 HTML 线框（9 页 + 1 原型 · 74 帧）。
 - **无构建 / 无依赖 / 无 remote**：纯静态 HTML+CSS+Markdown。别 `npm install`，别起服务。
 - 分支 `master`：**只 commit，永不 push，永不探测代理**。
 
@@ -56,7 +56,7 @@ powershell -NoProfile -File docs\design\wireframe\tools\round-close.ps1 -MsgFile
 
 ## 4. 决策编号
 
-- **已拍板 `D1`–`D25`**（含 `D23-1` / `D23-2` 等子项）· **待拍板 0 项** · **下一个可用 = `D26`**。
+- **已拍板 `D1`–`D26`**（含 `D23-1` / `D23-2` 等子项）· **待拍板 0 项** · **下一个可用 = `D27`**。
 - 登记位 = `需求规划评审意见.md` §7（决策表）+ 各文档自己的决策块。纯工具 / 流程轮**不占编号**。
 
 ## 5. 兜底

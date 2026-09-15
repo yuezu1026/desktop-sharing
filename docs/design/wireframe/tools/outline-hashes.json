@@ -2,7 +2,7 @@
   "AGENTS.md": {
     "lines": 67,
     "tokens": 1344,
-    "hash": "252056e22ade9bdf"
+    "hash": "93ab70c1a1329ee0"
   },
   "docs/成本测算表.md": {
     "lines": 772,
@@ -25,14 +25,14 @@
     "hash": "c78479fa47f95439"
   },
   "docs/需求规划-v2-P0P3重构.md": {
-    "lines": 1048,
-    "tokens": 36013,
-    "hash": "b13040bf0d0653df"
+    "lines": 1067,
+    "tokens": 36931,
+    "hash": "137847a0f797275f"
   },
   "docs/需求规划评审意见.md": {
-    "lines": 427,
-    "tokens": 18191,
-    "hash": "4e49fb1225b5c3c5"
+    "lines": 428,
+    "tokens": 18766,
+    "hash": "c5248eba1a440f41"
   },
   "docs/账号与管理系统设计.md": {
     "lines": 557,
@@ -77,11 +77,11 @@
   "docs/archive/wireframe-README-评审历史轮次.md": {
     "lines": 342,
     "tokens": 12082,
-    "hash": "804b80d7d5345eea"
+    "hash": "ac8bc2197536c6ab"
   },
   "docs/design/wireframe/README.md": {
-    "lines": 633,
-    "tokens": 17919,
-    "hash": "d5b42c84cef4c3e8"
+    "lines": 698,
+    "tokens": 20953,
+    "hash": "1fdfc0176c08da15"
   }
 }

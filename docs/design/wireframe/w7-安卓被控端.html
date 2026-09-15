@@ -1,0 +1,626 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>W7 · 安卓被控端（低保真）</title>
+    <link rel="stylesheet" href="wireframe.css" />
+  </head>
+  <body>
+    <nav class="topbar">
+      <a href="index.html">索引</a>
+      <a href="proto-流程原型.html">▶ 可点击原型</a>
+      <a href="w1-控制端-连接与额度.html">W1 控制端·连接与时长</a>
+      <a href="w2-被控端.html">W2 被控端</a>
+      <a href="w3-账号与设备管理.html">W3 账号与设备</a>
+      <a href="w4-计费与个人中心.html">W4 计费与个人中心</a>
+      <a href="w5-合规实名与运营台.html">W5 合规·实名·运营台</a>
+      <a href="w6-移动端手持.html">W6 移动端手持</a>
+      <a href="w7-安卓被控端.html" aria-current="page">W7 安卓被控端</a>
+    </nav>
+
+    <h1>W7 · 安卓被控端</h1>
+    <p class="lede">
+      W2 把「被控端」画成了 <b>PC 语义</b>（UAC / WoL / 编码器 / 多显示器），
+      但 <b>v2 §3.6「移动端作为被控端」自 2026-09-14 起就是 P0 能力</b>（`[D8]` 差异化钩子 +
+      `[D10]` 已把「PC→手机」提升到 P0）。<br />手机当被控端与 PC
+      当被控端有<b>三个不可回避的差异</b>：① 免 Root
+      能力<b>必须由人在手机旁逐项授权</b>；② 系统<b>强制要求前台服务通知</b>；③
+      <b>各厂商 ROM 的省电策略</b>决定「被连接」能不能持久。
+      <br />本页 <b>6 个条目 / 6 张图</b>，<b>全部为 P0</b>。
+    </p>
+
+    <div class="legend">
+      🔴
+      <b>贯穿本页的一条铁律：</b
+      >本页是「手机被控免费」这个钩子的<b>兑现面</b> ——
+      任何让被帮助的一方感到「要花钱 / 被推销 / 被瞒着」的界面，都会让整条产品链路归零（
+      <code>商业化与计费设计</code> §13.4 红线②）。
+      <br />🔴 术语纪律：本页是<b>被控端</b>，<span class="no">任何位置</span
+      >不得出现「额度」，也不得出现金额 / 催费 / 推销字样。
+    </div>
+
+    <h2>1 · 首次配置与授权</h2>
+
+    <div class="flow">
+      <!-- ============ W7-01 ============ -->
+      <figure class="frame" id="w7-01">
+        <figcaption>
+          <span class="fid">W7-01</span><b>首次启动授权引导（1 / 4）</b> · 层①
+          红线执行体 · P0　|　来源 v2 §3.6 技术路径 + 关键约束
+        </figcaption>
+        <div class="screen screen--mob">
+          <div class="bar">
+            <b>设置被控能力</b><span class="grow"></span
+            ><span class="tiny muted">1 / 4</span>
+          </div>
+          <div class="pad" style="padding: 10px">
+            <div class="box--fill box" style="padding: 10px">
+              <b class="tiny">为什么需要这些设置</b>
+              <div class="tiny muted" style="margin-top: 4px">
+                安卓不允许应用静默取得屏幕与控制权限。以下每一项都由你在系统弹窗里亲手允许，随时可在系统设置里收回。
+              </div>
+            </div>
+          </div>
+          <div class="stack" style="padding: 0 10px; gap: 6px">
+            <div class="box" style="padding: 9px">
+              <div class="hstack">
+                <span class="ico"></span>
+                <span class="grow tiny"
+                  ><b>① 屏幕录制授权</b><br /><span class="muted"
+                    >系统弹窗 · 用于采集屏幕画面</span
+                  ></span
+                ><span class="tag on">已完成</span>
+              </div>
+            </div>
+            <div class="box" style="padding: 9px; border-style: dashed">
+              <div class="hstack">
+                <span class="ico"></span>
+                <span class="grow tiny"
+                  ><b>② 无障碍服务</b><br /><span class="muted"
+                    >用于注入触摸与按键（各 ROM 路径不同）</span
+                  ></span
+                ><span class="tag">待授权</span>
+              </div>
+            </div>
+            <div class="box" style="padding: 9px; border-style: dashed">
+              <div class="hstack">
+                <span class="ico"></span>
+                <span class="grow tiny"
+                  ><b>③ 电池与自启白名单</b><br /><span class="muted"
+                    >建议项 · 不设置也能用，但息屏后可能被系统中断</span
+                  ></span
+                ><span class="tag">建议</span>
+              </div>
+            </div>
+            <div class="box" style="padding: 9px; border-style: dashed">
+              <div class="hstack">
+                <span class="ico"></span>
+                <span class="grow tiny"
+                  ><b>④ 通知权限</b><br /><span class="muted"
+                    >系统要求前台服务必须显示常驻通知</span
+                  ></span
+                ><span class="tag">待授权</span>
+              </div>
+            </div>
+          </div>
+          <div class="pad" style="padding: 10px">
+            <div class="box tiny" style="padding: 8px; border-style: dashed">
+              首次配置需要在<b>手机旁</b>操作（约 2 分钟）。暂时跳过也可以
+              —— 未完成的项目随时可在设置里补。
+            </div>
+          </div>
+          <div class="grow"></div>
+          <div class="pad" style="padding: 10px">
+            <div class="hstack">
+              <span class="btn ghost sm">暂时跳过</span
+              ><span class="grow"></span><span class="btn solid sm">去授权</span>
+            </div>
+          </div>
+          <span class="pin" style="left: 300px; top: 52px">1</span>
+          <span class="pin" style="left: 300px; top: 300px">2</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 🔴
+            <b>必须说清「首次配置需要有人在手机旁」</b>（v2 §3.6
+            关键约束）——宣传语<span class="no">不得</span
+            >暗示「无需任何设置」；界面也不得用一句「一键开启」把 4
+            个系统弹窗糊过去。
+          </li>
+          <li>
+            <b>②</b> 🔴 <b>第 ③ 项必须标为「建议」而不是「必做」</b>：白名单没做只降级为「息屏后可能被中断」，
+            <span class="no">不得</span
+            >阻断使用（否则「帮父母调手机」在第 0 秒就断了）。
+          </li>
+          <li>
+            🔴
+            <b>本页不得出现任何金额或推销字样</b
+            >（含「换机型 / 更高配置」这类暗示）——被控端只谈权限，不谈钱。
+          </li>
+          <li>
+            跳过与返回都必须无损：已授权的能力<b>不因「暂时跳过」被回收</b>，下次进来从断点继续。
+          </li>
+        </ul>
+      </figure>
+
+      <!-- ============ W7-02 ============ -->
+      <figure class="frame" id="w7-02">
+        <figcaption>
+          <span class="fid">W7-02</span><b>安卓被控端主界面</b> · 层① 红线执行体 ·
+          P0　|　来源 v2 §3.1 · §3.6
+        </figcaption>
+        <div class="screen screen--mob">
+          <div class="bar">
+            <b>远程桌面 · 本机</b><span class="grow"></span
+            ><span class="tag on">● 允许被连接</span>
+          </div>
+          <div class="pad" style="padding: 10px">
+            <div class="box" style="padding: 12px">
+              <span class="label">本机识别码</span>
+              <div class="hstack">
+                <b
+                  style="
+                    font:
+                      600 20px/1.2 Consolas,
+                      monospace;
+                    letter-spacing: 3px;
+                  "
+                  >123 456 789</b
+                ><span class="grow"></span><span class="btn sm">复制</span>
+              </div>
+            </div>
+            <div class="box" style="padding: 12px; margin-top: 8px">
+              <span class="label">临时密码</span>
+              <div class="hstack">
+                <b
+                  style="
+                    font:
+                      600 17px/1.2 Consolas,
+                      monospace;
+                    letter-spacing: 3px;
+                  "
+                  >a7k2f9</b
+                ><span class="grow"></span><span class="btn sm">换一个</span>
+              </div>
+              <div class="tiny muted" style="margin-top: 6px">
+                每次连接后自动更换；也可设为固定密码（不推荐）。
+              </div>
+            </div>
+          </div>
+          <div class="pad" style="padding: 0 10px">
+            <div class="box--fill box" style="padding: 10px">
+              <div class="hstack">
+                <span class="tag">未被连接</span><span class="grow"></span
+                ><span class="tiny muted">被连接时此处换成连接方</span>
+              </div>
+            </div>
+          </div>
+          <div class="pad" style="padding: 10px">
+            <div class="box" style="padding: 10px">
+              <b class="tiny">授权自检</b>
+              <div class="item" style="border: 0; padding: 5px 0">
+                <span class="tiny">屏幕录制</span><span class="grow"></span
+                ><span class="tag on">正常</span>
+              </div>
+              <div class="item" style="border: 0; padding: 5px 0">
+                <span class="tiny">无障碍服务</span><span class="grow"></span
+                ><span class="tag on">正常</span>
+              </div>
+              <div class="item" style="border: 0; padding: 5px 0">
+                <span class="tiny">电池与自启白名单</span
+                ><span class="grow"></span><span class="tag">未设置</span>
+              </div>
+              <div class="item" style="border: 0; padding: 5px 0">
+                <span class="tiny">通知权限</span><span class="grow"></span
+                ><span class="tag on">正常</span>
+              </div>
+            </div>
+          </div>
+          <div class="pad" style="padding: 0 10px 10px">
+            <div class="box tiny" style="padding: 8px; border-style: dashed">
+              安全提示：只把识别码与密码告诉你信任的人。任何人以「客服需要看屏幕」为由索要，都是诈骗。
+            </div>
+          </div>
+          <div class="grow"></div>
+          <div class="bar bar--bottom">
+            <span class="tiny"><b>本机</b></span
+            ><span class="tiny muted">被谁连</span
+            ><span class="grow"></span><span class="tiny muted">设置</span>
+          </div>
+          <span class="pin" style="left: 300px; top: 52px">1</span>
+          <span class="pin" style="left: 300px; top: 316px">2</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 与 <a href="w2-被控端.html#w2-01">W2-01</a>
+            同构（识别码 / 密码 / 状态 / 总开关），安卓<span class="no"
+              >不得</span
+            >多出任何计费元素。
+          </li>
+          <li>
+            <b>②</b> 🔴
+            <b>「授权自检」是安卓独有的</b>：4
+            项里任何一项掉了，都必须在这里显示「需重新授权」，<span class="no"
+              >不得</span
+            >静默失效（否则控制端连不上，用户只会以为是网络问题）。
+          </li>
+          <li>
+            🔴 屏幕录制授权<b>每次开机都要重新确认</b>是系统行为 ⇒
+            自检行必须能直接跳到重新授权，而不是只报「不正常」。
+          </li>
+          <li>
+            被连接时的「正在被控制」常驻提示见 <a href="#w7-03">W7-03</a>；本屏只在状态位留一个入口。
+          </li>
+        </ul>
+      </figure>
+    </div>
+
+    <h2>2 · 会话中的可见性与断开</h2>
+
+    <div class="flow">
+      <!-- ============ W7-03 ============ -->
+      <figure class="frame" id="w7-03">
+        <figcaption>
+          <span class="fid">W7-03</span
+          ><b>前台服务通知 + 一键断开</b> · 层① 合规硬项 · P0　|　来源 v2 §3.6
+          息屏串流 · 安全底线
+        </figcaption>
+        <div class="screen screen--mob">
+          <div class="bar">
+            <b>系统通知栏（示意）</b><span class="grow"></span
+            ><span class="tiny muted">下拉后可见</span>
+          </div>
+          <div class="pad" style="padding: 10px">
+            <div class="box--fill box" style="padding: 10px">
+              <div class="hstack">
+                <span class="ico"></span>
+                <span class="grow tiny"
+                  ><b>远程桌面正在共享你的屏幕</b><br /><span class="muted"
+                    >正在被「我的台式机」控制 · 已持续 12 分钟</span
+                  ></span
+                >
+              </div>
+              <div class="hstack" style="margin-top: 8px">
+                <span class="btn solid sm">断开</span
+                ><span class="btn sm">静音本机声音</span
+                ><span class="grow"></span>
+              </div>
+              <div class="tiny muted" style="margin-top: 6px">
+                本通知由系统要求常驻，不能划掉。
+              </div>
+            </div>
+            <div class="box" style="padding: 10px; margin-top: 8px">
+              <b class="tiny">回到被控 App 时</b>
+              <div class="hstack" style="margin-top: 6px">
+                <span class="tag on">● 正在被控制</span
+                ><span class="grow"></span><span class="btn sm">一键断开</span>
+              </div>
+              <div class="tiny muted" style="margin-top: 6px">
+                顶部状态区常驻一行；切到别的 App 也不消失。
+              </div>
+            </div>
+            <div class="box" style="padding: 10px; margin-top: 8px">
+              <b class="tiny">正在被谁控制</b>
+              <div class="hstack" style="margin-top: 6px">
+                <span class="ico"></span><span class="grow tiny"
+                  ><b>我的台式机</b><br /><span class="muted"
+                    >账号尾号 0618 · 直连 · 12 分钟</span
+                  ></span
+                ><span class="btn sm">仅查看</span>
+              </div>
+            </div>
+          </div>
+          <div class="grow"></div>
+          <div class="pad" style="padding: 0 10px 10px">
+            <div class="tiny muted">
+              断开不需要二次确认，也不会询问原因。
+            </div>
+          </div>
+          <span class="pin" style="left: 300px; top: 96px">1</span>
+          <span class="pin" style="left: 300px; top: 216px">2</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 🔴
+            <b>前台服务通知是合规硬项，不是可选项</b>：安卓 8+ 的前台服务必须显示常驻通知
+            ⇒
+            <span class="no">不得</span
+            >以「太吵 / 影响沉浸」为由隐藏或做成可划掉。
+          </li>
+          <li>
+            <b>②</b> 🔴
+            <b>通知内必须有「断开」</b>：被帮助的一方常常不在被控 App
+            前台（在看别的应用）⇒ 通知栏里的这个按钮是<b>唯一的直达路径</b>。
+          </li>
+          <li>
+            v2 §3.6 安全底线要求「持续显示可见提示（通知栏 / 悬浮标识）」——
+            本帧两条路径都画了；断开始终<b>无挽留式二次确认</b>（与 <a
+              href="w2-被控端.html#w2-03"
+              >W2-03</a
+            >
+            同口径）。
+          </li>
+          <li>
+            与 <a href="w2-被控端.html#w2-08">W2-08</a>
+            同基调：「静音本机声音」是<b>隐私控制</b>，不是降低服务档次的惩罚。
+          </li>
+        </ul>
+      </figure>
+
+      <!-- ============ W7-04 ============ -->
+      <figure class="frame" id="w7-04">
+        <figcaption>
+          <span class="fid">W7-04</span><b>息屏串流与电量策略</b> · 层① 红线执行体 ·
+          P0　|　来源 v2 §3.6 · §3.7
+        </figcaption>
+        <div class="screen screen--mob">
+          <div class="bar"><b>性能与隐私</b><span class="grow"></span></div>
+          <div class="pad" style="padding: 10px">
+            <div class="box" style="padding: 10px">
+              <div class="item" style="border: 0; padding: 6px 0">
+                <span class="tiny">息屏后继续串流</span
+                ><span class="grow"></span><span class="tag">关</span>
+              </div>
+              <div class="tiny muted">
+                关闭时：息屏即暂停画面，对方看到最后一帧并收到中性说明。
+              </div>
+            </div>
+            <div class="box" style="padding: 10px; margin-top: 8px">
+              <div class="item" style="border: 0; padding: 6px 0">
+                <span class="tiny">远控期间禁止休眠</span
+                ><span class="grow"></span><span class="tag">关</span>
+              </div>
+              <div class="tiny muted">
+                仅在有会话时生效，会话结束立即恢复系统默认。
+              </div>
+            </div>
+            <div class="box--fill box" style="padding: 10px; margin-top: 8px">
+              <b class="tiny">资源与耗电</b>
+              <div class="item" style="border: 0; padding: 5px 0">
+                <span class="tiny">空闲态（无会话）</span
+                ><span class="grow"></span
+                ><span class="tiny muted">不采集 · 不占用编码器</span>
+              </div>
+              <div class="item" style="border: 0; padding: 5px 0">
+                <span class="tiny">会话中</span><span class="grow"></span
+                ><span class="tiny muted">按资源档位限帧率</span>
+              </div>
+              <div class="item" style="border: 0; padding: 5px 0">
+                <span class="tiny">息屏串流</span><span class="grow"></span
+                ><span class="tiny muted">上方有上限口径</span>
+              </div>
+            </div>
+            <div class="box" style="padding: 10px; margin-top: 8px">
+              <b class="tiny">前台服务</b>
+              <div class="hstack" style="margin-top: 6px">
+                <span class="tag on">运行中</span><span class="grow"></span
+                ><span class="btn sm">查看常驻通知</span>
+              </div>
+            </div>
+          </div>
+          <div class="grow"></div>
+          <div class="pad" style="padding: 0 10px 10px">
+            <div class="box tiny" style="padding: 8px; border-style: dashed">
+              息屏后系统会限制后台的处理器与网络活动；未设置电池白名单时，串流可能在数分钟后被系统中断（见
+              W7-05）。
+            </div>
+          </div>
+          <span class="pin" style="left: 300px; top: 76px">1</span>
+          <span class="pin" style="left: 300px; top: 220px">2</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 🔴 <b>息屏串流默认「关」</b>：它把手机变成常亮串流端，属高耗电行为 ⇒
+            <span class="no">不得</span>默认开启，也不得用「开启体验更好」暗示。
+          </li>
+          <li>
+            <b>②</b> 🔴
+            <b>必须在这里给出可接受上限</b>（v2 §3.6 待确认项「电量消耗与发热上限」）：本屏把
+            <b>空闲态 / 会话中 / 息屏串流</b> 三档分开陈述，<span class="no">不得</span
+            >合成一个「耗电低」。
+          </li>
+          <li>
+            🔴 与 §3.7 的空闲态硬指标（静置 1 分钟 CPU &lt; 1% · GPU = 0）配套：
+            <b>息屏串流属于「有会话」而非空闲态</b>，两者不可混为一谈。
+          </li>
+          <li>
+            「远控期间禁止休眠」只在会话期间生效（v2 §3.3 睡眠阻断），
+            <span class="no">不得</span>改系统默认电源策略。
+          </li>
+        </ul>
+      </figure>
+    </div>
+
+    <h2>3 · 机型前提与省电策略</h2>
+
+    <div class="flow">
+      <!-- ============ W7-05 ============ -->
+      <figure class="frame" id="w7-05">
+        <figcaption>
+          <span class="fid">W7-05</span
+          ><b>电池 / 自启白名单引导（分厂商）</b> · 层① 红线执行体 · P0　|　来源
+          v2 §3.6「部分 ROM 被杀后台」
+        </figcaption>
+        <div class="screen screen--mob">
+          <div class="bar">
+            <b>电池与自启白名单</b><span class="grow"></span
+            ><span class="tiny muted">本机：MIUI 14</span>
+          </div>
+          <div class="pad" style="padding: 10px">
+            <div class="box--fill box" style="padding: 10px">
+              <b class="tiny">不做会怎样</b>
+              <div class="tiny muted" style="margin-top: 4px">
+                系统可能在息屏后杀掉后台服务 ⇒ 对方连不上，或连上几秒就断。设置后通常可稳定长时间连接。
+              </div>
+            </div>
+          </div>
+          <div class="stack" style="padding: 0 10px; gap: 6px">
+            <div class="box" style="padding: 9px">
+              <div class="hstack">
+                <span class="tiny" style="width: 14px">1</span>
+                <span class="grow tiny"
+                  ><b>允许后台运行</b><br /><span class="muted"
+                    >设置 › 应用 › 远程桌面 › 省电策略 › 无限制</span
+                  ></span
+                ><span class="btn sm">去设置</span>
+              </div>
+            </div>
+            <div class="box" style="padding: 9px">
+              <div class="hstack">
+                <span class="tiny" style="width: 14px">2</span>
+                <span class="grow tiny"
+                  ><b>允许自启动</b><br /><span class="muted"
+                    >设置 › 应用 › 远程桌面 › 自启动</span
+                  ></span
+                ><span class="btn sm">去设置</span>
+              </div>
+            </div>
+            <div class="box" style="padding: 9px">
+              <div class="hstack">
+                <span class="tiny" style="width: 14px">3</span>
+                <span class="grow tiny"
+                  ><b>在多任务里加锁</b><br /><span class="muted"
+                    >最近任务 › 下拉本应用 › 点锁图标</span
+                  ></span
+                ><span class="btn sm">看示意</span>
+              </div>
+            </div>
+          </div>
+          <div class="pad" style="padding: 10px">
+            <div class="box tiny" style="padding: 8px; border-style: dashed">
+              没有找到对应项？部分机型把这些开关藏在不同层级，可查看<b>机型指引列表</b>（含华为 / OPPO / vivo
+              / 原生安卓）。
+            </div>
+          </div>
+          <div class="grow"></div>
+          <div class="pad" style="padding: 10px">
+            <div class="hstack">
+              <span class="btn ghost sm">以后再说</span
+              ><span class="grow"></span><span class="btn solid sm">我已设置完成</span>
+            </div>
+          </div>
+          <span class="pin" style="left: 300px; top: 96px">1</span>
+          <span class="pin" style="left: 300px; top: 300px">2</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 🔴 <b>必须给「逐步指引」而不是一句「请把应用加入白名单」</b>：v2 §3.6
+            明写「各厂商 ROM 权限路径不同」⇒ 每条都要有<b>具体路径文字 + 直达按钮</b>，并按本机厂商排序。
+          </li>
+          <li>
+            <b>②</b> 🔴 <b>「以后再说」不阻断任何能力</b>：跳过只把
+            <a href="#w7-02">W7-02</a> 的自检行标成「未设置」，<span class="no">不得</span>
+            >禁用被控能力、<span class="no">不得</span>出现任何付费暗示。
+          </li>
+          <li>
+            🔴 这一项与 §3.7 的「常驻进程 ≤ 3」承诺是<b>同一件事的两面</b>：白名单没做
+            ⇒ 进程易被杀 ⇒ 承诺无法兑现 ⇒
+            <b>验收口径必须写明「前提是用户已完成白名单」</b>。
+          </li>
+          <li>
+            自检必须<b>回到本机实测</b>（检查后台限制状态），而不是只记「用户点过我设置完成」。
+          </li>
+        </ul>
+      </figure>
+
+      <!-- ============ W7-06 ============ -->
+      <figure class="frame" id="w7-06">
+        <figcaption>
+          <span class="fid">W7-06</span
+          ><b>机型分档与「不支持」的中性说明</b> · 层① 红线执行体 · P0　|　来源 v2
+          §3.6 机型覆盖 + 🔴 不得引导付费
+        </figcaption>
+        <div class="screen screen--mob">
+          <div class="bar">
+            <b>机型支持情况</b><span class="grow"></span
+            ><span class="tiny muted">可查全部机型</span>
+          </div>
+          <div class="pad" style="padding: 10px">
+            <div class="box--fill box" style="padding: 10px">
+              <div class="hstack">
+                <span class="grow tiny"
+                  ><b>本机：Xiaomi 13（MIUI 14）</b><br /><span class="muted"
+                    >安卓 13 · 未 Root</span
+                  ></span
+                ><span class="tag on">可用但需引导</span>
+              </div>
+              <div class="tiny muted" style="margin-top: 6px">
+                触摸注入需要在系统设置里手工开启无障碍服务（见 W7-01 ②）。
+              </div>
+            </div>
+          </div>
+          <div class="pad" style="padding: 0 10px">
+            <div class="box" style="padding: 10px">
+              <b class="tiny">三档口径</b>
+              <div class="item" style="border: 0; padding: 5px 0">
+                <span class="tiny">已验证</span><span class="grow"></span
+                ><span class="tiny muted">开箱可用，无需额外引导</span>
+              </div>
+              <div class="item" style="border: 0; padding: 5px 0">
+                <span class="tiny"><b>可用但需引导</b></span
+                ><span class="grow"></span
+                ><span class="tiny muted">需完成 W7-05 的白名单设置</span>
+              </div>
+              <div class="item" style="border: 0; padding: 5px 0">
+                <span class="tiny">不支持</span><span class="grow"></span
+                ><span class="tiny muted">系统层面限制了屏幕采集</span>
+              </div>
+            </div>
+          </div>
+          <div class="pad" style="padding: 10px">
+            <div class="box--fill box" style="padding: 10px">
+              <b class="tiny">本机属于「不支持」时的说明</b>
+              <div class="tiny muted" style="margin-top: 4px">
+                这台设备无法作为被控端（系统不允许应用采集屏幕）。若你想被别人协助，可以直接把它当作控制端使用，功能不受影响。
+              </div>
+              <div class="hstack" style="margin-top: 8px">
+                <span class="btn sm">查看支持的机型</span
+                ><span class="grow"></span>
+              </div>
+            </div>
+          </div>
+          <div class="grow"></div>
+          <div class="pad" style="padding: 0 10px 10px">
+            <div class="tiny muted">
+              机型列表按型号收录，随系统版本更新；不收录结论不代表承诺。
+            </div>
+          </div>
+          <span class="pin" style="left: 300px; top: 96px">1</span>
+          <span class="pin" style="left: 300px; top: 268px">2</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 🔴
+            <b>三档口径就是 v2 §3.6 的三档</b>（`已验证` / `可用但需引导` /
+            `不支持`），且必须在<b>产品内可查机型列表</b> ——
+            不允许只写「部分机型不支持」然后让用户自己猜。
+          </li>
+          <li>
+            <b>②</b> 🔴
+            <b>「不支持」的说明不得引导付费</b>（与 <a
+              href="w6-移动端手持.html#w6-08"
+              >W6-08</a
+            >
+            同源）：硬件与系统限制
+            <span class="no">不得</span>包装成计费问题，<span class="no">不得</span
+            >出现「更高配置 / 换个设备」这类推销句。
+          </li>
+          <li>
+            🔴 同屏<span class="no">不得</span
+            >出现任何暗示「无需任何设置」的表述（v2 §3.6 约束）。
+          </li>
+          <li>
+            分档结论必须<b>可回退</b>：系统更新后分档可能变化 ⇒
+            文案里注明「随系统版本更新」，避免用户拿旧结论当承诺。
+          </li>
+        </ul>
+      </figure>
+    </div>
+
+    <p class="pager">
+      ← 上一页：<a href="w6-移动端手持.html">W6 · 移动端手持</a
+      >　·　返回 <a href="index.html">索引</a>
+    </p>
+  </body>
+</html>
