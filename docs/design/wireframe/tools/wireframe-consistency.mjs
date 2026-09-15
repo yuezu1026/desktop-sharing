@@ -32,6 +32,7 @@ import {
   parseCanvasLedger,
   findCountClaims,
   findLineRefs,
+  estTokens,
   STANDARD_WIDTHS,
   norm,
   lineOf,
@@ -1065,6 +1066,81 @@ if (impact.have === null) {
   );
 } else {
   ok("C12", "docs/IMPACT.md", "decision impact index up to date");
+}
+
+/* ============================================================
+   ⑪ 常驻层体积（C20）—— 防「每轮都在付的税」无声膨胀
+   ============================================================ */
+/**
+ * 上面每一条 C 都在防**内容漂移**（文档写错、数字对不上）。C20 防的是另一种漂移：
+ *   **常驻层（每次都进上下文的文件）只增不减**。
+ * 它不会报错、也不会自相矛盾 —— 只是每一轮对话都多收费，直到某天冷启动成本
+ * 从 4k 悄悄涨到 20k，而没人说得清是哪一轮加的。内容漂移有 12 条门禁，
+ * 体积漂移此前**一条都没有**。
+ * 只检「人写的」常驻物：
+ *   · AGENTS.md                    —— L0 名片，**每轮必进**上下文
+ *   · .github/instructions/*.md    —— 命中 applyTo 才进上下文，但单条必须仍是「一条规则一行」
+ * 机器生成的 docs/OUTLINE.md **不检**：体积由文档总量决定，拦它没意义（新鲜度归 C11）。
+ */
+const REPO_DIR = join(WIREFRAME_DIR, "..", "..", "..");
+const AGENTS_TOK_MAX = 1800; // 现 1454 ⇒ 约 25% 余量；再涨就说明有人在往名片里塞文档
+const INSTR_LINES_MAX = 40; // 触发层单条上限（一条规则一行）
+
+const agentsPath = join(REPO_DIR, "AGENTS.md");
+const agentsText = read(agentsPath);
+if (agentsText === null) {
+  fail("C20", "AGENTS.md", "L0 name card is missing", "AGENTS.md present", null);
+} else {
+  const tok = estTokens(agentsText);
+  const lines = agentsText.split("\n").length;
+  if (tok > AGENTS_TOK_MAX) {
+    fail(
+      "C20",
+      "AGENTS.md",
+      `resident layer too fat: ${tok} tok / ${lines} lines`,
+      `<= ${AGENTS_TOK_MAX} tok`,
+      ["move the detail into docs/ and link it from the doc map"],
+    );
+  } else {
+    ok("C20", "AGENTS.md", `L0 card ${tok} tok / ${lines} lines`);
+  }
+}
+
+const INSTR_DIR = join(REPO_DIR, ".github", "instructions");
+const instrFiles = existsSync(INSTR_DIR)
+  ? readdirSync(INSTR_DIR).filter((n) => n.endsWith(".md"))
+  : [];
+if (!instrFiles.length) {
+  warn(
+    "C20",
+    ".github/instructions",
+    "no instruction file found (trigger layer missing)",
+    ">=1",
+    0,
+  );
+} else {
+  const tooLong = [];
+  for (const n of instrFiles) {
+    const t = read(join(INSTR_DIR, n));
+    if (t === null) continue;
+    const lines = t.replace(/\s+$/, "").split("\n").length;
+    if (lines > INSTR_LINES_MAX) tooLong.push(`${n} ${lines}L`);
+  }
+  if (tooLong.length) {
+    fail(
+      "C20",
+      ".github/instructions",
+      "trigger layer bloated",
+      `each file <= ${INSTR_LINES_MAX} lines`,
+      tooLong,
+    );
+  } else {
+    ok(
+      "C20",
+      ".github/instructions",
+      `${instrFiles.length} file(s) within ${INSTR_LINES_MAX} lines`,
+    );
+  }
 }
 
 /* ============================================================

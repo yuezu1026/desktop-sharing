@@ -31,7 +31,7 @@ node tools/wireframe-consistency.mjs --fix  # 上一条报数字/台账漂移？
 powershell -NoProfile -File docs\design\wireframe\tools\round-close.ps1 -MsgFile .\.git-msg.txt -Commit
 ```
 
-- 覆盖 8 类漂移（计数 / 几何 / 术语 / 数值 / 引用 / 格式器 / 台账 / 被控端红线）+ `C11` 目录过期 + `C12` 索引过期 ⇒ 见 `wireframe/README.md` §12。
+- 覆盖 8 类漂移（计数 / 几何 / 术语 / 数值 / 引用 / 格式器 / 台账 / 被控端红线）+ `C11` 目录过期 + `C12` 索引过期 + `C20` 常驻层体积 ⇒ 见 `wireframe/README.md` §12。
 - 明细报告落在 `wireframe/tools/*-report.json`（**勿手改、勿提交**）。
 - 提交信息走 `-MsgFile`（UTF-8 **无 BOM**）；**禁** `git commit -m "中文"`（PS 5.1 按 GBK 传参乱码）。
 - 每次收尾自动写 `.rounds/last.md`（**上一轮的 ~300 token 摘要，冷启动时先读它**）。

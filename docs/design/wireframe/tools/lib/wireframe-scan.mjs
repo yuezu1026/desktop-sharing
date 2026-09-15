@@ -96,6 +96,23 @@ export const textOf = (s) => norm(unescapeEnt(stripTags(s)));
 /** 字符偏移 → 1-based 行号 */
 export const lineOf = (text, idx) => text.slice(0, idx).split("\n").length;
 
+/**
+ * 规模估算：CJK 按 1 tok/字、ASCII 按 3.6 字符/tok（给人一个量级感，不是精确计费）。
+ * 🔴 **唯一实现**：`doc-outline.mjs`（OUTLINE.md 里打印的 token 列）与
+ *   `wireframe-consistency.mjs`（`C20` 常驻层体积门禁）共用本函数。
+ *   两处各写一份的话，门禁阈值会和印在目录里的数字对不上。
+ */
+export const estTokens = (text) => {
+  let cjk = 0;
+  let ascii = 0;
+  for (const ch of text) {
+    const c = ch.codePointAt(0);
+    if (c > 0x2e7f) cjk++;
+    else ascii++;
+  }
+  return Math.round(cjk + ascii / 3.6);
+};
+
 /* ---------- 帧解析 ---------- */
 const FIG_RE = /<figure\b([^>]*)>([\s\S]*?)<\/figure>/g;
 const CAPTION_RE = /<figcaption\b[^>]*>([\s\S]*?)<\/figcaption>/;

@@ -1,8 +1,8 @@
 {
   "AGENTS.md": {
     "lines": 68,
-    "tokens": 1454,
-    "hash": "39c9412ffc3160d9"
+    "tokens": 1462,
+    "hash": "d2de23653256cb84"
   },
   "docs/成本测算表.md": {
     "lines": 772,
@@ -80,8 +80,8 @@
     "hash": "43a55215e0b52a7c"
   },
   "docs/design/wireframe/README.md": {
-    "lines": 1118,
-    "tokens": 38380,
-    "hash": "6cf89dc7c63e7ce1"
+    "lines": 1119,
+    "tokens": 38583,
+    "hash": "59b3d0ed87971f30"
   }
 }

@@ -18,6 +18,7 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
+import { estTokens } from "./lib/wireframe-scan.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url)); // docs/design/wireframe/tools
 const WIREFRAME = path.resolve(HERE, ".."); // docs/design/wireframe
@@ -65,17 +66,6 @@ const SECTION_STATUS = {
   "docs/需求规划-v2-P0P3重构.md::1": "🔴 **活跃**（范围与优先级，含 P0 发版阻塞项清单）",
   "docs/需求规划评审意见.md::10": "🔴 **活跃**（待拍板台账）",
 };
-
-function estTokens(text) {
-  let cjk = 0;
-  let ascii = 0;
-  for (const ch of text) {
-    const c = ch.codePointAt(0);
-    if (c > 0x2e7f) cjk++;
-    else ascii++;
-  }
-  return Math.round(cjk + ascii / 3.6);
-}
 
 function sha1(text) {
   return crypto.createHash("sha1").update(text.replace(/\r\n/g, "\n"), "utf8").digest("hex").slice(0, 16);
