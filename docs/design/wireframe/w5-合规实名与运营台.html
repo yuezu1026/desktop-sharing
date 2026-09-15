@@ -802,6 +802,272 @@
       </figure>
     </div>
 
+    <h2>3 · 运营台入口与账号（内部账号 · 认证与生命周期）</h2>
+
+    <p class="lede">
+      🔴 本节是 <b>§2 的入口</b>：§2 的三帧（W5-04 ~ W5-06）
+      <b>全部从「已登录 + 已带入角色」开始</b>，而运营台能查到全网用户的手机号 /
+      实名状态 / 每一笔用量，还能改额度、封禁、退款 ——
+      它是<b>全系统风险最高的入口</b>，此前却是全稿<b>唯一没有"门"的界面</b>。
+      本组两帧补上入口（编号排在 §2 之后，以保持既有锚点稳定）。
+    </p>
+
+    <div class="flow">
+      <!-- ============ W5-07 ============ -->
+      <figure class="frame" id="w5-07">
+        <figcaption>
+          <span class="fid">W5-07</span
+          ><b>运营台登录（内部账号独立 · 强制二次验证）</b> · 层③ 内部界面 ·
+          P0　|　来源 账号设计 §5.7 · <b>[D24]</b>
+        </figcaption>
+        <div class="screen screen--desk" style="height: 620px">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">运营台 · 登录（内网入口）</span>
+          </div>
+          <div class="pad stack" style="height: calc(100% - 28px)">
+            <div
+              class="hstack"
+              style="
+                gap: 24px;
+                justify-content: center;
+                align-items: flex-start;
+              "
+            >
+              <div class="box" style="width: 330px; padding: 16px">
+                <b>① 第一步 · 内部账号</b>
+                <div class="tiny muted" style="margin: 4px 0 12px">
+                  内部账号与 C 端账号<b>完全隔离</b>：没有手机号、没有短信登录。
+                </div>
+                <span class="label">内部账号（邮箱）</span>
+                <div class="input" style="margin-bottom: 10px">
+                  ops***@company.internal
+                </div>
+                <span class="label">密码</span>
+                <div class="input" style="margin-bottom: 10px">••••••••••</div>
+                <span class="btn solid block">下一步</span>
+                <div
+                  class="box--fill box"
+                  style="padding: 9px; margin-top: 12px"
+                >
+                  <span class="tiny"
+                    >🔴 本页<b>没有</b>：注册 · 短信验证码登录 · 第三方登录 ·
+                    自助重置密码<br />
+                    <span class="muted"
+                      >账号的开立 / 停用只由管理员执行（见 ③）</span
+                    ></span
+                  >
+                </div>
+              </div>
+
+              <div class="box" style="width: 330px; padding: 16px">
+                <b>② 第二步 · 强制二次验证</b>
+                <div class="tiny muted" style="margin: 4px 0 12px">
+                  <b>不可跳过</b>，且<span class="no">不得</span
+                  >提供「记住本设备 N 天」。
+                </div>
+                <span class="label">动态码（TOTP 6 位）</span>
+                <div class="input" style="margin-bottom: 10px">1 2 3 4 5 6</div>
+                <span class="label">或使用恢复码（一次性）</span>
+                <div class="input" style="margin-bottom: 10px">XXXX-XXXX</div>
+                <span class="btn solid block">进入运营台</span>
+                <div
+                  class="box--fill box"
+                  style="padding: 9px; margin-top: 12px"
+                >
+                  <span class="tiny"
+                    >⚠️ 失败提示<b>只报</b>「账号或密码错误」，
+                    <span class="no">不得</span
+                    >区分"账号是否存在"（否则等于账号枚举接口）；连续失败锁定 +
+                    告警到管理员。</span
+                  >
+                </div>
+              </div>
+            </div>
+
+            <div class="box--fill box" style="padding: 11px">
+              <b>③ 三条硬规则（本帧的验收点）</b>
+              <div class="tiny" style="margin-top: 7px; line-height: 1.9">
+                1 / 🔴 <b>与 C 端身份完全隔离</b>：内部账号 = 邮箱 + 密码 +
+                TOTP， <span class="no">不得</span>复用手机号 / 短信登录 ——
+                否则离职后个人手机号仍是系统入口。<br />
+                2 / 🔴 <b>不提供自助注册</b>：只由管理员开立 /
+                停用，开立与回收<b>都进审计</b>（§5.5）。<br />
+                3 / 🔴 <b>离职即回收</b>：停用即刻吊销全部会话（见 W5-08），
+                <span class="no">不得</span>留"前员工仍能登录"的窗口。
+              </div>
+            </div>
+          </div>
+          <span class="pin" style="left: 204px; top: 300px">1</span>
+          <span class="pin" style="left: 436px; top: 300px">2</span>
+          <span class="pin" style="left: 24px; top: 392px">3</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 为什么必须单独出一帧：全稿的运营台三帧（W5-04 ~ W5-06）
+            <b>全部从"已登录 + 已带入角色"开始</b>，而本台能查全网手机号 /
+            实名状态 / 每笔用量，还能改额度、封禁、退款 ——
+            它是<b>全系统风险最高的入口</b>，此前却是全稿唯一<b>没有门</b>的界面。
+          </li>
+          <li>
+            <b>②</b> 🔴 <b>认证不是"后台功能"</b>：`[D12-6]`「P0
+            不造后台」指的是不做完整后台（定价版本 / 成本台账 / 报表 / 工单），
+            <span class="no">不包含</span>访问控制。且 W5-04 / W5-05 / W5-06
+            本就已是 P0 界面 —— 内页出了、入口没出，与
+            `[D23]`（"已登录态改密无处可去"）是同一类结构缺口。
+          </li>
+          <li>
+            <b>③</b> 🔴 <b>不得复用 C 端身份</b>：C 端身份根是手机号（账号设计
+            §2.1），而客服 / 风控 / 财务的账号必须能被<b>独立停用</b>；且
+            <span class="no">不得</span>存在"用个人手机号登录内部系统"的路径。
+          </li>
+          <li>
+            <b>④</b> 🔴
+            <b>2FA 强制、不可跳过、不设"记住设备"</b>：本台可读全网用户数据，
+            单因素密码泄漏 = 数据全泄漏；恢复码只用于换机 /
+            丢手机，且<b>一次性</b>。
+          </li>
+          <li>
+            ⚠️ 本帧只画<b>登录</b>；<b>开号 / 授权 / 停用</b
+            >的管理员侧界面本轮未出稿（登记于 README §7），P0
+            由管理员按内部流程执行。
+          </li>
+        </ul>
+      </figure>
+
+      <!-- ============ W5-08 ============ -->
+      <figure class="frame" id="w5-08">
+        <figcaption>
+          <span class="fid">W5-08</span
+          ><b>运营台账号与安全（改密 · 2FA · 会话 · 离职回收）</b> · 层①
+          已拍板决策执行体 · P0　|　来源 账号设计 §5.7 · <b>[D24]</b>
+        </figcaption>
+        <div class="screen screen--desk" style="height: 480px">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">运营台 · 账号与安全</span>
+          </div>
+          <div
+            class="pad"
+            style="height: calc(100% - 28px); display: flex; gap: 16px"
+          >
+            <div class="stack" style="width: 360px">
+              <div class="box box--fill" style="padding: 11px">
+                <div class="hstack">
+                  <span class="ico"></span>
+                  <span class="tiny"
+                    ><b>ops***@company.internal</b><br />
+                    <span class="muted"
+                      >内部账号 · 当前角色：客服 · 开立人：管理员</span
+                    ></span
+                  >
+                </div>
+              </div>
+
+              <span class="label">登录与安全</span>
+              <div class="stack tiny" style="border: 1px solid var(--line)">
+                <div class="item">
+                  <span>修改密码</span><span class="grow"></span
+                  ><span class="muted">30 天前 ›</span>
+                </div>
+                <div class="item">
+                  <span>双重验证（强制）</span><span class="grow"></span
+                  ><span class="tag on">已开启</span>
+                </div>
+                <div class="item">
+                  <span>恢复码</span><span class="grow"></span
+                  ><span class="muted">10 个 · 剩 8 ›</span>
+                </div>
+                <div class="item">
+                  <span>登录会话</span><span class="grow"></span
+                  ><span class="muted">2 台 ›</span>
+                </div>
+              </div>
+
+              <span class="label">账号生命周期</span>
+              <div class="stack tiny" style="border: 1px solid var(--line)">
+                <div class="item">
+                  <span>角色变更</span><span class="grow"></span
+                  ><span class="muted">需管理员 + 审计 ›</span>
+                </div>
+                <div class="item">
+                  <span>停用（离职）</span><span class="grow"></span
+                  ><span class="muted">管理员执行 ›</span>
+                </div>
+                <div class="item">
+                  <span>注销账号</span><span class="grow"></span
+                  ><span class="no">❌ 本台不提供 ›</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="grow stack">
+              <div class="box" style="padding: 11px">
+                <b>🔴 改密后：所有内部台会话立即失效</b>
+                <div class="tiny" style="margin-top: 7px; line-height: 1.85">
+                  与 C 端 `[D23-1]` 同源但<b>更严</b>：C
+                  端允许「当前设备保持登录」，内部台<span class="no">不设</span
+                  >这一豁免 —— 改完必须重新登录 + 重新过 2FA。
+                </div>
+              </div>
+              <div class="box" style="padding: 11px">
+                <b>🔴 停用 ≠ 删除</b>
+                <div class="tiny" style="margin-top: 7px; line-height: 1.85">
+                  离职只<b>停用</b>账号（立即失效 + 吊销全部令牌），
+                  <span class="no">不删</span>审计记录 —— §5.5
+                  已定"审计不可删除"，删号会让"谁在何时调了这笔额度"永久无法追溯。
+                </div>
+              </div>
+              <div class="box" style="padding: 11px">
+                <b>🔴 可自助 / 不可自助</b>
+                <div class="tiny" style="margin-top: 7px; line-height: 1.85">
+                  可自助：改密 · 重新生成恢复码 · 退出其他会话<br />
+                  <span class="no">不可自助</span>：开号 · 改角色 · 停用 ·
+                  销号（全部 = 管理员动作，见 W5-06 权限模型）
+                </div>
+              </div>
+              <div class="box tiny" style="padding: 10px; border-style: dashed">
+                P1：管理员侧的<b>开号 / 角色分配 / 停用</b
+                >界面（本帧只画"我的账号"侧， 已登记在 README §7）。
+              </div>
+            </div>
+          </div>
+          <span class="pin" style="left: 24px; top: 84px">1</span>
+          <span class="pin" style="left: 24px; top: 300px">2</span>
+          <span class="pin" style="left: 374px; top: 52px">3</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 本帧是 `[D24]` 的<b>执行体</b>：内部台的账号生命周期
+            <span class="no">不得</span>照抄 C 端（`[D23]`）——
+            两者的"严重性"与"谁有权处置"完全不同。
+          </li>
+          <li>
+            <b>②</b> 🔴 <b>改密后所有内部台会话立即失效</b>（比 C 端 `[D23-1]`
+            更严）：C
+            端为了不把用户自己踢出去而保留当前设备；内部台可读全网用户数据，
+            一律重新登录 + 重新过 2FA。
+          </li>
+          <li>
+            <b>③</b> 🔴 <b>停用 ≠ 删除</b>：§5.5 审计不可删除 ⇒
+            离职必须留号（停用），否则"谁在何时调了这笔额度"将永久无法追溯。
+          </li>
+          <li>
+            <b>④</b> 🔴 <b>不得自助销号 / 不得自助改角色</b>：这两件事是
+            <b>管理员动作</b>（W5-06 权限模型「管理员：全部 +
+            授权」）且必须留审计。
+          </li>
+          <li>
+            <b>⑤</b> ⚠️ 术语纪律：本台的「账号」= <b>内部员工账号</b>，
+            <span class="no">不得</span>与 C 端账号混用同一套话术（同
+            `[D23]`「登录设备 / 我的设备两表不得合并」的纪律）。
+          </li>
+        </ul>
+      </figure>
+    </div>
+
     <p class="pager">
       ← 上一页：<a href="w4-计费与个人中心.html">W4 · 计费与个人中心</a
       >　·　下一页：<a href="w6-移动端手持.html">W6 · 移动端手持 →</a>　·　返回
