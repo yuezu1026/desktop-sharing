@@ -29,10 +29,11 @@
     <div class="legend">
       移动端同样受全部红线约束：<b>被控端不出现金额</b>、<b
         >iOS 无站外支付引导</b
-      >、 <b>免费中继时长只做渐进披露</b>。下面共 <b>9 个条目 / 9 张图</b>：<b
+      >、 <b>免费中继时长只做渐进披露</b>。下面共 <b>9 个条目 / 10 张图</b>：<b
         >W6-01 ~ W6-04 全部为 P0</b
       >；<b>W6-05 ~ W6-08（外接大屏 / 桌面模式）为 P1</b>（v2 §2.3.2
-      增强路径）；<b>W6-09（沉浸式手持）为 P0</b>（`[D22]` 补稿，见本页末尾）。
+      增强路径）；<b>W6-09（沉浸式手持）为 P0</b>（`[D22]`
+      补稿，含横屏子态 W6-09a，见本页末尾）。
     </div>
 
     <div class="flow">
@@ -1038,6 +1039,142 @@
           <li>
             ⚠️ 本帧是 <b>`[D22]` 补稿</b>，因此编号排在 W6-08
             之后；内容归属<b>手持组</b>（W6-01 ~ W6-04），不属外接大屏组。
+          </li>
+        </ul>
+      </figure>
+
+      <!-- ============ W6-09a ============ -->
+      <figure class="frame" id="w6-09a">
+        <figcaption>
+          <span class="fid">W6-09a</span
+          ><b>沉浸式手持 · 横屏子态（命中区随旋转重排，唤出条进底部安全区）</b> ·
+          层③ 常规界面 · P0　|　来源 v2 §2.4.1 `[D22]` 红线 3 · 🔴 R28 收口
+        </figcaption>
+        <div class="screen" style="width: 620px; height: 340px">
+          <div
+            class="pad"
+            style="
+              padding: 10px;
+              height: 100%;
+              display: flex;
+              flex-direction: column;
+              gap: 8px;
+            "
+          >
+            <div class="tiny muted">
+              横屏（本帧）= 竖屏态 <a href="w6-移动端手持.html#w6-09">W6-09</a>
+              旋转后的<b>同一个状态</b>：沉浸不中断，只有命中区与唤出条位置重排。
+            </div>
+            <div class="ph-img" style="flex: 1; position: relative">
+              被控端画面（横屏 · 等比缩放，不变形）
+              <div
+                style="
+                  position: absolute;
+                  left: 0;
+                  right: 0;
+                  bottom: 0;
+                  height: 30px;
+                  border-top: 1px dashed var(--anno);
+                "
+              >
+                <span
+                  class="tiny"
+                  style="
+                    position: absolute;
+                    left: 8px;
+                    top: 5px;
+                    color: var(--anno);
+                  "
+                  >下缘上滑命中区（含底部安全区）</span
+                >
+              </div>
+              <div
+                style="
+                  position: absolute;
+                  top: 0;
+                  right: 0;
+                  bottom: 30px;
+                  width: 22px;
+                  border-left: 1px dashed var(--anno);
+                "
+              >
+                <span
+                  class="tiny"
+                  style="
+                    position: absolute;
+                    right: 3px;
+                    top: 6px;
+                    color: var(--anno);
+                    white-space: nowrap;
+                  "
+                  >右缘左滑 →</span
+                >
+              </div>
+              <div
+                class="box"
+                style="
+                  position: absolute;
+                  top: 6px;
+                  left: 6px;
+                  padding: 2px 7px;
+                  background: rgba(255, 255, 255, 0.88);
+                "
+              >
+                <span
+                  style="
+                    display: inline-block;
+                    width: 7px;
+                    height: 7px;
+                    border-radius: 50%;
+                    background: var(--ink2);
+                    vertical-align: middle;
+                  "
+                ></span>
+                <span class="tiny">中继</span>
+              </div>
+              <div
+                class="box"
+                style="
+                  position: absolute;
+                  left: 8px;
+                  right: 32px;
+                  bottom: 5px;
+                  padding: 3px 6px;
+                  background: rgba(255, 255, 255, 0.96);
+                "
+              >
+                <span class="btn sm">退出沉浸式</span>
+                <span class="btn sm ghost">键盘</span>
+                <span class="btn sm ghost">指针 ▾</span>
+                <span class="grow"></span>
+                <span class="btn sm">断开</span>
+              </div>
+            </div>
+            <div class="box--fill box tiny" style="padding: 8px">
+              <b>横屏重排（与竖屏的差异只有两条）</b><br />
+              ① 唤出条移到<b>底部安全区</b>（避开刘海 / 挖孔与系统手势条）；<br />
+              ② <b>下缘上滑</b>仍是主命中区，<b>右缘左滑</b>的命中区随旋转变短 ⇒
+              两者宽度都必须可调（避免与系统返回手势打架）。
+            </div>
+          </div>
+          <span class="pin" style="left: 596px; top: 120px">1</span>
+          <span class="pin" style="left: 596px; top: 296px">2</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 🔴 <b>本帧存在的理由</b>：W6-09 的注 ⑦ 与「横屏重排」块都承诺了横屏行为，而全稿
+            <b>没有任何横屏示意</b> —— 高保真阶段「下缘上滑 / 右缘左滑」会被直接照搬竖屏坐标，横屏下与系统手势重叠。
+          </li>
+          <li>
+            <b>②</b> 🔴 横屏<b>不改变沉浸状态</b>，也不打断会话；退出后回到<b
+              >进入前的竖屏与页面位置</b>（D9 / C1：不得默认全屏，也不得因旋转而"顺手"保持全屏）。
+          </li>
+          <li>
+            旋转只重排<b>命中区</b>与<b>唤出条位置</b>；工具收敛到唤出条内这一条不变（同
+            W6-09）。
+          </li>
+          <li>
+            ⚠️ 本帧是 W6-09 的<b>横屏子态</b>（同一条目），因此编号用 <b>W6-09a</b>，不新增条目。
           </li>
         </ul>
       </figure>

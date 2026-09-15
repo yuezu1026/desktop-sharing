@@ -1,8 +1,8 @@
 {
   "AGENTS.md": {
     "lines": 67,
-    "tokens": 1344,
-    "hash": "3fb71f16dba1b01f"
+    "tokens": 1348,
+    "hash": "fe75ed0c4b5002c5"
   },
   "docs/成本测算表.md": {
     "lines": 772,
@@ -30,9 +30,9 @@
     "hash": "137847a0f797275f"
   },
   "docs/需求规划评审意见.md": {
-    "lines": 431,
-    "tokens": 19674,
-    "hash": "67193474353bbed2"
+    "lines": 434,
+    "tokens": 20641,
+    "hash": "914e9afac5a0c850"
   },
   "docs/账号与管理系统设计.md": {
     "lines": 557,
@@ -80,8 +80,8 @@
     "hash": "ac8bc2197536c6ab"
   },
   "docs/design/wireframe/README.md": {
-    "lines": 874,
-    "tokens": 28629,
-    "hash": "04cf7f491d632d79"
+    "lines": 918,
+    "tokens": 31051,
+    "hash": "6079d5fd2e635de6"
   }
 }

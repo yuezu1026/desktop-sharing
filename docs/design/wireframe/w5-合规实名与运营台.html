@@ -671,7 +671,7 @@
                   ><span class="tiny muted">我已核实明细</span>
                 </div>
                 <div class="btn solid sm" style="margin-top: 9px">
-                  提交（超阈值需第二人复核）
+                  提交
                 </div>
               </div>
 
@@ -706,16 +706,24 @@
 
             <div class="grow stack">
               <div class="box" style="padding: 11px">
-                <b>🔴 权限模型（P0 可只开两个角色，但必须从第一天就分开）</b>
+                <b
+                  >🔴 权限模型（P0 可只开两个角色，但必须从第一天就分开）</b
+                >
+                <div class="tiny muted" style="margin-top: 6px">
+                  下表是本台权限口径的<b>唯一来源</b>（单一源）—— 三个动作框内<span
+                    class="no"
+                    >不</span
+                  >再重复权限结论。
+                </div>
               </div>
               <table class="tbl" style="border: 1px solid var(--line)">
                 <thead>
                   <tr>
-                    <th style="width: 120px">角色</th>
-                    <th style="width: 110px">查询</th>
-                    <th style="width: 130px">调额度</th>
-                    <th style="width: 120px">封禁/加白</th>
-                    <th style="width: 110px">退款</th>
+                    <th style="width: 72px">角色</th>
+                    <th style="width: 66px">查询</th>
+                    <th style="width: 86px">调额度</th>
+                    <th style="width: 88px">封禁/加白</th>
+                    <th style="width: 66px">退款</th>
                     <th>备注</th>
                   </tr>
                 </thead>
@@ -726,7 +734,7 @@
                     <td>△ 小额</td>
                     <td><span class="no">❌</span></td>
                     <td><span class="no">❌</span></td>
-                    <td>P0 必开</td>
+                    <td>P0 必开 · 超阈值二次复核</td>
                   </tr>
                   <tr>
                     <td>风控 / 运营</td>
@@ -888,7 +896,7 @@
             </div>
 
             <div class="box--fill box" style="padding: 11px">
-              <b>③ 三条硬规则（本帧的验收点）</b>
+              <b>③ 三条硬规则</b>
               <div class="tiny" style="margin-top: 7px; line-height: 1.9">
                 1 / 🔴 <b>与 C 端身份完全隔离</b>：内部账号 = 邮箱 + 密码 +
                 TOTP， <span class="no">不得</span>复用手机号 / 短信登录 ——
@@ -1065,6 +1073,122 @@
             <span class="no">不得</span>与 C 端账号混用同一套话术（同
             `[D23]`「登录设备 / 我的设备两表不得合并」的纪律）。
           </li>
+        </ul>
+      </figure>
+    </div>
+
+    <h2>4 · 表单错误态（🔴 `[D28]` 新增 · R24 的 W5 侧收口）</h2>
+    <p class="lede">
+      实名与运营台登录是全稿<b>最容易卡住用户</b>的两处（其余失败都是额度 /
+      网络类，见 W5-03）。此前 W5 全页<b>零错误态</b>，高保真阶段一定会各写各的 ⇒
+      本页把两处的错误呈现<b>合成一张表</b>，作为全稿表单错误文案的单一源。
+    </p>
+
+    <div class="flow">
+      <!-- ============ W5-09 ============ -->
+      <figure class="frame" id="w5-09">
+        <figcaption>
+          <span class="fid">W5-09</span
+          ><b>表单错误态总表（实名 6 类 + 运营台登录 2 类）</b> · 层① 常规界面 ·
+          P0　|　来源 账号设计 §5.7 · v2 §1 E6 <b>A6</b> · 🔴 R24 收口
+        </figcaption>
+        <div class="screen screen--desk">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">错误态 · 实名核验 / 运营台登录</span>
+          </div>
+          <div class="pad" style="height: calc(100% - 28px)">
+            <table class="tbl" style="border: 1px solid var(--line)">
+              <thead>
+                <tr>
+                  <th style="width: 168px">出错场景</th>
+                  <th style="width: 250px">就地呈现（文案即交付物）</th>
+                  <th style="width: 140px">恢复动作</th>
+                  <th>🔴 不得</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>实名 · 姓名与证件号不一致</td>
+                  <td>字段下：姓名与证件号不一致，请核对</td>
+                  <td>就地重填</td>
+                  <td>只说「信息有误」而不指出字段</td>
+                </tr>
+                <tr>
+                  <td>实名 · 证件已过有效期</td>
+                  <td>该证件已超过有效期，请更换后重试</td>
+                  <td>换一张</td>
+                  <td>暗示「用别的办法也能通过」</td>
+                </tr>
+                <tr>
+                  <td>实名 · 手机号与实名不一致</td>
+                  <td>手机号与实名信息不一致（为什么？）</td>
+                  <td>改手机号或实名信息</td>
+                  <td>把三类失败合并成一句「实名失败」</td>
+                </tr>
+                <tr>
+                  <td>实名 · 人脸核验未通过</td>
+                  <td>这次没通过，可在光线充足处再试</td>
+                  <td>重试（共 N 次）</td>
+                  <td>暗示「你不是本人」</td>
+                </tr>
+                <tr>
+                  <td>实名 · 同一证件已达上限</td>
+                  <td>该证件已绑定 N 个账号，不能再新增</td>
+                  <td>说明规则 + 客服</td>
+                  <td>只报一句「操作失败」</td>
+                </tr>
+                <tr>
+                  <td>实名 · 核验服务不可用</td>
+                  <td>实名服务暂时不可用，可稍后重试</td>
+                  <td>重试</td>
+                  <td>把系统故障写成「信息有误」</td>
+                </tr>
+                <tr>
+                  <td>运营台 · 账号或密码错误</td>
+                  <td>只报「账号或密码错误」</td>
+                  <td>重试（锁定 + 告警）</td>
+                  <td>区分账号是否存在（= 枚举接口）</td>
+                </tr>
+                <tr>
+                  <td>运营台 · 2FA 动态码错误</td>
+                  <td>动态码不正确 · 还可尝试 N 次</td>
+                  <td>重试 / 用恢复码</td>
+                  <td>允许一次性码复用（重放）</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="box--fill box" style="padding: 10px; margin-top: 10px">
+              <b>六条通用纪律（本表 = 全稿表单错误文案的单一源）</b>
+              <div class="tiny" style="margin-top: 6px; line-height: 1.7">
+                1 / <b>就地</b>：贴字段或贴表单，<span class="no">不得</span
+                >用弹窗（弹窗只用于拦截类，如账号锁定）。<br />
+                2 / 🔴 <b>保住已填内容</b>：任何错误态都不得清空已输入的字段 ——
+                重填一次是最容易卸载的一刻。<br />
+                3 / 🔴 <b>系统故障 ≠ 用户错误</b>：「核验服务暂时不可用」不得写成「信息有误」。<br />
+                4 / 🔴 <b>不得泄露账号是否存在</b>（登录 / 找回 / 实名一律适用）。<br />
+                5 / 可重试的<b>必须给「重试」</b>；不可重试的必须说清<b>为什么</b>并给出别的路。<br />
+                6 / ⚠️ <span class="no">不得</span>暗示「换个方式绕过实名」或「付费可跳过」（与
+                W5-01 / W5-03 同源）。
+              </div>
+            </div>
+          </div>
+          <span class="pin" style="left: 22px; top: 150px">1</span>
+          <span class="pin" style="left: 22px; top: 396px">2</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 实名是全稿<b>最容易卡住用户</b>的一处：卡住 ⇒
+            中继时长不可用 ⇒ 用户会把「额度用尽」误判成「产品坏了」。这一处的错误文案不是文案问题，是
+            <b>降级链的一环</b>。
+          </li>
+          <li>
+            <b>②</b> 🔴 运营台登录的两行不追求「友好」，追求<b>不泄露</b>：账号是否存在、
+            恢复码是否有效，都是攻击者可直接利用的信息（等同账号枚举接口）。
+          </li>
+          <li>本表只覆盖<b>输入类</b>错误；额度 / 网络 / 降级类失败另见 W1-13、W1-14 与 W5-03。</li>
+          <li>⚠️ 文案定稿前须<b>法务复核</b>（同 W5-02 的实名文案）。</li>
         </ul>
       </figure>
     </div>

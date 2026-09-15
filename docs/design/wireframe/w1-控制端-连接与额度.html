@@ -363,7 +363,7 @@
         </figcaption>
         <div class="screen" style="width: 830px; height: 346px">
           <div class="bar" style="background: #fafafa">
-            <b>组件规格：免费中继时长指示器</b> <span class="grow"></span
+            <b>免费中继时长指示器 · 三态</b> <span class="grow"></span
             ><span class="tiny muted">组件 · 只出现在控制端</span>
           </div>
           <div class="pad" style="display: flex; gap: 14px">
@@ -454,6 +454,17 @@
           <span class="pin" style="left: 24px; top: 58px">1</span>
           <span class="pin" style="left: 290px; top: 120px">2</span>
           <span class="pin" style="left: 566px; top: 120px">3</span>
+        </div>
+        <div class="spec">
+          <span class="tag-spec">规格</span
+          ><b>免费中继时长指示器</b>（给开发的说明，<span class="no">不是</span
+          >界面内容 —— 🔴 本块不得被实现成界面元素）<br />
+          ① 出现位置：控制端主界面顶栏右侧 / 会话窗口工具条；🔴
+          <b>被控端永不出现</b>（红线①）。<br />
+          ② 三态阈值：默认<b>不显示任何计数</b> → 用掉约八成 → 展开明细；🔴
+          计数值必须与用户侧「用量明细」<b>同源</b>（`[D20]` 计量展示口径）。<br />
+          ③ 交付纪律：连「在设置里单开一个余量页」也算违反 ——
+          默认折叠的理由见态 A 说明（技术状态常驻、商业计数折叠）。
         </div>
         <ul class="notes">
           <li>

@@ -868,10 +868,11 @@
               <div class="tiny muted" style="padding: 4px 8px">远程桌面（本机）</div>
               <div class="item" style="border: 0; padding: 6px 8px">
                 <span class="tag on">可被连接</span>
-                <span class="tiny">服务态 · 未登录用户也能连</span>
+                <span class="grow"></span>
+                <span class="tiny muted">回显 · 不可点</span>
               </div>
               <div class="tiny muted" style="padding: 2px 8px 4px">
-                识别码 123 456 789
+                服务态 · 未登录用户也能连 · 识别码 123 456 789
               </div>
               <div class="item" style="border: 0; padding: 6px 8px">
                 <span class="tiny"><b>停止被控</b></span>
@@ -916,8 +917,13 @@
             本帧<b>不出现任何金额 / 推销</b>（`商业化与计费设计` §13.4 红线②）——被控端托盘尤其不能挂任何付费入口。
           </li>
           <li>
-            <b>⑤</b> 托盘菜单里的「停止被控」与 [W2-01](w2-被控端.html#w2-01)
-            主界面总开关是<b>同一个状态</b>（双向同步），不得两处各自记状态。
+            <b>⑤</b> 🔴 <b>托盘与主界面是同一个状态，不是两份状态</b>（`[D28]`
+            R31）：托盘里的「停止被控」= [W2-01](w2-被控端.html#w2-01)
+            主界面总开关，任一处切换都<b>立即</b>改变可连性（<span class="no">不</span
+            >等下一次刷新、<span class="no">不</span
+            >等重开菜单）；托盘里的「可被连接」是<b>状态回显</b>（不可点）。 ⇒
+            托盘菜单<b>不得</b>再出现第二个同类开关 ——
+            双开关必然出现「菜单说能连、实际连不上」。
           </li>
         </ul>
       </figure>

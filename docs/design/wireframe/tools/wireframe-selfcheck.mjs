@@ -224,6 +224,49 @@ for (const file of files) {
     bad.length ? bad.join("; ") : `${anchors.length} 个锚点全部命中`,
   );
 
+  /* C18 —— 规格块纪律（`[D28]` R23）
+     2026-09-14 评审 R23：开发向说明（组件规格 / 验收方式 / 给开发）混在画布里，
+     看图的人会把它当成真界面 ⇒ 高保真阶段被照着做出来。
+     规矩：开发向说明只能落在帧外 —— `.spec` 规格块 或 `.notes` 标注层。
+       · C18-a：`.spec` 不得出现在 .screen 内
+       · C18-b：.screen 内可见文案不得出现开发向词 */
+  const specDiscipline = await page.evaluate(() => {
+    const DEV_WORDS =
+      /(规格|给开发|实现说明|验收点|验收标准|验收方式|设计意图)/;
+    const inside = [];
+    const words = [];
+    document.querySelectorAll(".screen").forEach((s, i) => {
+      const id = s.id || "#" + i;
+      s.querySelectorAll(".spec").forEach((el) => {
+        const head = (el.textContent || "").replace(/\s+/g, " ").trim();
+        inside.push(`${id} ← 「${head.slice(0, 18)}」`);
+      });
+      const text = (s.innerText || "").replace(/\s+/g, " ").trim();
+      const hit = DEV_WORDS.exec(text);
+      if (hit) {
+        const at = Math.max(0, text.indexOf(hit[0]) - 10);
+        words.push(`${id} ← 「…${text.slice(at, at + 30)}…」`);
+      }
+    });
+    return { inside, words };
+  });
+  record(
+    file,
+    specDiscipline.inside.length === 0,
+    "规格块不进画布",
+    specDiscipline.inside.length
+      ? specDiscipline.inside.join("; ")
+      : ".spec 只出现在 .screen 之外",
+  );
+  record(
+    file,
+    specDiscipline.words.length === 0,
+    "画布内无规格词",
+    specDiscipline.words.length
+      ? specDiscipline.words.join("; ")
+      : "画布可见文案无开发向词",
+  );
+
   /* 4 —— 原型页额外断言 */
   if (file.startsWith("proto")) {
     record(

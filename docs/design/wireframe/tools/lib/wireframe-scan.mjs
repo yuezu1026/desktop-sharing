@@ -106,6 +106,11 @@ const NOTES_RE =
   /<ul\b[^>]*class\s*=\s*"[^"]*\bnotes\b[^"]*"[\s\S]*?<\/ul\s*>/g;
 const STRIPE_RE =
   /<div\b[^>]*class\s*=\s*"[^"]*\bstripe\b[^"]*"[\s\S]*?<\/div\s*>/g;
+/* `.spec` = 帧外的「规格块」（`[D28]` R23）：给开发看的说明，**不是界面文案**，
+   必须从可见文案里剥掉，否则 C7 之类按文案做的红线检查会拿标注当界面。
+   ⚠️ 同样是非贪婪配对 ⇒ 规定 .spec 块内不得嵌套 div（见 wireframe.css 注释）。 */
+const SPEC_RE =
+  /<div\b[^>]*class\s*=\s*"[^"]*\bspec\b[^"]*"[\s\S]*?<\/div\s*>/g;
 /* 两种画布写法都要吃下：
  *   ① 标准变体 `<div class="screen screen--desk" style="height: 740px">`
  *   ② 自由画布 `<div class="screen" style="width: 830px; height: 346px">`
@@ -113,15 +118,17 @@ const STRIPE_RE =
 const SCREEN_TAG_RE = /<div\b([^>]*\bclass\s*=\s*"[^"]*\bscreen\b[^"]*"[^>]*)>/;
 
 /**
- * 帧的「界面可见文案」= figure 块 去掉 figcaption / notes / 禁放区斜纹块。
+ * 帧的「界面可见文案」= figure 块 去掉 figcaption / notes / 禁放区斜纹块 / 规格块。
  * 🔴 禁放区（`此处严禁出现：余额…`）是**反面示例**，不是界面文案，必须排除，
  *    否则被控端红线检查会被自己的标注刷成 13 条假阳性。
+ * 🔴 `.spec` 规格块同为帧外说明（`[D28]`），同理排除。
  */
 function visibleTextOf(block) {
   const t = block
     .replace(/<figcaption\b[\s\S]*?<\/figcaption>/g, " ")
     .replace(NOTES_RE, " ")
-    .replace(STRIPE_RE, " ");
+    .replace(STRIPE_RE, " ")
+    .replace(SPEC_RE, " ");
   return textOf(t);
 }
 

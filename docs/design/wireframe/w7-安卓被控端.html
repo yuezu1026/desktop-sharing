@@ -563,30 +563,34 @@
           </div>
           <div class="pad" style="padding: 0 10px">
             <div class="box" style="padding: 10px">
-              <b class="tiny">三档口径</b>
+              <b class="tiny">三档口径（互斥：一台设备只命中一档）</b>
               <div class="item" style="border: 0; padding: 5px 0">
                 <span class="tiny">已验证</span><span class="grow"></span
-                ><span class="tiny muted">开箱可用，无需额外引导</span>
+                ><span class="tiny muted">开箱可用 · 该档无引导段</span>
               </div>
               <div class="item" style="border: 0; padding: 5px 0">
                 <span class="tiny"><b>可用但需引导</b></span
                 ><span class="grow"></span
-                ><span class="tiny muted">需完成 W7-05 的白名单设置</span>
+                ><span class="tiny muted">需 W7-05 白名单 · 只出现引导段</span>
               </div>
               <div class="item" style="border: 0; padding: 5px 0">
                 <span class="tiny">不支持</span><span class="grow"></span
-                ><span class="tiny muted">系统层面限制了屏幕采集</span>
+                ><span class="tiny muted">系统限制采集 · 只出现下方说明</span>
               </div>
             </div>
           </div>
           <div class="pad" style="padding: 10px">
             <div class="box--fill box" style="padding: 10px">
-              <b class="tiny">本机属于「不支持」时的说明</b>
+              <b class="tiny">③ 本机命中「不支持」时才出现的说明</b>
               <div class="tiny muted" style="margin-top: 4px">
-                这台设备无法作为被控端（系统不允许应用采集屏幕）。若你想被别人协助，可以直接把它当作控制端使用，功能不受影响。
+                ⚠️ 本段与「支持」侧 <b>互斥</b>：本机命中哪一档，界面就
+                <b>只出现那一段</b>（本图给的是 ③ 档的内容）。
+              </div>
+              <div class="tiny" style="margin-top: 6px">
+                这台设备无法作为被控端（系统不允许应用屏幕采集）。若你想被别人协助，可以直接把它当作控制端使用，功能不受影响。
               </div>
               <div class="hstack" style="margin-top: 8px">
-                <span class="btn sm">查看支持的机型</span
+                <span class="btn sm" data-noop>查看支持的机型</span
                 ><span class="grow"></span>
               </div>
             </div>
@@ -624,6 +628,12 @@
           <li>
             分档结论必须<b>可回退</b>：系统更新后分档可能变化 ⇒
             文案里注明「随系统版本更新」，避免用户拿旧结论当承诺。
+          </li>
+          <li>
+            🔴 <b>三档互斥、不并列</b>（`[D28]` R27）：一台设备只命中一档 ⇒
+            界面<b>只出现该档的那一段</b>。<span class="no">不得</span
+            >把「支持」口径与「不支持」说明<b>并列排版</b> ——
+            并列会被读成「这台设备支持若干能力，只是其中一项不支持」，与「不夸大、不误导」直接冲突。
           </li>
         </ul>
       </figure>
