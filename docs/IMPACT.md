@@ -6,7 +6,7 @@
 > **范围**：`docs/**` 的 `.md` 与 `design/wireframe/**` 的 `.html`；🔴 不含 `archive/`（历史快照，不是落点）与 `tools/`（生成物）。
 > **过期判定**：门禁 `C12`（`wireframe-consistency.mjs`）拿本文件与重新扫描结果逐字对拍 ⇒ 任何文档增删行都会让它 FAIL 提示重跑。
 
-**共 61 个决策 / 565 处落点 / 17 个文件。**
+**共 61 个决策 / 575 处落点 / 17 个文件。**
 
 ---
 
@@ -56,7 +56,7 @@
 - `需求规划评审意见.md`: 308
 
 ### `D11-4` · 1 处 / 1 个文件
-- `design/wireframe/README.md`: 405
+- `design/wireframe/README.md`: 427
 
 ### `D11-5` · 1 处 / 1 个文件
 - `成本测算表.md`: 509
@@ -153,7 +153,7 @@
 - `需求规划评审意见.md`: 416, 417, 423
 
 ### `D18` · 31 处 / 7 个文件
-- `design/wireframe/README.md`: 330
+- `design/wireframe/README.md`: 352
 - `design/wireframe/w1-控制端-连接与额度.html`: 501
 - `商业化与计费设计.md`: 224, 227, 229, 247
 - `成本测算表.md`: 20, 21, 35, 36, 37, 43, 265, 285, 305, 331, 333, 733, 735, 768
@@ -208,7 +208,7 @@
 - `需求规划评审意见.md`: 313
 
 ### `D20` · 11 处 / 6 个文件
-- `design/wireframe/README.md`: 541
+- `design/wireframe/README.md`: 565
 - `design/wireframe/w1-控制端-连接与额度.html`: 36, 362
 - `design/wireframe/w5-合规实名与运营台.html`: 552
 - `商业化与计费设计.md`: 307, 321, 653
@@ -232,7 +232,7 @@
 - `design/wireframe/w4-计费与个人中心.html`: 650
 
 ### `D21` · 12 处 / 4 个文件
-- `design/wireframe/README.md`: 541
+- `design/wireframe/README.md`: 565
 - `design/wireframe/w5-合规实名与运营台.html`: 194, 262, 366
 - `商业化与计费设计.md`: 504, 518, 519, 654
 - `需求规划-v2-P0P3重构.md`: 133, 770, 779, 1065
@@ -259,11 +259,11 @@
 - `design/wireframe/w5-合规实名与运营台.html`: 250, 332, 371, 798
 - `账号与管理系统设计.md`: 339
 
-### `D22` · 28 处 / 6 个文件
-- `design/wireframe/README.md`: 36, 53, 70, 158, 161, 329, 396, 547
-- `design/wireframe/index.html`: 809
+### `D22` · 31 处 / 6 个文件
+- `design/wireframe/README.md`: 36, 53, 70, 158, 161, 297, 351, 418, 571, 689
+- `design/wireframe/index.html`: 824
 - `design/wireframe/w1-控制端-连接与额度.html`: 41, 346, 941, 1000, 1232, 1239
-- `design/wireframe/w6-移动端手持.html`: 35, 208, 874, 879, 888, 1019, 1029
+- `design/wireframe/w6-移动端手持.html`: 35, 208, 269, 884, 889, 898, 1029, 1039
 - `商业化与计费设计.md`: 657
 - `需求规划-v2-P0P3重构.md`: 24, 46, 151, 335, 1065
 
@@ -285,45 +285,45 @@
 - `商业化与计费设计.md`: 657
 - `需求规划-v2-P0P3重构.md`: 299, 358
 
-### `D23` · 31 处 / 6 个文件
-- `design/wireframe/README.md`: 37, 53, 106, 107, 108, 109, 312, 315, 316, 399, 403, 412, 551
-- `design/wireframe/index.html`: 176, 812
+### `D23` · 32 处 / 6 个文件
+- `design/wireframe/README.md`: 37, 53, 106, 107, 108, 109, 334, 337, 338, 421, 425, 434, 575
+- `design/wireframe/index.html`: 181, 184, 827
 - `design/wireframe/w3-账号与设备管理.html`: 30, 660, 870
 - `design/wireframe/w5-合规实名与运营台.html`: 919, 1045, 1066
 - `账号与管理系统设计.md`: 79, 145, 171, 173, 180, 462, 504, 508
 - `需求规划-v2-P0P3重构.md`: 42, 721
 
 ### `D23-1` · 15 处 / 5 个文件
-- `design/wireframe/README.md`: 313, 314, 320
+- `design/wireframe/README.md`: 335, 336, 342
 - `design/wireframe/w3-账号与设备管理.html`: 759, 855
 - `design/wireframe/w5-合规实名与运营台.html`: 1011, 1049
 - `账号与管理系统设计.md`: 83, 431, 437, 509, 516
 - `需求规划-v2-P0P3重构.md`: 42, 724, 732
 
 ### `D23-2` · 7 处 / 4 个文件
-- `design/wireframe/README.md`: 317, 415
+- `design/wireframe/README.md`: 339, 437
 - `design/wireframe/w3-账号与设备管理.html`: 990, 1081
 - `账号与管理系统设计.md`: 75, 510
 - `需求规划-v2-P0P3重构.md`: 42
 
-### `D24` · 24 处 / 5 个文件
-- `design/wireframe/README.md`: 38, 53, 143, 144, 268, 318, 319, 320, 321, 400, 555
-- `design/wireframe/index.html`: 181, 816
+### `D24` · 25 处 / 5 个文件
+- `design/wireframe/README.md`: 38, 53, 143, 144, 268, 340, 341, 342, 343, 422, 579
+- `design/wireframe/index.html`: 188, 190, 831
 - `design/wireframe/w5-合规实名与运营台.html`: 822, 945, 1044
 - `账号与管理系统设计.md`: 373, 398, 483, 512, 516
 - `需求规划-v2-P0P3重构.md`: 97, 728, 1065
 
-### `D25` · 35 处 / 6 个文件
-- `design/wireframe/README.md`: 39, 53, 123, 124, 125, 126, 280, 404, 405, 406, 559
-- `design/wireframe/index.html`: 190, 796, 820
+### `D25` · 37 处 / 6 个文件
+- `design/wireframe/README.md`: 39, 53, 123, 124, 125, 126, 280, 426, 427, 428, 521, 583
+- `design/wireframe/index.html`: 196, 200, 807, 835
 - `design/wireframe/w4-计费与个人中心.html`: 28, 953, 968, 1504, 1636
 - `商业化与计费设计.md`: 591, 622, 623, 624, 625, 658, 679, 700, 704
 - `账号与管理系统设计.md`: 279, 484, 518, 522
 - `需求规划-v2-P0P3重构.md`: 54, 737, 1065
 
-### `D26` · 21 处 / 3 个文件
-- `design/wireframe/README.md`: 40, 53, 71, 85, 86, 87, 88, 89, 90, 91, 92, 94, 331, 333, 334, 563, 603
-- `design/wireframe/index.html`: 199, 824
+### `D26` · 24 处 / 3 个文件
+- `design/wireframe/README.md`: 40, 53, 71, 85, 86, 87, 88, 89, 90, 91, 92, 94, 297, 353, 355, 356, 521, 587, 627
+- `design/wireframe/index.html`: 206, 210, 842
 - `需求规划-v2-P0P3重构.md`: 420, 451
 
 ---

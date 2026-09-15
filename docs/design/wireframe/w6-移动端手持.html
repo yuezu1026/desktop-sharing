@@ -222,7 +222,8 @@
           <div class="bar">
             <span class="tag">仅观看</span>
             <span class="tiny muted">爸爸的笔记本</span>
-            <span class="grow"></span><span class="ico"></span>
+            <span class="grow"></span>
+            <span class="tag on">直连</span><span class="ico"></span>
           </div>
           <div class="pad" style="padding: 8px">
             <div class="ph-img" style="height: 300px">
@@ -252,6 +253,7 @@
           </div>
           <span class="pin" style="left: 24px; top: 300px">1</span>
           <span class="pin" style="left: 296px; top: 566px">2</span>
+          <span class="pin" style="left: 296px; top: 34px">3</span>
         </div>
         <ul class="notes">
           <li>
@@ -262,6 +264,12 @@
             <b>②</b>
             「请求控制」是向上转正路径：<b>由观看方发起、由被控方确认</b>，且被控方会看到明确提示（见
             <a href="w2-被控端.html#w2-02">W2-02</a>）。
+          </li>
+          <li>
+            <b>③</b> 🔴 <b>链路指示器不得消失</b>（`[D22]`）：仅观看 /
+            沉浸等形态下仍须常驻显示「直连 / 中继」——
+            连的是哪条通道，是用户判断"要不要担心时长"的唯一依据；
+            观察态反而更需要它（此时无权操作，只剩"看得到"这件事）。
           </li>
           <li>
             此时<b>不得</b>给"开通会员即可控制"之类文案 ——
@@ -630,20 +638,18 @@
         </div>
         <ul class="notes">
           <li>
-            <b>①</b> 大屏布局 ≠ 全屏：仍然<b>窗口化启动</b>（D9 / C1），
+            大屏布局 ≠ 全屏：仍然<b>窗口化启动</b>（D9 / C1），
             只是把「手机界面」换成「多窗口桌面界面」。
           </li>
           <li>
-            <b>②</b> <b>可见远端光标</b>是键鼠场景的最低门槛 ——
+            <b>可见远端光标</b>是键鼠场景的最低门槛 ——
             没有它，用户不知道鼠标到底在哪一层。
           </li>
           <li>
-            <b>③</b>
             右键菜单必须是<b>被控端的菜单</b>（真右键语义），不是控制端自己造的菜单，
             否则文件操作会全部做错地方。
           </li>
           <li>
-            <b>④</b>
             画面仍<b>等比</b>；可用区比例与被控端不一致时留白，<b>不得拉伸</b>。
           </li>
           <li>
@@ -653,6 +659,10 @@
           <li>
             「文件传输 / 剪贴板同步」在本稿中<b>未出稿</b>（见 README
             §7），此处仅表示它们在大屏形态下是并列窗口。
+          </li>
+          <li>
+            ℹ️ 本帧<b>不设图注编号</b>：四处要点（窗口化 / 光标 / 右键菜单 /
+            画面比例）已在画布上就地图注，再挂编号只会产生<b>无落点的悬空序号</b>。
           </li>
         </ul>
       </figure>
@@ -959,7 +969,7 @@
             </div>
 
             <div class="box--fill box tiny" style="padding: 8px">
-              <b>边缘手势唤出唤出条</b><br />
+              <b>边缘手势唤出条</b><br />
               ① 屏幕<b>下缘上滑</b>（竖屏 / 横屏通用）<br />
               ② 屏幕<b>右缘左滑</b>；3 s 无操作再次淡出
             </div>

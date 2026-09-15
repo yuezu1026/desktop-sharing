@@ -246,6 +246,27 @@ for (const file of files) {
           ? "静止状态就报警 ⇒ 误报"
           : "静止状态未报警",
     );
+
+    /* C15 —— 伪按钮：点了没反应，比没有按钮更伤体验（第九轮 R32）
+       规则：原型页里每个 .btn 要么自己（或祖先）有 onclick，要么显式标 data-noop。 */
+    const deadButtons = await page.evaluate(() => {
+      const bad = [];
+      document.querySelectorAll(".btn").forEach((el) => {
+        if (el.hasAttribute("data-noop")) return;
+        if (el.closest("[onclick]")) return;
+        if (el.closest("a")) return;
+        bad.push((el.textContent || "").trim().slice(0, 16) || "(无文案)");
+      });
+      return bad;
+    });
+    record(
+      file,
+      deadButtons.length === 0,
+      "无伪按钮",
+      deadButtons.length
+        ? `${deadButtons.length} 个 .btn 既无 onclick 也无 data-noop（点了没反应）：${deadButtons.join(" / ")}`
+        : "全部 .btn 均可点或已显式标 data-noop",
+    );
   }
 }
 

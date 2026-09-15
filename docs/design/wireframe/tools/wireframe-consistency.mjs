@@ -572,6 +572,141 @@ if (redlineHits.length) {
 }
 
 /* ============================================================
+   ⑨ 跨帧一致性（C13 / C14）—— 第九轮评审沉淀
+   ------------------------------------------------------------
+   这两类漂移在第九轮之前**没有门禁**，只能靠人眼撞见：
+     · C13 扉页声明计数：页内写着「本页 N 个条目 / M 张图」，而 N / M 与真值不符
+            （第八轮给 W2 补了 2 帧，扉页却仍写 8 ⇒ 整整一轮无人发现）
+     · C14 画布 pin ↔ notes 编号：两者必须互相对应
+            （W6-06 有 ①②③④ 四条编号说明，画布上却一个 pin 都没有
+              ⇒ 评审者照着编号找不到落点）
+   两轴都不依赖文字措辞，因此对格式化器免疫（只匹配标签与数字）。
+   ============================================================ */
+const frontClaimOf = (html) => {
+  const m = /本页\s*<b\s*>\s*(\d+)\s*个条目\s*\/\s*(\d+)\s*张图\s*<\/b\s*>/.exec(
+    html ?? "",
+  );
+  return m ? { entries: Number(m[1]), figures: Number(m[2]) } : null;
+};
+
+/** README 里每个条目归属的页（一个条目可带多个锚点，按条目去重） */
+const entriesPerPage = new Map();
+for (const e of entries) {
+  const keys = new Set(
+    e.anchors
+      .map((a) => String(a).split("-")[0].toUpperCase())
+      .filter((k) => /^W[1-7]$/.test(k)),
+  );
+  for (const k of keys) entriesPerPage.set(k, (entriesPerPage.get(k) ?? 0) + 1);
+}
+
+/** 按 figure 切块（C14 需要逐帧看 pin / notes） */
+const figureHtml = new Map();
+for (const p of scan.pages) {
+  const html = p.html ?? read(join(WIREFRAME_DIR, p.file));
+  if (!html) continue;
+  const re = /<figure[^>]*\bid="([^"]+)"[^>]*>/g;
+  const marks = [];
+  let m;
+  while ((m = re.exec(html))) marks.push({ id: m[1], start: m.index });
+  marks.forEach((mk, i) => {
+    const end = i + 1 < marks.length ? marks[i + 1].start : html.length;
+    if (!figureHtml.has(mk.id)) figureHtml.set(mk.id, html.slice(mk.start, end));
+  });
+}
+
+const CIRCLED = "①②③④⑤⑥⑦⑧⑨⑩";
+const toNoteNo = (s) => {
+  const i = CIRCLED.indexOf(s);
+  return i >= 0 ? i + 1 : Number(s);
+};
+
+let c13Checked = 0;
+let c14Checked = 0;
+/** 编号 notes 无对应 pin 的帧（历史习惯：编号当列表序号用）⇒ 只汇总提醒，不逐帧刷屏 */
+const c14Orphans = [];
+for (const p of scan.pages) {
+  const html = p.html ?? read(join(WIREFRAME_DIR, p.file));
+  if (!html) continue;
+
+  /* --- C13 扉页声明计数 vs 真值 --- */
+  const claim = frontClaimOf(html);
+  if (claim) {
+    c13Checked += 1;
+    const realFig = truth.perPage[p.key];
+    const realEnt = entriesPerPage.get(p.key);
+    if (realFig === undefined || realEnt === undefined) {
+      warn(
+        "C13",
+        `${p.file} front claim`,
+        "cannot resolve truth (entries/frames)",
+        "resolvable",
+        claim,
+      );
+    } else if (claim.figures !== realFig || claim.entries !== realEnt) {
+      fail(
+        "C13",
+        `${p.file} front claim`,
+        `front-page count drifted (entries ${claim.entries} vs ${realEnt}, figures ${claim.figures} vs ${realFig})`,
+        `${realEnt} entries / ${realFig} figures`,
+        `${claim.entries} entries / ${claim.figures} figures`,
+      );
+    } else {
+      ok(
+        "C13",
+        `${p.file} front claim`,
+        `${realEnt} entries / ${realFig} figures (in sync)`,
+      );
+    }
+  }
+
+  /* --- C14 pin 编号 ↔ notes 编号 --- */
+  for (const f of scan.frames.filter((x) => x.page === p.key)) {
+    const block = figureHtml.get(f.id);
+    if (!block) continue;
+    const pins = new Set(
+      [...block.matchAll(/<span\s+class="pin[^"]*"[^>]*>\s*(\d+)\s*<\/span\s*>/g)].map(
+        (m) => Number(m[1]),
+      ),
+    );
+    const noteNos = new Set(
+      [
+        ...block.matchAll(
+          /<li[^>]*>\s*<b\s*>\s*(①|②|③|④|⑤|⑥|⑦|⑧|⑨|⑩|\d+)\s*<\/b\s*>/g,
+        ),
+      ].map((m) => toNoteNo(m[1])),
+    );
+    if (pins.size === 0 && noteNos.size === 0) continue;
+    c14Checked += 1;
+    const dangling = [...pins].filter((n) => !noteNos.has(n));
+    const orphan = [...noteNos].filter((n) => !pins.has(n));
+    if (dangling.length) {
+      fail(
+        "C14",
+        `${p.file} ${f.id}`,
+        `canvas pin number(s) with no matching numbered note: ${dangling.join(",")}`,
+        "every pin number appears in notes",
+        { pins: [...pins].sort(), notes: [...noteNos].sort() },
+      );
+    } else if (orphan.length) {
+      c14Orphans.push({ where: `${p.file} ${f.id}`, orphan });
+    }
+  }
+}
+if (c14Orphans.length) {
+  warn(
+    "C14-b",
+    "wireframe pages",
+    `${c14Orphans.length} frame(s) have numbered notes with no pin on canvas (legacy habit: numbers used as list markers)`,
+    "0 frames",
+    c14Orphans.slice(0, 6),
+  );
+}
+if (c13Checked === 0) {
+  warn("C13", "all wireframe pages", "no front-page count claim found", ">=1", 0);
+}
+
+/* ============================================================
    ⑧ 目录过期（C11）：docs/OUTLINE.md 必须与源 md 同步
    ============================================================ */
 /**
