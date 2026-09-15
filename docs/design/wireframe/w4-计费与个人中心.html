@@ -20,10 +20,11 @@
 
     <h1>W4 · 计费与个人中心</h1>
     <p class="lede">
-      这是<b>合规密度最高</b>的一页。三条硬约束贯穿始终：
+      这是<b>合规密度最高</b>的一页。<b>四条硬约束</b>贯穿始终：
       <b>① iOS 版必须单独一套</b>（零站外支付引导）；
       <b>② 免费给的东西必须显式写「免费」</b>（否则钩子反向失效）；
-      <b>③ 取消续费不得比开通更难</b>。
+      <b>③ 取消续费不得比开通更难</b>； <b>④ 支付必须画到「结果」为止</b>（🔴
+      <b>[D25]</b>：只有购买页没有支付结果 = 用户付了钱却没到账时无路可走）。
     </p>
 
     <div class="legend">
@@ -929,6 +930,828 @@
           </li>
           <li>
             时点：扣费前 <b>5 日</b>（自有渠道，不依赖 App Store 的提醒）。
+          </li>
+        </ul>
+      </figure>
+    </div>
+
+    <h2>3 · 支付链路（订单确认 → 支付结果 → 扣款失败）与 Web 购买入口</h2>
+
+    <p class="lede">
+      本节补的是<b>同一个洞</b>：此前全稿只有「购买页」（下单<b>前</b>），
+      <b>没有「支付本身」</b
+      >。支付是全流程<b>唯一「钱已经出去、权益还没到」</b>的状态 ——
+      缺了它，用户唯一的求助路径是找客服。第四帧补的是
+      <code>商业化 §10</code> 早已定下却从未出图的一处：<b
+        >「Web / 桌面端应作为主购买入口」</b
+      >。
+    </p>
+
+    <div class="legend">
+      🔴
+      <b>口径纪律（<b>[D25]</b>）：</b>本节只画<b>我方界面</b>。<b
+        >微信 / 支付宝的收银台页、Apple 的支付弹层不是我方界面，不出稿</b
+      >； 需要出稿的是<b>跳转前（订单确认）· 跳转中（确认中）· 跳转后（结果）</b
+      >三段。<br />
+      ⚠️
+      <b>本节仍不得出现：</b>倒计时优惠 · 「已省 xx 元」· 支付结果页的任何推荐位
+      · 被控端同步展示（商业化 §13.4 红线②⑤）。
+    </div>
+
+    <div class="flow">
+      <!-- ============ W4-09 ============ -->
+      <figure class="frame" id="w4-09">
+        <figcaption>
+          <span class="fid">W4-09</span><b>订单确认（下单页 · 含发票抬头）</b> ·
+          层① 已拍板决策执行体 · P0　|　来源 商业化 §13.2#7 · 账号设计 §4.3 ·
+          <b>[D25]</b>
+        </figcaption>
+        <div class="screen screen--desk" style="height: 740px">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">确认订单</span>
+          </div>
+          <div
+            class="pad"
+            style="height: calc(100% - 28px); display: flex; gap: 16px"
+          >
+            <div class="grow stack">
+              <div class="box--fill box" style="padding: 12px">
+                <div class="hstack">
+                  <b>个人版 · 年付</b><span class="grow"></span
+                  ><span class="tag on">年付</span>
+                </div>
+                <div class="hstack" style="margin-top: 8px">
+                  <b style="font-size: 20px">¥158.00</b
+                  ><span class="tiny muted">/ 年（约 ¥13.2 / 月）</span>
+                </div>
+              </div>
+
+              <div class="stack tiny" style="border: 1px solid var(--line)">
+                <div class="item">
+                  <span>商品 · 个人版（12 个月）</span><span class="grow"></span
+                  ><span>¥158.00</span>
+                </div>
+                <div class="item">
+                  <span>优惠</span><span class="grow"></span
+                  ><span class="muted">无优惠</span>
+                </div>
+                <div class="item">
+                  <b>应付合计</b><span class="grow"></span><b>¥158.00</b>
+                </div>
+              </div>
+
+              <div class="box" style="padding: 11px">
+                <b>🔴 本单价格已固化（[D14] 的用户侧落点）</b>
+                <div class="tiny" style="margin-top: 6px; line-height: 1.8">
+                  订单上的价格版本号
+                  <b>price_version = v2026-03</b>
+                  与金额在<b>下单那一刻</b>一起写进订单；
+                  此后调价不影响本单，活动价也不会反向覆盖。<br />「当时应付多少」在本页<b
+                    >可复现</b
+                  >
+                  —— 这是 D14 版本管理在用户侧<b>唯一</b>的可见位。
+                </div>
+              </div>
+
+              <div class="box" style="padding: 11px">
+                <span class="label"
+                  >发票（W4-01 写的"支付前填写"就落在这里）</span
+                >
+                <div class="hstack" style="margin-top: 7px">
+                  <span class="tiny muted" style="width: 62px">需要发票</span>
+                  <span class="tag">不开票</span
+                  ><span class="tag on">开票</span>
+                </div>
+                <div class="hstack" style="margin-top: 6px">
+                  <span class="tiny muted" style="width: 62px">抬头类型</span>
+                  <span class="tag on">企业</span><span class="tag">个人</span>
+                </div>
+                <div class="hstack" style="margin-top: 6px">
+                  <span class="tiny muted" style="width: 62px">发票抬头</span>
+                  <span class="input tiny grow">北京 xx 科技有限公司</span>
+                </div>
+                <div class="hstack" style="margin-top: 6px">
+                  <span class="tiny muted" style="width: 62px">税号</span>
+                  <span class="input tiny grow">9111 0000 xxxx xxxx xx</span>
+                </div>
+                <div class="tiny muted" style="margin-top: 7px">
+                  🔴 抬头<b>只在本页填一次</b>，之后在账单页（W4-06）复用 ——
+                  不得要求每单重填，也不得把开票入口放到「支付成功之后」。
+                </div>
+              </div>
+
+              <div class="hstack tiny muted">
+                <span>☐</span
+                ><span>我已阅读并同意《服务协议》《自动续费服务协议》</span>
+              </div>
+
+              <div class="grow"></div>
+              <span class="btn solid block" style="min-height: 32px"
+                >去支付 ¥158.00</span
+              >
+              <div class="tiny muted" style="text-align: center">
+                点「去支付」后跳转到<b>微信 / 支付宝</b>的收银台页（🔴
+                第三方页面，非我方界面）；本页<b>不采集</b>任何卡号 / 支付密码。
+              </div>
+            </div>
+
+            <div style="width: 290px" class="stack">
+              <div class="box" style="padding: 11px">
+                <b>这笔钱买的是什么</b>
+                <div class="tiny" style="margin-top: 6px; line-height: 1.8">
+                  买的是<b>更多的中继时长</b>，不是解锁功能。手机被控 /
+                  直连不限时长 / 150 台设备在免费版里就有。
+                </div>
+              </div>
+
+              <div class="box" style="padding: 11px">
+                <b>🔴 本页不得出现</b>
+                <div class="tiny" style="margin-top: 6px">
+                  <div class="item" style="border: 0; padding: 4px 0">
+                    · 倒计时优惠（「仅剩 12 分钟」）
+                  </div>
+                  <div class="item" style="border: 0; padding: 4px 0">
+                    · 「已省 xx 元」（划线价无依据即违规）
+                  </div>
+                  <div class="item" style="border: 0; padding: 4px 0">
+                    · 默认勾选的搭售项
+                  </div>
+                </div>
+              </div>
+
+              <div class="box tiny" style="padding: 9px; border-style: dashed">
+                与 W4-01 的关系：W4-01 回答<b>「卖什么」</b>，本页回答
+                <b>「这一单多少钱、怎么付、发票怎么开」</b> ⇒
+                两页不可合并（合并后价格版本无法就地固化）。
+              </div>
+            </div>
+          </div>
+          <span class="pin" style="left: 204px; top: 268px">1</span>
+          <span class="pin" style="left: 24px; top: 96px">2</span>
+          <span class="pin" style="left: 24px; top: 404px">3</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 🔴 <b>发票抬头必须在支付前可填</b> —— W4-01
+            早就写了这句承诺，但此前<b>没有任何界面承载它</b>，属「承诺已发出、执行体缺失」。
+          </li>
+          <li>
+            <b>②</b> 🔴 <b>订单必须固化「下单当时的价格版本」并显示给用户</b>。
+            没有这一屏，<b>[D14]</b>
+            的版本管理只在后端成立，用户侧仍然回答不了"我当时应付多少"。
+          </li>
+          <li>
+            <b>③</b> 「应付合计」是<b>唯一</b>允许加粗强调的数字；
+            一旦出现「立省 ¥xx」这类对比数字，就滑进价格欺诈的判定范围。
+          </li>
+          <li>
+            🔴 本页<b>没有</b>「选支付方式」这一步 —— 渠道在第三方收银台里选，
+            我方重复画一遍会造成「以我为准」的错觉（用户在那里改了，我方却还显示旧值）。
+          </li>
+        </ul>
+      </figure>
+
+      <!-- ============ W4-10 四态 ============ -->
+      <h3 id="w4-10" style="margin-top: 6px">
+        W4-10 · 🔴 支付结果四态（缺任意一态 =「钱付了、权益没到」无处可查）
+      </h3>
+      <div class="legend">
+        按顺序看：<b>A 已开通</b> · <b>B 未完成</b> ·
+        <b>C 确认中（回调未达）</b> · <b>D 订单已关闭（超时）</b>。 🔴
+        <b>C 是本组的核心</b> ——
+        它是「钱已经出去了、权益还没到」这段真空期的<b>唯一出口</b>。
+        <br />四态各自有锚点，可单独引用： <a href="#w4-10a">A</a> ·
+        <a href="#w4-10b">B</a> · <a href="#w4-10c">C</a> ·
+        <a href="#w4-10d">D</a>。
+      </div>
+
+      <figure class="frame" id="w4-10a">
+        <figcaption>态 A · 已开通（权益已到账）</figcaption>
+        <div class="screen screen--desk" style="height: 420px">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">支付结果 · 已开通</span>
+          </div>
+          <div
+            class="pad"
+            style="height: calc(100% - 28px); display: flex; gap: 16px"
+          >
+            <div class="grow stack">
+              <div class="box--fill box" style="padding: 14px">
+                <div class="hstack">
+                  <span class="ico"></span><b style="font-size: 18px">已开通</b
+                  ><span class="grow"></span><span class="tag on">生效中</span>
+                </div>
+                <div class="tiny muted" style="margin-top: 8px">
+                  个人版 · 年付已生效，<b>中继时长已到账</b>。
+                </div>
+              </div>
+              <div class="stack tiny" style="border: 1px solid var(--line)">
+                <div class="item">
+                  <span class="muted">订单号</span><span class="grow"></span
+                  ><span>20260915 000123 456789</span>
+                </div>
+                <div class="item">
+                  <span class="muted">金额 / 渠道</span
+                  ><span class="grow"></span><span>¥158.00 · 微信支付</span>
+                </div>
+                <div class="item">
+                  <span class="muted">到期时间</span><span class="grow"></span
+                  ><span>2027-03-15</span>
+                </div>
+                <div class="item">
+                  <span class="muted">发票</span><span class="grow"></span
+                  ><span>已按企业抬头申请（W4-06 可下载）</span>
+                </div>
+              </div>
+              <div class="hstack">
+                <span class="btn sm solid">返回设备列表</span>
+                <span class="btn sm">查看账单</span>
+              </div>
+            </div>
+
+            <div style="width: 290px" class="stack">
+              <div class="box" style="padding: 11px">
+                <b>🔴 本页不得出现</b>
+                <div class="tiny" style="margin-top: 6px">
+                  <div class="item" style="border: 0; padding: 4px 0">
+                    · 升级年付 / 加购插件等推荐位
+                  </div>
+                  <div class="item" style="border: 0; padding: 4px 0">
+                    · 「邀请好友得时长」等增长位（§9.4 红线）
+                  </div>
+                </div>
+              </div>
+              <div class="box tiny" style="padding: 9px; border-style: dashed">
+                刚付完钱的一屏是<b>最容易被"顺手加一句推荐"</b>的地方 —— 这正是
+                §13.4 红线⑤（不做促销）的同源要求。
+              </div>
+            </div>
+          </div>
+          <span class="pin" style="left: 24px; top: 56px">1</span>
+          <span class="pin" style="left: 204px; top: 100px">2</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 🔴
+            <b>订单号必须显示</b
+            >：它既是「到账了」的证据，也是客服定位的<b>唯一键</b>。
+            没有订单号的成功页 = 一次潜在争议全部推给客服去翻后台。
+          </li>
+          <li>
+            <b>②</b> 到账信息必须<b>四项齐全</b>：商品 / 金额与渠道 / 到期时间 /
+            发票。 「到期时间」是用户下一步真正要用的信息。
+          </li>
+          <li>
+            🔴 成功页<b>不弹任何推荐</b> ——
+            与「断连瞬间不弹促销」同一条理由（红线⑤）。
+          </li>
+        </ul>
+      </figure>
+
+      <figure class="frame" id="w4-10b">
+        <figcaption>态 B · 未完成（🔴 不得猜测失败原因）</figcaption>
+        <div class="screen screen--desk" style="height: 440px">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">支付结果 · 未完成</span>
+          </div>
+          <div
+            class="pad"
+            style="height: calc(100% - 28px); display: flex; gap: 16px"
+          >
+            <div class="grow stack">
+              <div class="box--fill box" style="padding: 14px">
+                <div class="hstack">
+                  <span class="ico"></span
+                  ><b style="font-size: 18px">支付未完成</b
+                  ><span class="grow"></span
+                  ><span class="tag">订单未支付 · 不会扣款</span>
+                </div>
+                <div class="tiny muted" style="margin-top: 8px">
+                  你可以稍后重试；<b>同一订单在 15 分钟内保留</b>。
+                </div>
+              </div>
+              <div class="stack tiny" style="border: 1px solid var(--line)">
+                <div class="item">
+                  <span class="muted">订单号</span><span class="grow"></span
+                  ><span>20260915 000123 456790</span>
+                </div>
+                <div class="item">
+                  <span class="muted">金额</span><span class="grow"></span
+                  ><span>¥158.00</span>
+                </div>
+                <div class="item">
+                  <span class="muted">状态</span><span class="grow"></span
+                  ><span>未支付</span>
+                </div>
+                <div class="item">
+                  <span class="muted">订单保留</span><span class="grow"></span
+                  ><span>剩余 12:30</span>
+                </div>
+              </div>
+              <div class="hstack">
+                <span class="btn sm solid">重试支付（同一订单）</span>
+                <span class="btn sm">换个支付方式</span>
+                <span class="btn sm">查看订单</span>
+              </div>
+            </div>
+
+            <div style="width: 290px" class="stack">
+              <div class="box" style="padding: 11px">
+                <b>🔴 我方<b>不知道</b>失败原因</b>
+                <div class="tiny" style="margin-top: 6px; line-height: 1.8">
+                  渠道<b>不回传具体原因</b>（余额不足 / 限额 /
+                  用户点了返回，我方看到的都是同一个「未完成」）⇒
+                  界面<b>只能写中性话术</b>，<span class="no">不得</span
+                  >写「你的余额不足」—— 猜错等于<b>指控用户</b>。
+                </div>
+              </div>
+              <div class="box" style="padding: 11px">
+                <b>🔴 不得自动重试</b>
+                <div class="tiny" style="margin-top: 6px; line-height: 1.8">
+                  严禁后台静默重试扣款；重试<b>只能由用户点</b>。
+                  重复扣款是最难解释的一类客诉。
+                </div>
+              </div>
+              <div class="box tiny" style="padding: 9px; border-style: dashed">
+                「换个支付方式」= 在<b>本单</b>上换渠道，<b>不新建订单</b> ——
+                否则会同时出现两笔待支付订单（幂等键 = 订单号）。
+              </div>
+            </div>
+          </div>
+          <span class="pin" style="left: 24px; top: 56px">1</span>
+          <span class="pin" style="left: 400px; top: 100px">2</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 🔴
+            <b>写「未完成」而不是「失败」</b
+            >：很多"失败"只是用户在收银台点了返回， 写"失败"会让他以为出了故障。
+          </li>
+          <li>
+            <b>②</b> 🔴 必须明说<b>「不会扣款」</b> ——
+            这是用户在这一屏唯一真正想知道的事。
+          </li>
+          <li>
+            <b>③</b> 15
+            分钟保留期是<b>真话</b>，必须给剩余时间；否则用户无法判断"还能不能重试"。
+          </li>
+        </ul>
+      </figure>
+
+      <figure class="frame" id="w4-10c">
+        <figcaption>态 C · 🔴 确认中（回调未达 · 本组核心一态）</figcaption>
+        <div class="screen screen--desk" style="height: 560px">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">支付结果 · 正在确认</span>
+          </div>
+          <div
+            class="pad"
+            style="height: calc(100% - 28px); display: flex; gap: 16px"
+          >
+            <div class="grow stack">
+              <div class="box--fill box" style="padding: 14px">
+                <div class="hstack">
+                  <span class="ico"></span
+                  ><b style="font-size: 18px">正在确认支付结果</b
+                  ><span class="grow"></span
+                  ><span class="tag on">请勿重复支付</span>
+                </div>
+                <div class="tiny muted" style="margin-top: 8px">
+                  订单号已锁定，<b>重复下单会被自动拦截</b>。已等待 00:38。
+                </div>
+              </div>
+
+              <div class="box" style="padding: 11px">
+                <b>为什么会看到这一屏</b>
+                <div class="tiny" style="margin-top: 6px; line-height: 1.9">
+                  · 你在收银台完成付款后<b>关掉了 App / 断了网</b><br />
+                  · 支付渠道的<b>异步回调</b>尚未到达我方<br />
+                  · iOS 侧 Apple 收据<b>校验中</b><br />
+                  ⇒ 这是一个<b>正常的中间态</b>，不是出错。
+                </div>
+              </div>
+
+              <div class="box" style="padding: 11px">
+                <b>我方在做什么</b>
+                <div class="tiny" style="margin-top: 6px; line-height: 1.9">
+                  · 已自动向渠道发起查询（每 5 秒一次，最多 2 分钟）<br />
+                  · 结果会通过 <b>App 内消息</b>推送 ——
+                  你<b>可以关掉这一屏</b>去做别的事<br />
+                  🔴 结果落定后权益<b>自动补发</b>，无需你申诉
+                </div>
+              </div>
+
+              <div class="grow"></div>
+              <div class="hstack">
+                <span class="btn sm solid">我已付款 · 继续等待</span>
+                <span class="btn sm">返回设备列表</span>
+              </div>
+            </div>
+
+            <div style="width: 290px" class="stack">
+              <div class="box" style="padding: 11px">
+                <b>🔴 不得用假进度条</b>
+                <div class="tiny" style="margin-top: 6px; line-height: 1.8">
+                  滚动条 / 百分比动画在没有真实进度时会制造「卡住了」的错觉；
+                  只允许<b>文字 + 已等待时长</b>。
+                </div>
+              </div>
+              <div class="box" style="padding: 11px">
+                <b>iOS 变体</b>
+                <div class="tiny" style="margin-top: 6px; line-height: 1.8">
+                  文案换成「<b>正在与 App Store 确认</b>」；🔴 状态<b
+                    >以 Apple 收据校验结果为准</b
+                  >，不读本地缓存（W4-04）。
+                </div>
+              </div>
+              <div class="box tiny" style="padding: 9px; border-style: dashed">
+                🔴 本屏是「钱已经出去、权益还没到」这段真空期<b>唯一的出口</b>
+                —— 没有它，用户唯一能做的就是找客服。
+              </div>
+            </div>
+          </div>
+          <span class="pin" style="left: 24px; top: 56px">1</span>
+          <span class="pin" style="left: 400px; top: 100px">2</span>
+          <span class="pin" style="left: 400px; top: 246px">3</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 🔴 这一态缺了 =
+            已付钱但权益没到账的用户<b>没有任何自助路径</b>；
+            它不是体验优化，是<b>资金风险的出口</b>。
+          </li>
+          <li>
+            <b>②</b> 🔴 「请勿重复支付」必须放在<b>最显眼处</b> ——
+            用户重复支付的动机正是"是不是没成功"。
+          </li>
+          <li>
+            <b>③</b>
+            必须给出<b>「可以关掉这一屏」的许可</b>，否则用户会一直盯着等；
+            同时承诺「权益自动补发」，把不确定性从我方转移到系统。
+          </li>
+          <li>
+            <b>④</b> 幂等键 = 订单号；同一订单重复提交必须由服务端拒绝，
+            界面要把这件事说成<b>「系统在保护你」</b>而不是「你不能点」。
+          </li>
+        </ul>
+      </figure>
+
+      <figure class="frame" id="w4-10d">
+        <figcaption>态 D · 订单已关闭（超时未支付 · 🔴 措辞纪律）</figcaption>
+        <div class="screen screen--desk" style="height: 440px">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">支付结果 · 订单已关闭</span>
+          </div>
+          <div
+            class="pad"
+            style="height: calc(100% - 28px); display: flex; gap: 16px"
+          >
+            <div class="grow stack">
+              <div class="box--fill box" style="padding: 14px">
+                <div class="hstack">
+                  <span class="ico"></span
+                  ><b style="font-size: 18px">订单已关闭</b
+                  ><span class="grow"></span><span class="tag">未扣款</span>
+                </div>
+                <div class="tiny muted" style="margin-top: 8px">
+                  超过 <b>15 分钟</b>未完成支付，订单已自动关闭。
+                </div>
+              </div>
+              <div class="stack tiny" style="border: 1px solid var(--line)">
+                <div class="item">
+                  <span class="muted">订单号</span><span class="grow"></span
+                  ><span>20260915 000123 456791</span>
+                </div>
+                <div class="item">
+                  <span class="muted">金额</span><span class="grow"></span
+                  ><span>¥158.00</span>
+                </div>
+                <div class="item">
+                  <span class="muted">状态</span><span class="grow"></span
+                  ><span>已关闭（未支付）</span>
+                </div>
+                <div class="item">
+                  <span class="muted">关闭时间</span><span class="grow"></span
+                  ><span>2026-09-15 10:35</span>
+                </div>
+              </div>
+              <div class="hstack">
+                <span class="btn sm solid">重新下单</span>
+                <span class="btn sm">查看账单</span>
+              </div>
+            </div>
+
+            <div style="width: 290px" class="stack">
+              <div class="box" style="padding: 11px">
+                <b>🔴 为什么不能写「支付失败」</b>
+                <div class="tiny" style="margin-top: 6px; line-height: 1.8">
+                  用户看到"失败"的第一反应是<b>「钱是不是扣了」</b>。
+                  「订单已关闭」描述的是<b>我方系统的动作</b>，"支付失败"暗示的是<b
+                    >他的动作出了问题</b
+                  >
+                  —— 前者更准确，也更少引发追问。
+                </div>
+              </div>
+              <div class="box" style="padding: 11px">
+                <b>关闭 ≠ 拒绝服务</b>
+                <div class="tiny" style="margin-top: 6px; line-height: 1.8">
+                  免费版与既有权益<b>完全不受影响</b>；本页不得出现"你还没有开通"这类<b>暗示损失</b>的文案。
+                </div>
+              </div>
+              <div class="box tiny" style="padding: 9px; border-style: dashed">
+                「重新下单」必须<b>新建订单号并重新取价</b>（D14）——
+                不得复用已关闭订单的价格版本，否则活动结束后会出现"旧价订单复活"。
+              </div>
+            </div>
+          </div>
+          <span class="pin" style="left: 24px; top: 56px">1</span>
+          <span class="pin" style="left: 400px; top: 100px">2</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 🔴 超时关闭是<b>中性事实</b>，不是用户过错 ——
+            文案不得带任何责备或催促。
+          </li>
+          <li>
+            <b>②</b> 「重新下单必须重新取价」与 W4-09
+            的价格版本固化是<b>一对</b>：
+            固化的是<b>已生成的订单</b>，不是"曾经看过的价"。
+          </li>
+          <li>
+            <b>③</b>
+            「查看账单」是让用户<b>自己核实"真的没扣"</b>的入口（W4-06）——
+            比任何解释都有效。
+          </li>
+        </ul>
+      </figure>
+
+      <!-- ============ W4-11 ============ -->
+      <figure class="frame" id="w4-11">
+        <figcaption>
+          <span class="fid">W4-11</span
+          ><b>自动续费扣款失败（🔴 失败 ≠ 终止）</b> · 层① 已拍板决策执行体 ·
+          P0　|　来源 商业化 §13.2#8 · §10 · 账号设计 §4.4 · <b>[D25]</b>
+        </figcaption>
+        <div class="screen screen--desk" style="height: 520px">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px">订阅 · 自动续费扣款失败</span>
+          </div>
+          <div class="banner">
+            <span class="tiny"
+              ><b>自动续费扣款未成功</b> · 剩余重试 3 次，下一次
+              <b>2026-04-05</b></span
+            >
+            <span class="grow"></span><span class="btn sm solid">立即处理</span>
+          </div>
+          <div
+            class="pad"
+            style="height: calc(100% - 28px - 38px); display: flex; gap: 16px"
+          >
+            <div class="grow stack">
+              <div class="box--fill box" style="padding: 12px">
+                <div class="hstack">
+                  <b>个人版 · 年付（连续包月）</b><span class="grow"></span
+                  ><span class="tag">待处理</span>
+                </div>
+                <div class="tiny muted" style="margin-top: 7px">
+                  这是<b>扣款失败</b>，不是订阅终止。宽限期内一切功能不变。
+                </div>
+              </div>
+
+              <div class="stack tiny" style="border: 1px solid var(--line)">
+                <div class="item">
+                  <span class="muted">扣款金额</span><span class="grow"></span
+                  ><span>¥24.00</span>
+                </div>
+                <div class="item">
+                  <span class="muted">扣款渠道</span><span class="grow"></span
+                  ><span>微信支付（自动扣款）</span>
+                </div>
+                <div class="item">
+                  <span class="muted">失败时间</span><span class="grow"></span
+                  ><span>2026-04-01 10:20</span>
+                </div>
+                <div class="item">
+                  <span class="muted">下次重试</span><span class="grow"></span
+                  ><span>2026-04-05（后端下发）</span>
+                </div>
+                <div class="item">
+                  <b class="muted">权益失效时刻</b><span class="grow"></span
+                  ><b>2026-04-08 10:20</b>
+                </div>
+              </div>
+
+              <div class="box" style="padding: 11px">
+                <b>当前权益仍然有效</b>
+                <div class="tiny" style="margin-top: 6px; line-height: 1.8">
+                  到期时间 <b>2026-04-08</b>（含 <b>7 天宽限期</b>）；
+                  宽限期内<b>时长、画质、设备数全部不变</b>。
+                </div>
+              </div>
+
+              <div class="grow"></div>
+              <div class="hstack">
+                <span class="btn sm solid">更新支付方式</span>
+                <span class="btn sm">手动续费</span>
+                <span class="grow"></span>
+                <span class="btn sm">关闭自动续费</span>
+              </div>
+            </div>
+
+            <div class="stack" style="width: 290px">
+              <div class="box" style="padding: 11px">
+                <b>🔴 三条硬规则</b>
+                <div class="tiny" style="margin-top: 6px; line-height: 1.9">
+                  · <b>失败 ≠ 终止</b>：先重试、再宽限；🔴
+                  <span class="no">不得</span>在用户使用时静默降级（与 W1-05
+                  降级链同源）<br />
+                  · 🔴
+                  <span class="no">不得</span
+                  >在会话断开的那一瞬间推送本页（红线⑤）<br />
+                  · 🔴 被控端<b>不得出现</b>任何金额 / 余额（红线②）
+                </div>
+              </div>
+              <div class="box" style="padding: 11px">
+                <b>与 W4-08 的关系</b>
+                <div class="tiny" style="margin-top: 6px; line-height: 1.8">
+                  W4-08 = 扣费<b>前</b>告知（成功路径）；本帧 =
+                  扣费<b>后</b>失败路径。 两者共同构成续费合规闭环 —— 只画 W4-08
+                  等于<b>只画了一半</b>。
+                </div>
+              </div>
+              <div class="box tiny" style="padding: 9px; border-style: dashed">
+                重试计划由<b>后端下发</b>；🔴
+                前端不得自己决定重试次数与时刻（与「数值不得硬编码」同源）。
+              </div>
+            </div>
+          </div>
+          <span class="pin" style="left: 24px; top: 246px">1</span>
+          <span class="pin" style="left: 700px; top: 176px">2</span>
+          <span class="pin" style="left: 24px; top: 404px">3</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 🔴
+            <b
+              >「下次重试时间」与「权益失效的确切时刻」是这一屏唯一真正有用的两个信息</b
+            >
+            —— 其余都是解释。
+          </li>
+          <li>
+            <b>②</b> 🔴 <b>不得自动降级</b>：宽限期内功能 / 画质 /
+            时长全部不变。 把"扣款失败"翻译成"立刻限速"是最容易招致投诉的做法。
+          </li>
+          <li>
+            <b>③</b> 🔴 「关闭自动续费」必须与「更新支付方式」<b>同级可见</b> ——
+            用户是被通知来处理的，不能只给他"继续付钱"这一条路（取消不得比开通更难）。
+          </li>
+          <li>
+            <b>④</b>
+            会话进行中遇到本状态时，只允许<b>中性角标</b>（如「订阅待处理」），
+            不得中断会话 —— 与红线⑤同源。
+          </li>
+        </ul>
+      </figure>
+
+      <!-- ============ W4-12 ============ -->
+      <figure class="frame" id="w4-12">
+        <figcaption>
+          <span class="fid">W4-12</span
+          ><b>Web / 官网购买页（🔴 主购买入口 · 不得与 iOS 版合并）</b> · 层①
+          已拍板决策执行体 · P0　|　来源 商业化
+          <b>§10</b>（"应作为主购买入口"）·
+          <b>[D25]</b>
+        </figcaption>
+        <div class="screen screen--desk" style="height: 620px">
+          <div class="chrome">
+            <span class="dot"></span><span class="dot"></span
+            ><span class="dot"></span>
+            <span style="margin-left: 6px"
+              >web.example.com/buy — 远程桌面官网 · 购买</span
+            >
+          </div>
+          <div
+            class="pad"
+            style="height: calc(100% - 28px); display: flex; gap: 16px"
+          >
+            <div class="grow stack">
+              <div class="box--fill box" style="padding: 10px">
+                <div class="hstack">
+                  <span class="ico"></span>
+                  <span><b>远程桌面 · 官网购买</b></span
+                  ><span class="grow"></span
+                  ><span class="tiny muted">已登录 · 138****6721</span>
+                </div>
+              </div>
+
+              <div class="box--fill box" style="padding: 12px">
+                <div class="hstack">
+                  <b>个人版</b><span class="grow"></span
+                  ><span class="tag on">年付</span><span class="tag">月付</span>
+                </div>
+                <div class="hstack" style="margin-top: 8px">
+                  <b style="font-size: 20px">¥158</b
+                  ><span class="tiny muted">/ 年（约 ¥13.2 / 月）</span
+                  ><span class="grow"></span
+                  ><span class="tiny muted">价格与权益由服务端下发</span>
+                </div>
+              </div>
+
+              <div class="box" style="padding: 11px">
+                <span class="label">支付方式</span>
+                <div class="hstack">
+                  <span class="btn sm">微信支付</span
+                  ><span class="btn sm">支付宝</span>
+                </div>
+                <div class="tiny muted" style="margin-top: 8px">
+                  🔴 Web 上可<b>正大光明</b>提供 —— 不受 App Store 3.1.1
+                  约束（§10）。这也是把它定为主购买入口的原因。
+                </div>
+              </div>
+
+              <div class="box" style="padding: 11px">
+                <span class="label">或扫码支付</span>
+                <div class="hstack" style="margin-top: 7px">
+                  <div class="ph-img" style="width: 88px; height: 88px">
+                    二维码
+                  </div>
+                  <div class="stack tiny">
+                    <span>用<b>微信 / 支付宝</b>扫码</span>
+                    <span class="muted">二维码 15 分钟内有效</span>
+                    <span class="btn sm">刷新二维码</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="grow"></div>
+              <span class="btn solid block" style="min-height: 32px"
+                >去支付 ¥158.00</span
+              >
+              <div class="tiny muted" style="text-align: center">
+                支付由微信 / 支付宝收银台完成；本页<b>不采集</b>卡号与支付密码。
+              </div>
+            </div>
+
+            <div style="width: 290px" class="stack">
+              <div class="box" style="padding: 11px">
+                <b>🔴 Web / 桌面端 vs iOS App</b>
+                <div class="tiny" style="margin-top: 6px; line-height: 1.9">
+                  · 支付渠道：微信 / 支付宝　|　🔴 iOS 仅 App Store<br />
+                  · 跨平台比价：<b>允许</b>　|　🔴 iOS <b>禁止</b><br />
+                  · 扫码支付：<b>允许</b>　|　🔴 iOS <b>禁止</b>
+                </div>
+              </div>
+              <div class="box" style="padding: 11px">
+                <b>🔴 本页只对 Web 存在</b>
+                <div class="tiny" style="margin-top: 6px; line-height: 1.8">
+                  iOS App
+                  内<b>不得出现本页任何内容</b>（含官网地址、二维码、"网页版更划算"）；
+                  与 <b>W4-02</b> 是<b>两套实现</b>，不得共用同一套文案。
+                </div>
+              </div>
+              <div class="box tiny" style="padding: 9px; border-style: dashed">
+                跳转到微信 / 支付宝收银台 =
+                <b>第三方页面，非我方界面</b>，不出稿；
+                需要出稿的是<b>跳转前</b>（本页）· <b>跳转中</b>（W4-10c）·
+                <b>跳转后</b>（W4-10a / b / d）三段。
+              </div>
+            </div>
+          </div>
+          <span class="pin" style="left: 24px; top: 156px">1</span>
+          <span class="pin" style="left: 204px; top: 300px">2</span>
+          <span class="pin" style="left: 400px; top: 100px">3</span>
+        </div>
+        <ul class="notes">
+          <li>
+            <b>①</b> 🔴 商业化 §10 把 Web /
+            桌面端定为「<b>应作为主购买入口</b>」， 但此前<b>全稿无此页</b> ——
+            这不是"有意不做"，是<b>双方都漏了</b>。
+          </li>
+          <li>
+            <b>②</b> 🔴 本页与 W4-02 是<b>互为镜像的两套</b>： W4-02
+            里的全部「❌ 禁止」项，在 Web 上全部合法。写到一起必然返工。
+          </li>
+          <li>
+            <b>③</b> 「已登录」状态决定购买后权益归属哪个账号 ——
+            未登录时先引导登录，🔴
+            <b>不得允许匿名下单</b>（额度是账号属性，§9）。
+          </li>
+          <li>
+            <b>④</b> 本页与 PC
+            客户端内的「立即开通」（W4-01）是<b>同一链路</b>； 🔴
+            两者必须读<b>同一份价格版本</b>（[D14]），否则同一时刻会出现两个价格。
           </li>
         </ul>
       </figure>
