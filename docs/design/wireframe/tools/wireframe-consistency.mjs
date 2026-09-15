@@ -708,7 +708,7 @@ if (c13Checked === 0) {
 }
 
 /* ============================================================
-   ⑩ 术语与危险动作（C16 / C17）—— 第十轮（[D27]）沉淀
+   ⑩ 术语与危险动作（C16 / C17 / C19）—— 第十轮（[D27]）+ 第十二轮（[D29]）
    ------------------------------------------------------------
    两条「不许有第二个名字 / 第二种做法」的强制约定，落点见 README §6.1 / §6.3：
      · C16 术语词表：同一概念全稿一名一词（UI 面禁止词见下）——
@@ -719,6 +719,12 @@ if (c13Checked === 0) {
            ③ 触发按钮带 data-confirm
            ⇒ README §6.3 台账与 HTML 里的 data-confirm 双向对拍（§11.11.2 R19 / R30）
    两轴都只匹配词与属性，对格式化器免疫。
+   ------------------------------------------------------------
+   第十二轮（[D29]）追加 C19 家族（授权 / 安全出口按钮权重，README §6.4）：
+     · C19   授权 / 提权按钮不得 .btn.solid（实心 = 软默认同意）
+     · C19-b 安全出口（拒绝 / 保持仅查看 / 断开 / 撤销注销）不得 .btn.ghost
+     · C19-c 同容器对拍：有授权项 ⇒ 必须有实心的安全出口，且授权项非实心
+     · C19-d 授权项旁没有安全出口 ⇒ WARN
    ============================================================ */
 const TERM_FILES = [
   ...PAGES.map((p) => p.file),
@@ -851,6 +857,159 @@ const TERM_RULES = [
     );
   } else {
     ok("C17-b", "wireframe pages", "every data-confirm sits on a .btn.solid button");
+  }
+}
+
+/* --- C19 授权 / 安全出口的按钮权重（README §6.4 · 第十二轮 [D29]）---
+   三类动作**方向相反**，不能用同一条规则：
+     · A 破坏性 / 不可逆  -> §6.3 + C17/C17-b（越危险越重）
+     · B 安全出口（拒绝 / 保持仅查看 / 断开 / 撤销注销）
+            用户想脱身时必须一眼找到 => **不得** .btn.ghost（做淡 = 找不到）
+     · C 授权 / 提权（允许本次 / 只允许本次观看 / 允许操作 / 总是允许此设备）
+            是**别人在求你开门** => **不得** .btn.solid
+            （实心 = 视觉上的推荐 = 软默认同意，与「不得默认同意」自相矛盾；
+              反诈场景里骗子的话术正是「点那个亮着的按钮」）
+   同容器（相邻按钮）里既有 C 又有 B 时：B 必须实心、C 必须非实心 ——
+   本项对应 §11.11.1 S2 里长期无人认领的两条历史残留。
+   只匹配词与 class 字面量，对格式化器免疫。
+   ⚠️ 按钮用**标签栈**逐个配平：**容器标签不参与匹配** —— 否则一个外层
+   `<div class="…">` 会把它内部嵌套的 `.btn` 整块当成"内文"吞掉 ⇒ 断言空跑还报 PASS。 */
+{
+  /** 原型页也在扫描范围内（`TERM_FILES` 先例）——PAGES 不含 proto */
+  const AUTH_EXIT_FILES = [...PAGES.map((p) => p.file), "proto-流程原型.html"];
+  const AUTH_TEXT_RE = /允许本次|只允许本次观看|允许操作|总是允许此设备/;
+  const EXIT_TEXT_RE = /^(拒绝|保持仅查看|断开|断开连接|撤销注销)$/;
+  const BTN_TAG_RE = /<(\/?)([a-zA-Z][\w-]*)((?:"[^"]*"|'[^']*'|[^>"'])*)>/g;
+  const CLASS_ATTR_RE = /\bclass\s*=\s*"([^"]*)"/;
+  const VOID_TAGS = new Set(["br", "hr", "img", "input", "meta", "link"]);
+  const authSolid = [];
+  const exitGhost = [];
+  const pairBad = [];
+  const loneAuth = [];
+  let authSeen = 0;
+  let exitSeen = 0;
+  let pairChecked = 0;
+  for (const file of AUTH_EXIT_FILES) {
+    const html = PAGES.find((p) => p.file === file)?.html ?? read(join(WIREFRAME_DIR, file));
+    if (!html) continue;
+    /** 按文档顺序收集**按钮**元素（标签栈配平；容器不参与 ⇒ 不会吞掉嵌套按钮） */
+    const nodes = [];
+    const stack = [];
+    for (const m of html.matchAll(BTN_TAG_RE)) {
+      const tag = m[2].toLowerCase();
+      if (m[1] === "/") {
+        const i = stack.map((s) => s.tag).lastIndexOf(tag);
+        if (i < 0) continue;
+        const el = stack.splice(i, 1)[0];
+        nodes.push({
+          isBtn: true,
+          solid: el.solid,
+          ghost: el.ghost,
+          text: html
+            .slice(el.start, m.index)
+            .replace(/<[^>]*>/g, "")
+            .replace(/\s+/g, ""),
+          where: `${file}:${lineOf(html, el.start)}`,
+          start: el.start,
+          end: m.index + m[0].length,
+        });
+        continue;
+      }
+      if (VOID_TAGS.has(tag) || /\/$/.test(m[3])) continue;
+      const cls = CLASS_ATTR_RE.exec(m[3])?.[1] ?? "";
+      if (!/\bbtn\b/.test(cls)) continue;
+      stack.push({
+        tag,
+        solid: /\bsolid\b/.test(cls),
+        ghost: /\bghost\b/.test(cls),
+        start: m.index,
+      });
+    }
+    nodes.sort((a, b) => a.start - b.start);
+    const btns = nodes.filter((n) => n.isBtn);
+    for (const b of btns) {
+      if (AUTH_TEXT_RE.test(b.text)) {
+        authSeen += 1;
+        if (b.solid) authSolid.push(`${b.where} ${b.text}`);
+      } else if (EXIT_TEXT_RE.test(b.text)) {
+        exitSeen += 1;
+        if (b.ghost) exitGhost.push(`${b.where} ${b.text}`);
+      }
+    }
+    /** 相邻按钮 = 组：两节点之间只有空白（`<span class="grow">` 之类会自然把组切开） */
+    const groups = [];
+    for (const n of nodes) {
+      const last = groups[groups.length - 1];
+      if (last && /^\s*$/.test(html.slice(last[last.length - 1].end, n.start))) last.push(n);
+      else groups.push([n]);
+    }
+    for (const g of groups) {
+      const inGroup = g.filter((n) => n.isBtn);
+      const auths = inGroup.filter((n) => AUTH_TEXT_RE.test(n.text));
+      const exits = inGroup.filter((n) => EXIT_TEXT_RE.test(n.text));
+      if (!auths.length) continue;
+      if (!exits.length) {
+        loneAuth.push(`${auths[0].where} ${auths[0].text}`);
+        continue;
+      }
+      pairChecked += 1;
+      const bad = auths.filter((n) => n.solid).length || !exits.some((n) => n.solid);
+      if (bad) pairBad.push(`${auths[0].where} auth-vs-exit weight inverted`);
+    }
+  }
+  if (authSolid.length) {
+    fail(
+      "C19",
+      "wireframe pages + proto",
+      `authorization button weighted as primary (.btn.solid): ${authSolid.join(" | ")}`,
+      "granting access must be an outline button (README 6.4)",
+      authSolid,
+    );
+  } else {
+    ok(
+      "C19",
+      `wireframe pages + proto (${authSeen} grant button(s))`,
+      "no authorization button is styled as the primary action",
+    );
+  }
+  if (exitGhost.length) {
+    fail(
+      "C19-b",
+      "wireframe pages + proto",
+      `safe-exit button dimmed to .btn.ghost: ${exitGhost.join(" | ")}`,
+      "decline / disconnect must never be dimmed (README 6.4)",
+      exitGhost,
+    );
+  } else {
+    ok(
+      "C19-b",
+      `wireframe pages + proto (${exitSeen} safe-exit button(s))`,
+      "no safe exit is dimmed to .btn.ghost",
+    );
+  }
+  if (pairBad.length) {
+    fail(
+      "C19-c",
+      "wireframe pages + proto",
+      `same-row weight inversion between grant and decline: ${pairBad.join(" | ")}`,
+      "in one dialog: decline solid, grant not solid (README 6.4)",
+      pairBad,
+    );
+  } else {
+    ok(
+      "C19-c",
+      `wireframe pages + proto (${pairChecked} dialog(s))`,
+      "in every grant/decline dialog the decline is the primary action",
+    );
+  }
+  if (loneAuth.length) {
+    warn(
+      "C19-d",
+      "wireframe pages + proto",
+      `grant button with no decline as a neighbour: ${loneAuth.join(" | ")}`,
+      "decline reachable next to every grant",
+      loneAuth,
+    );
   }
 }
 

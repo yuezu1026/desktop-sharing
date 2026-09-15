@@ -755,7 +755,7 @@
           h +=
             '<div class="tiny muted" style="margin-top:6px">本弹窗不可折叠、不可跳过。</div></div>';
           h +=
-            '<div class="stack" style="gap:6px"><span class="btn block solid" onclick="go(\'allow\')">允许本次</span><span class="btn block" onclick="go(\'allow\')">总是允许此设备</span><span class="btn block ghost" onclick="go(\'deny\')">拒绝</span></div>';
+            '<div class="stack" style="gap:6px"><span class="btn block" onclick="go(\'allow\')">允许本次</span><span class="btn block" onclick="go(\'allow\')">总是允许此设备</span><span class="btn block solid" onclick="go(\'deny\')">拒绝</span></div>';
           h += "</div>";
         }
         if (st.host === "connected") {
@@ -788,7 +788,7 @@
           h +=
             '<div class="box box--fill" style="padding:10px"><b>对方请求恢复「可操作」</b><div class="tiny muted" style="margin-top:5px">允许后，对方将能够使用鼠标和键盘操作你的电脑。</div></div>';
           h +=
-            '<div class="hstack"><span class="btn sm solid" onclick="go(\'allowCtl\')">允许操作</span><span class="btn sm" onclick="go(\'denyCtl\')">保持仅查看</span></div>';
+            '<div class="hstack"><span class="btn sm" onclick="go(\'allowCtl\')">允许操作</span><span class="btn sm solid" onclick="go(\'denyCtl\')">保持仅查看</span></div>';
           h += "</div>";
         }
         if (st.host === "viewonly") {

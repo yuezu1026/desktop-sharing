@@ -221,8 +221,8 @@
                 </div>
               </div>
               <div class="dlg-f">
-                <span class="btn">拒绝</span>
-                <span class="btn solid">允许本次</span>
+                <span class="btn">允许本次</span>
+                <span class="btn solid">拒绝</span>
               </div>
             </div>
           </div>
@@ -236,17 +236,24 @@
             明确要求）。它是本屏视觉权重第二高的元素（仅次于标题）。
           </li>
           <li>
-            <b>②</b> 🔴 <b>两个按钮的关系必须说清（本项已按 `[D27]` 口径重写）</b
-            >：<b>「允许本次」是危险动作</b>（授予屏幕访问权）⇒
-            必须<b>实心</b>且<b>只能由人主动点击</b>，
-            <span class="no">不得</span
-            >默认勾选同意、<span class="no">不得</span
-            >把回车当同意；<b>「拒绝」是安全出口</b> ⇒
-            <span class="no">不得</span
-            >用 <code>.btn.ghost</code> / <code>.btn.sm</code>
-            等方式把它做小、做淡、推远（它的<b>尺寸与字号与「允许」完全相同</b>）。
-            🔴 旧稿写「两者权重接近、并列」，与「危险动作不得低于常规权重」的口径
-            <b>互相冲突</b>（实心只有一个）—— 现改为：<b>允许实心 / 拒绝描边，但可点面积相当</b>。
+            <b>②</b> 🔴 <b>两个按钮的关系（`[D27]` 起草 · `[D29]` 定稿 · README
+            §6.4）</b
+            >：<b>「拒绝」是安全出口</b> ⇒
+            它是本屏<b>唯一的主按钮</b>（<code>.btn.solid</code>，且排在右侧常规主位）；<b
+              >「允许本次」是授权 / 提权</b
+            >
+            ⇒ 走描边（<code>.btn</code>），只能<b>由人主动点击</b>：<span class="no"
+              >不得</span
+            >默认勾选同意、<span class="no">不得</span>把回车当同意、<span
+              class="no"
+              >不得</span
+            >默认聚焦。两者<b>尺寸 / 字号 / 可点面积完全相同</b> ——
+            「不做小」不等于「做成主按钮」。🔴 <b>本条两次改口径的留档</b>：旧稿「两者权重接近、并列」被
+            `[D27]` 判为与「危险动作不得低于常规权重」冲突，改为「允许实心 / 拒绝描边」；
+            但<b>实心 = 视觉上的推荐 = 软默认同意</b>，与同一条里的「不得默认同意」
+            <b>自相矛盾</b> ⇒ `[D29]` 裁决：<b>安全出口为主</b>。理由：反诈场景里骗子的话术正是「点那个<b
+              >亮着的</b
+            >按钮」，而合法用户（帮爸妈）不靠颜色找按钮 ⇒ 降权不增加合法路径的失败率。
             另：<b>不做「仅允许一次」以外的暧昧选项</b>，避免误点。
           </li>
           <li>
@@ -672,10 +679,10 @@
               </div>
             </div>
             <div class="hstack">
-              <span class="btn" style="min-height: 30px">保持仅查看</span>
+              <span class="btn solid" style="min-height: 30px">保持仅查看</span>
               <span class="btn" style="min-height: 30px">允许操作</span>
               <span class="grow"></span>
-              <span class="btn ghost">断开</span>
+              <span class="btn" style="min-height: 30px">断开</span>
             </div>
             <div
               class="stripe"
@@ -704,9 +711,15 @@
           </li>
           <li>
             🔴
-            <b>默认动作必须是「保持仅查看」</b
-            >：恢复操作是权限提权，不得把「允许操作」做成高亮主按钮（与 W2-02
-            的谨慎基调一致）。
+            <b>「保持仅查看」是本屏唯一主按钮</b
+            >（<code>.btn.solid</code>）：恢复操作是权限提权 ⇒
+            「允许操作」只能是描边，<span class="no">不得</span
+            >做成实心、<span class="no">不得</span
+            >默认聚焦；「断开」是安全出口 ⇒
+            与两者<b>等面积同字号</b>，<span class="no">不得</span
+            >用 <code>.btn.ghost</code> 做淡（`[D29]` · README §6.4
+            —— 本帧此前正是 §11.11.1 <b>S2</b>
+            点名的「「断开」由 solid 一路降到 ghost」那一处）。
           </li>
           <li>
             与 <a href="#w2-02">W2-02</a>

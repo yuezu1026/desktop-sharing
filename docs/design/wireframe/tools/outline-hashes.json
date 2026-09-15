@@ -2,7 +2,7 @@
   "AGENTS.md": {
     "lines": 67,
     "tokens": 1348,
-    "hash": "fe75ed0c4b5002c5"
+    "hash": "41cf82036bb53483"
   },
   "docs/成本测算表.md": {
     "lines": 772,
@@ -30,9 +30,9 @@
     "hash": "137847a0f797275f"
   },
   "docs/需求规划评审意见.md": {
-    "lines": 434,
-    "tokens": 20641,
-    "hash": "914e9afac5a0c850"
+    "lines": 437,
+    "tokens": 21963,
+    "hash": "b7888c13cd25e080"
   },
   "docs/账号与管理系统设计.md": {
     "lines": 557,
@@ -80,8 +80,8 @@
     "hash": "ac8bc2197536c6ab"
   },
   "docs/design/wireframe/README.md": {
-    "lines": 918,
-    "tokens": 31051,
-    "hash": "6079d5fd2e635de6"
+    "lines": 1024,
+    "tokens": 34342,
+    "hash": "eb7f9a0796efc2ec"
   }
 }
