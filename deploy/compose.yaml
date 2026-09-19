@@ -1,0 +1,24 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: desktop
+      POSTGRES_PASSWORD: desktop
+      POSTGRES_DB: desktop
+    ports:
+      - "5432:5432"
+    volumes:
+      - desktop-pg:/var/lib/postgresql/data
+  control-plane:
+    build:
+      context: ../services/control-plane
+    environment:
+      DATABASE_URL: postgres://desktop:desktop@postgres:5432/desktop
+      DEVICE_QUOTA: "150"
+      SMS_DEV_EXPOSE: "1"
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+volumes:
+  desktop-pg:
