@@ -18,6 +18,12 @@ export type AppConfig = {
   /** 通道数 / 每通道会话数尚未拍板。未设置就不拦截，禁止落成 1 和 2。 */
   channelLimit: number | null;
   sessionsPerChannel: number | null;
+  /** 个人版价格。单位是分，避免小数。月均标签只用于展示，不是扣款额。 */
+  priceVersion: string;
+  yearlyPriceCents: number;
+  monthlyPriceCents: number;
+  yearlyPerMonthLabel: string;
+  orderCallbackSecret: string | null;
 };
 
 const DEFAULT_DEVICE_QUOTA = 150;
@@ -27,6 +33,10 @@ const DEFAULT_FREE_BITRATE_KBPS = 4000;
 const DEFAULT_FREE_MAX_FPS = 30;
 const DEFAULT_DISPLAY_MINUTE_FLOOR_KBPS = 2000;
 const DEFAULT_TICKET_TTL_SECONDS = 90;
+const DEFAULT_PRICE_VERSION = "P8";
+const DEFAULT_YEARLY_PRICE_CENTS = 15800;
+const DEFAULT_MONTHLY_PRICE_CENTS = 2400;
+const DEFAULT_YEARLY_PER_MONTH_LABEL = "13.2";
 
 export function loadConfig(env: NodeJS.ProcessEnv): AppConfig {
   const databaseUrl = env.DATABASE_URL?.trim() ?? "";
@@ -53,6 +63,11 @@ export function loadConfig(env: NodeJS.ProcessEnv): AppConfig {
     signalSharedSecret: signalSharedSecret.length > 0 ? signalSharedSecret : null,
     channelLimit: readOptionalPositiveInt(env.CHANNEL_LIMIT),
     sessionsPerChannel: readOptionalPositiveInt(env.SESSIONS_PER_CHANNEL),
+    priceVersion: env.PRICE_VERSION?.trim() || DEFAULT_PRICE_VERSION,
+    yearlyPriceCents: readPositiveInt(env.YEARLY_PRICE_CENTS, DEFAULT_YEARLY_PRICE_CENTS),
+    monthlyPriceCents: readPositiveInt(env.MONTHLY_PRICE_CENTS, DEFAULT_MONTHLY_PRICE_CENTS),
+    yearlyPerMonthLabel: env.YEARLY_PER_MONTH_LABEL?.trim() || DEFAULT_YEARLY_PER_MONTH_LABEL,
+    orderCallbackSecret: env.ORDER_CALLBACK_SECRET?.trim() || null,
   };
 }
 

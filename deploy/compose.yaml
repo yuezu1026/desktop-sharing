@@ -29,6 +29,11 @@ services:
       # 仅本地编排。上线必须换成独立密钥，不能沿用这两行。
       RELAY_SHARED_SECRET: local-relay
       SIGNAL_SHARED_SECRET: local-signal
+      PRICE_VERSION: P8
+      YEARLY_PRICE_CENTS: "15800"
+      MONTHLY_PRICE_CENTS: "2400"
+      YEARLY_PER_MONTH_LABEL: "13.2"
+      ORDER_CALLBACK_SECRET: local-order
     ports:
       - "8080:8080"
     depends_on:

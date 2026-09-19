@@ -150,4 +150,17 @@ ALTER TABLE remote_sessions ADD CONSTRAINT remote_sessions_state_check
 CREATE UNIQUE INDEX IF NOT EXISTS host_devices_device_code
   ON host_devices (device_code)
   WHERE device_code IS NOT NULL AND removed_at IS NULL;
+
+CREATE TABLE IF NOT EXISTS orders (
+  order_id uuid PRIMARY KEY,
+  account_id uuid NOT NULL REFERENCES accounts (account_id),
+  plan text NOT NULL,
+  amount_cents integer NOT NULL,
+  price_version text NOT NULL,
+  state text NOT NULL,
+  created_at timestamptz NOT NULL,
+  CONSTRAINT orders_plan_check CHECK (plan IN ('yearly', 'monthly')),
+  CONSTRAINT orders_state_check CHECK (state IN ('unfinished', 'confirming', 'opened', 'closed')),
+  CONSTRAINT orders_amount_check CHECK (amount_cents > 0)
+);
 `;

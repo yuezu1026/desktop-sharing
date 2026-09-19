@@ -2,13 +2,14 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import type { Pool } from "pg";
 import type { AppConfig } from "./config.js";
 import { AccountService, type Failure } from "./account-service.js";
+import { OrderService } from "./order-service.js";
 import { SessionService } from "./session-service.js";
 
 type Json = Record<string, unknown>;
 
-export function createHttpServer(pool: Pool, config: AppConfig, service: AccountService, sessions: SessionService) {
+export function createHttpServer(pool: Pool, config: AppConfig, service: AccountService, sessions: SessionService, orders: OrderService) {
   return createServer((request, response) => {
-    void handle(request, response, pool, config, service, sessions);
+    void handle(request, response, pool, config, service, sessions, orders);
   });
 }
 
@@ -19,6 +20,7 @@ async function handle(
   config: AppConfig,
   service: AccountService,
   sessions: SessionService,
+  orders: OrderService,
 ): Promise<void> {
   const url = new URL(request.url ?? "/", "http://127.0.0.1");
   const method = request.method ?? "GET";
@@ -43,7 +45,7 @@ async function handle(
 
     const body = method === "GET" || method === "DELETE" ? {} : await readJson(request);
     const token = bearer(request);
-    const result = await dispatch(service, sessions, method, url.pathname, body, token, relaySecret(request), signalSecret(request));
+    const result = await dispatch(service, sessions, orders, method, url.pathname, body, token, relaySecret(request), signalSecret(request), orderSecret(request));
     if (!result) {
       send(response, 404, { ok: false, code: "not_found", message: "路径不存在" });
       return;
@@ -78,12 +80,14 @@ async function handle(
 async function dispatch(
   service: AccountService,
   sessions: SessionService,
+  orders: OrderService,
   method: string,
   pathname: string,
   body: Json,
   token: string | null,
   relaySecret: string | null,
   signalSecretHeader: string | null,
+  orderSecretHeader: string | null,
 ): Promise<Record<string, unknown> | Failure | null> {
   if (method === "POST" && pathname === "/v1/challenges") {
     return service.createChallenge({
@@ -197,6 +201,13 @@ async function dispatch(
   if (method === "POST" && notice?.[1]) return service.markNoticeRead(token, notice[1]);
 
   if (method === "GET" && pathname === "/v1/relay-balance") return sessions.balance(token);
+  if (method === "GET" && pathname === "/v1/catalog") return orders.catalog();
+  if (method === "GET" && pathname === "/v1/orders") return orders.list(token);
+  if (method === "POST" && pathname === "/v1/orders") return orders.create(token, text(body, "plan") ?? "");
+  const orderProvider = pathname.match(/^\/v1\/orders\/([^/]+)\/provider$/);
+  if (method === "POST" && orderProvider?.[1]) {
+    return orders.applyProviderResult(orderSecretHeader, orderProvider[1], text(body, "state") ?? "");
+  }
   if (method === "GET" && pathname === "/v1/remote-sessions/incoming") return sessions.listIncoming(token);
   if (method === "POST" && pathname === "/v1/remote-sessions") {
     return sessions.requestSession(token, text(body, "hostDeviceId") ?? "", text(body, "controllerFingerprint") ?? "");
@@ -251,6 +262,11 @@ function text(body: Json, key: string): string | null {
 function integer(body: Json, key: string): number | null {
   const value = body[key];
   return typeof value === "number" && Number.isInteger(value) ? value : null;
+}
+
+function orderSecret(request: IncomingMessage): string | null {
+  const header = request.headers["x-order-secret"];
+  return typeof header === "string" && header.length > 0 ? header : null;
 }
 
 function relaySecret(request: IncomingMessage): string | null {
