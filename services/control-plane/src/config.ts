@@ -12,6 +12,7 @@ export type AppConfig = {
   freeMaxFps: number;
   ticketTtlSeconds: number;
   relaySharedSecret: string | null;
+  signalSharedSecret: string | null;
   /** 通道数 / 每通道会话数尚未拍板。未设置就不拦截，禁止落成 1 和 2。 */
   channelLimit: number | null;
   sessionsPerChannel: number | null;
@@ -33,6 +34,7 @@ export function loadConfig(env: NodeJS.ProcessEnv): AppConfig {
   const deviceQuota = readPositiveInt(env.DEVICE_QUOTA, DEFAULT_DEVICE_QUOTA);
   const tokenTtlMinutes = readPositiveInt(env.TOKEN_TTL_MINUTES, DEFAULT_TOKEN_TTL_MINUTES);
   const relaySharedSecret = env.RELAY_SHARED_SECRET?.trim() ?? "";
+  const signalSharedSecret = env.SIGNAL_SHARED_SECRET?.trim() ?? "";
   return {
     databaseUrl,
     port,
@@ -44,6 +46,7 @@ export function loadConfig(env: NodeJS.ProcessEnv): AppConfig {
     freeMaxFps: readPositiveInt(env.FREE_MAX_FPS, DEFAULT_FREE_MAX_FPS),
     ticketTtlSeconds: readPositiveInt(env.TICKET_TTL_SECONDS, DEFAULT_TICKET_TTL_SECONDS),
     relaySharedSecret: relaySharedSecret.length > 0 ? relaySharedSecret : null,
+    signalSharedSecret: signalSharedSecret.length > 0 ? signalSharedSecret : null,
     channelLimit: readOptionalPositiveInt(env.CHANNEL_LIMIT),
     sessionsPerChannel: readOptionalPositiveInt(env.SESSIONS_PER_CHANNEL),
   };

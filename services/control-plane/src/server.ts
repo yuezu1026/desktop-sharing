@@ -42,7 +42,7 @@ async function handle(
 
     const body = method === "GET" || method === "DELETE" ? {} : await readJson(request);
     const token = bearer(request);
-    const result = await dispatch(service, sessions, method, url.pathname, body, token, relaySecret(request));
+    const result = await dispatch(service, sessions, method, url.pathname, body, token, relaySecret(request), signalSecret(request));
     if (!result) {
       send(response, 404, { ok: false, code: "not_found", message: "路径不存在" });
       return;
@@ -82,6 +82,7 @@ async function dispatch(
   body: Json,
   token: string | null,
   relaySecret: string | null,
+  signalSecretHeader: string | null,
 ): Promise<Record<string, unknown> | Failure | null> {
   if (method === "POST" && pathname === "/v1/challenges") {
     return service.createChallenge({
@@ -197,6 +198,9 @@ async function dispatch(
       bitrateKbps: integer(body, "bitrateKbps"),
     });
   }
+  if (method === "POST" && pathname === "/v1/relay/tickets/inspect") {
+    return sessions.inspect(signalSecretHeader, text(body, "ticket") ?? "");
+  }
   if (method === "POST" && pathname === "/v1/relay/tickets/admit") {
     return sessions.admit(relaySecret, {
       ticket: text(body, "ticket") ?? "",
@@ -228,6 +232,11 @@ function integer(body: Json, key: string): number | null {
 
 function relaySecret(request: IncomingMessage): string | null {
   const header = request.headers["x-relay-secret"];
+  return typeof header === "string" && header.length > 0 ? header : null;
+}
+
+function signalSecret(request: IncomingMessage): string | null {
+  const header = request.headers["x-signal-secret"];
   return typeof header === "string" && header.length > 0 ? header : null;
 }
 
@@ -272,6 +281,10 @@ function readJson(request: IncomingMessage): Promise<Json> {
 }
 
 function send(response: ServerResponse, status: number, body: unknown): void {
-  response.writeHead(status, { "content-type": "application/json; charset=utf-8" });
-  response.end(JSON.stringify(body));
+  const payload = JSON.stringify(body);
+  response.writeHead(status, {
+    "content-type": "application/json; charset=utf-8",
+    "content-length": Buffer.byteLength(payload),
+  });
+  response.end(payload);
 }

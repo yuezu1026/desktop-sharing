@@ -164,11 +164,31 @@ export class SessionService {
     };
   }
 
+  async inspect(signalSecret: string | null, ticket: string): Promise<Record<string, unknown> | Failure> {
+    const allowed = this.sharedSecretAllowed(signalSecret, this.config.signalSharedSecret, "signal_unconfigured", "信令校验尚未配置");
+    if (allowed) return allowed;
+    const secret = ticket.trim();
+    if (secret.length < 20) return fail(401, "ticket_invalid", "票据无效");
+    const loaded = await this.loadTicket(this.pool, secret);
+    const now = this.now();
+    if (!loaded || loaded.revokedAt || loaded.expiresAt <= now || loaded.state === "closed") {
+      return fail(401, "ticket_invalid", "票据无效");
+    }
+    return {
+      ok: true,
+      remoteSessionId: loaded.remoteSessionId,
+      controllerFingerprint: loaded.controllerFingerprint,
+      hostFingerprint: loaded.hostFingerprint,
+      bitrateKbps: loaded.bitrateKbps,
+      expiresAt: loaded.expiresAt.toISOString(),
+    };
+  }
+
   async admit(
     relaySecret: string | null,
     input: { ticket: string; controllerFingerprint: string; hostFingerprint: string },
   ): Promise<Record<string, unknown> | Failure> {
-    const allowed = this.relayAllowed(relaySecret);
+    const allowed = this.sharedSecretAllowed(relaySecret, this.config.relaySharedSecret, "relay_unconfigured", "中继校验尚未配置");
     if (allowed) return allowed;
     const secret = input.ticket.trim();
     if (secret.length < 20) return fail(401, "ticket_invalid", "票据无效");
@@ -199,7 +219,7 @@ export class SessionService {
     relaySecret: string | null,
     input: { ticket: string; heartbeatId: string; bytes: number; durationSeconds: number; acceptDegrade: boolean },
   ): Promise<Record<string, unknown> | Failure> {
-    const allowed = this.relayAllowed(relaySecret);
+    const allowed = this.sharedSecretAllowed(relaySecret, this.config.relaySharedSecret, "relay_unconfigured", "中继校验尚未配置");
     if (allowed) return allowed;
     if (!isUuid(input.heartbeatId)) return fail(400, "heartbeat_invalid", "心跳编号不正确");
     if (!Number.isInteger(input.bytes) || input.bytes < 0 || input.bytes > HEARTBEAT_MAX_BYTES) {
@@ -432,8 +452,8 @@ export class SessionService {
     return renewed;
   }
 
-  private async loadTicket(client: PoolClient, secret: string): Promise<LoadedTicket | null> {
-    const found = await client.query<{
+  private async loadTicket(runner: Pool | PoolClient, secret: string): Promise<LoadedTicket | null> {
+    const found = await runner.query<{
       relay_ticket_id: string;
       remote_session_id: string;
       expires_at: Date;
@@ -518,13 +538,12 @@ export class SessionService {
     return null;
   }
 
-  private relayAllowed(relaySecret: string | null): Failure | null {
-    const expected = this.config.relaySharedSecret;
-    if (!expected) return fail(503, "relay_unconfigured", "中继校验尚未配置");
-    if (!relaySecret || relaySecret.length !== expected.length) return fail(401, "relay_unauthorized", "中继未授权");
-    const actual = Buffer.from(relaySecret);
+  private sharedSecretAllowed(presented: string | null, expected: string | null, missingCode: string, missingMessage: string): Failure | null {
+    if (!expected) return fail(503, missingCode, missingMessage);
+    if (!presented || presented.length !== expected.length) return fail(401, "relay_unauthorized", "调用方未授权");
+    const actual = Buffer.from(presented);
     const wanted = Buffer.from(expected);
-    if (!timingSafeEqual(actual, wanted)) return fail(401, "relay_unauthorized", "中继未授权");
+    if (!timingSafeEqual(actual, wanted)) return fail(401, "relay_unauthorized", "调用方未授权");
     return null;
   }
 

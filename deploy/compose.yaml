@@ -25,12 +25,24 @@ services:
       FREE_MAX_FPS: "30"
       TICKET_TTL_SECONDS: "90"
       SMS_DEV_EXPOSE: "1"
-      # 仅本地编排。上线必须换成独立密钥，不能沿用这一行。
+      # 仅本地编排。上线必须换成独立密钥，不能沿用这两行。
       RELAY_SHARED_SECRET: local-relay
+      SIGNAL_SHARED_SECRET: local-signal
     ports:
       - "8080:8080"
     depends_on:
       postgres:
         condition: service_healthy
+  signal:
+    build:
+      context: ../services/signal
+    environment:
+      CONTROL_PLANE_URL: http://control-plane:8080
+      SIGNAL_SHARED_SECRET: local-signal
+      PORT: "8081"
+    ports:
+      - "8081:8081"
+    depends_on:
+      - control-plane
 volumes:
   desktop-pg:
