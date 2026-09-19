@@ -34,6 +34,7 @@ services:
       MONTHLY_PRICE_CENTS: "2400"
       YEARLY_PER_MONTH_LABEL: "13.2"
       ORDER_CALLBACK_SECRET: local-order
+      REAL_NAME_CALLBACK_SECRET: local-realname
     ports:
       - "8080:8080"
     depends_on:

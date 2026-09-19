@@ -73,6 +73,7 @@ mod windows_controller {
         ways_open: bool,
         way_titles: Vec<(String, bool)>,
         subscription_badge: String,
+        real_name_message: String,
     }
 
     unsafe impl Send for Model {}
@@ -96,6 +97,7 @@ mod windows_controller {
             ways_open: false,
             way_titles: Vec::new(),
             subscription_badge: String::new(),
+            real_name_message: String::new(),
         });
         unsafe { message_loop() }
     }
@@ -464,9 +466,10 @@ mod windows_controller {
                 model.view_only.clone(),
                 model.ways_open,
                 model.way_titles.clone(),
+                model.real_name_message.clone(),
             )
         });
-        let Some((show_balance, display_minutes, footnote, notice, view_only, ways_open, way_titles)) = snapshot else { return };
+        let Some((show_balance, display_minutes, footnote, notice, view_only, ways_open, way_titles, real_name_message)) = snapshot else { return };
         SetBkMode(device_context, TRANSPARENT);
         let _ = SetTextColor(device_context, COLORREF(0x00E7_EFF3));
         let mut top = 48;
@@ -486,6 +489,11 @@ mod windows_controller {
             let line = wide_chars(&notice);
             draw_text(device_context, &line, 16, top, client_width - 32, 24, false);
             top += 28;
+        }
+        if !real_name_message.is_empty() {
+            let line = wide_chars(&real_name_message);
+            draw_text(device_context, &line, 16, top, client_width - 32, 48, false);
+            top += 52;
         }
         if view_only == "resource" {
             let frozen = wide_chars("画面已停在最后一帧，暂时无法继续");
@@ -544,6 +552,12 @@ mod windows_controller {
             model.way_titles = way_titles;
             model.subscription_badge = parsed
                 .get("subscriptionBadge")
+                .and_then(|value| value.as_str())
+                .unwrap_or("")
+                .to_string();
+            model.real_name_message = parsed
+                .get("realName")
+                .and_then(|value| value.get("message"))
                 .and_then(|value| value.as_str())
                 .unwrap_or("")
                 .to_string();

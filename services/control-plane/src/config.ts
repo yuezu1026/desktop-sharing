@@ -24,6 +24,7 @@ export type AppConfig = {
   monthlyPriceCents: number;
   yearlyPerMonthLabel: string;
   orderCallbackSecret: string | null;
+  realNameCallbackSecret: string | null;
 };
 
 const DEFAULT_DEVICE_QUOTA = 150;
@@ -68,6 +69,7 @@ export function loadConfig(env: NodeJS.ProcessEnv): AppConfig {
     monthlyPriceCents: readPositiveInt(env.MONTHLY_PRICE_CENTS, DEFAULT_MONTHLY_PRICE_CENTS),
     yearlyPerMonthLabel: env.YEARLY_PER_MONTH_LABEL?.trim() || DEFAULT_YEARLY_PER_MONTH_LABEL,
     orderCallbackSecret: env.ORDER_CALLBACK_SECRET?.trim() || null,
+    realNameCallbackSecret: env.REAL_NAME_CALLBACK_SECRET?.trim() || null,
   };
 }
 

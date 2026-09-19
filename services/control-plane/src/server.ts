@@ -45,7 +45,20 @@ async function handle(
 
     const body = method === "GET" || method === "DELETE" ? {} : await readJson(request);
     const token = bearer(request);
-    const result = await dispatch(service, sessions, orders, method, url.pathname, body, token, relaySecret(request), signalSecret(request), orderSecret(request));
+    const result = await dispatch(
+      service,
+      sessions,
+      orders,
+      method,
+      url.pathname,
+      body,
+      token,
+      relaySecret(request),
+      signalSecret(request),
+      orderSecret(request),
+      realNameSecret(request),
+      url.searchParams,
+    );
     if (!result) {
       send(response, 404, { ok: false, code: "not_found", message: "路径不存在" });
       return;
@@ -88,6 +101,8 @@ async function dispatch(
   relaySecret: string | null,
   signalSecretHeader: string | null,
   orderSecretHeader: string | null,
+  realNameSecretHeader: string | null,
+  searchParams: URLSearchParams,
 ): Promise<Record<string, unknown> | Failure | null> {
   if (method === "POST" && pathname === "/v1/challenges") {
     return service.createChallenge({
@@ -234,6 +249,17 @@ async function dispatch(
   }
   if (method === "GET" && pathname === "/v1/connection-disclosure") return sessions.connectionDisclosure(token);
   if (method === "POST" && pathname === "/v1/connection-disclosure") return sessions.acknowledgeDisclosure(token);
+  if (method === "GET" && pathname === "/v1/real-name") {
+    return sessions.realName(token, searchParams.get("controllerFingerprint"));
+  }
+  const realNameProvider = pathname.match(/^\/v1\/real-name\/([^/]+)\/provider$/);
+  if (method === "POST" && realNameProvider?.[1]) {
+    if (body.verified !== true) {
+      return { ok: false, status: 400, code: "real_name_result_invalid", message: "核验结果不正确" };
+    }
+    const acceptsIdentity = "idNumber" in body || "name" in body || "photo" in body;
+    return sessions.recordRealName(realNameSecretHeader, realNameProvider[1], acceptsIdentity);
+  }
   if (method === "GET" && pathname === "/v1/remote-sessions/incoming") return sessions.listIncoming(token);
   if (method === "POST" && pathname === "/v1/remote-sessions") {
     return sessions.requestSession(token, text(body, "hostDeviceId") ?? "", text(body, "controllerFingerprint") ?? "");
@@ -307,6 +333,11 @@ function integer(body: Json, key: string): number | null {
 
 function orderSecret(request: IncomingMessage): string | null {
   const header = request.headers["x-order-secret"];
+  return typeof header === "string" && header.length > 0 ? header : null;
+}
+
+function realNameSecret(request: IncomingMessage): string | null {
+  const header = request.headers["x-real-name-secret"];
   return typeof header === "string" && header.length > 0 ? header : null;
 }
 

@@ -13,6 +13,12 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3
 
 type Directive = "continue" | "warn" | "suggest_direct" | "degraded" | "stop_relay";
 
+/** 免费额度用到一半才提示。50% 是已定阈值，不从客户端传入。 */
+const REAL_NAME_USED_SHARE = 2;
+/** 同一控制端 7 天内不同被控设备达到此数才提示。数字来自已定规则。 */
+const REAL_NAME_DISTINCT_HOSTS = 3;
+const REAL_NAME_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+
 function fail(status: number, code: string, message: string, extra?: Record<string, unknown>): Failure {
   return { ok: false, status, code, message, extra };
 }
@@ -196,6 +202,30 @@ export class SessionService {
     return this.connectionDisclosure(token);
   }
 
+  /** 没触发就不提示。跨账号不在这里要求实名，闸门在被控端确认。 */
+  async realName(token: string | null, controllerFingerprint: string | null): Promise<Record<string, unknown> | Failure> {
+    const session = await this.accounts.authenticate(token);
+    if (isAuthFailure(session)) return session;
+    const prompt = await this.realNamePrompt(this.pool, session.accountId, controllerFingerprint, this.now());
+    return { ok: true, realName: prompt };
+  }
+
+  /** 核验结果只记时间。证件号和照片不进这张表。 */
+  async recordRealName(secret: string | null, accountId: string, acceptsIdentity: boolean): Promise<Record<string, unknown> | Failure> {
+    if (!this.config.realNameCallbackSecret) return fail(503, "real_name_unconfigured", "实名核验尚未配置");
+    if (secret !== this.config.realNameCallbackSecret) return fail(401, "real_name_callback_invalid", "实名回调校验失败");
+    if (acceptsIdentity) return fail(400, "real_name_identity_rejected", "证件信息不由这里接收");
+    if (!/^[0-9a-f-]{36}$/i.test(accountId)) return fail(400, "account_invalid", "账号不正确");
+    const updated = await this.pool.query(
+      `UPDATE accounts
+          SET real_name_verified_at = COALESCE(real_name_verified_at, $2), updated_at = $2
+        WHERE account_id = $1`,
+      [accountId, this.now()],
+    );
+    if (!updated.rowCount) return fail(404, "account_missing", "账号不存在");
+    return { ok: true, verified: true };
+  }
+
   /** 拒绝只结束这一次请求。扣款失败不在会话断开时推送。 */
   async rejectIncoming(token: string | null, remoteSessionId: string): Promise<{ ok: true } | Failure> {
     if (!isUuid(remoteSessionId)) return fail(400, "session_invalid", "会话不正确");
@@ -292,8 +322,13 @@ export class SessionService {
     const totalBytes = await this.grantTotal(this.pool, session.accountId, now);
     const usedRatio = totalBytes <= 0 ? 1 : (totalBytes - remainingBytes) / totalBytes;
     const showBalance = usedRatio >= 0.8 || remainingBytes <= 0;
-    const latest = await this.pool.query<{ bitrate_kbps: number; state: string; input_revoked: boolean }>(
-      `SELECT bitrate_kbps, state, input_revoked
+    const latest = await this.pool.query<{
+      bitrate_kbps: number;
+      state: string;
+      input_revoked: boolean;
+      controller_fingerprint: string;
+    }>(
+      `SELECT bitrate_kbps, state, input_revoked, controller_fingerprint
          FROM remote_sessions
         WHERE account_id = $1 AND state IN ('active', 'relay_stopped')
         ORDER BY created_at DESC
@@ -339,6 +374,7 @@ export class SessionService {
         WHERE account_id = $1`,
       [session.accountId, now],
     );
+    const realName = await this.realNamePrompt(this.pool, session.accountId, current?.controller_fingerprint ?? null, now);
     return {
       ok: true,
       remainingBytes,
@@ -361,6 +397,7 @@ export class SessionService {
           ]
         : [],
       subscriptionBadge: charge.rows[0]?.pending ? "订阅待处理" : null,
+      realName,
     };
   }
 
@@ -466,6 +503,9 @@ export class SessionService {
       const remainingBytes = await this.remainingBytes(client, ticket.accountId, now);
       const totalBytes = await this.grantTotal(client, ticket.accountId, now);
       const usedRatio = totalBytes <= 0 ? 1 : (totalBytes - remainingBytes) / totalBytes;
+      const prompt = remainingBytes > 0
+        ? await this.realNamePrompt(client, ticket.accountId, ticket.controllerFingerprint, now)
+        : null;
       let bitrateKbps = ticket.bitrateKbps;
       let directive: Directive = "continue";
       let notice: string | null = null;
@@ -473,6 +513,9 @@ export class SessionService {
       if (remainingBytes <= 0) {
         directive = "stop_relay";
         notice = "中继已停，会话还在。可以改走直连";
+      } else if (prompt) {
+        directive = "stop_relay";
+        notice = prompt.message;
       } else if (input.acceptDegrade && bitrateKbps > this.config.freeBitrateKbps && usedRatio >= 0.8) {
         bitrateKbps = this.config.freeBitrateKbps;
         directive = "degraded";
@@ -491,7 +534,9 @@ export class SessionService {
 
       let nextTicket: string | null = null;
       let expiresAt = ticket.expiresAt;
-      if (directive === "stop_relay") {
+      if (directive === "stop_relay" && prompt) {
+        await client.query("UPDATE relay_tickets SET revoked_at = $2 WHERE relay_ticket_id = $1", [ticket.relayTicketId, now]);
+      } else if (directive === "stop_relay") {
         await client.query("UPDATE relay_tickets SET revoked_at = $2 WHERE relay_ticket_id = $1", [ticket.relayTicketId, now]);
         await client.query("UPDATE remote_sessions SET state = 'relay_stopped' WHERE remote_session_id = $1", [ticket.remoteSessionId]);
       } else {
@@ -531,9 +576,13 @@ export class SessionService {
     await this.ensureFreeGrant(client, session.accountId, controllerFingerprint, now);
     const remainingBytes = await this.remainingBytes(client, session.accountId, now);
     const relayAllowed = remainingBytes > 0;
+    const prompt = relayAllowed
+      ? await this.realNamePrompt(client, session.accountId, controllerFingerprint, now)
+      : null;
+    const relayOpen = relayAllowed && !prompt;
     let ticket: string | null = null;
     let ticketExpiresAt: string | null = null;
-    if (relayAllowed) {
+    if (relayOpen) {
       const issued = await this.insertTicket(client, remoteSessionId, now);
       ticket = issued.ticket;
       ticketExpiresAt = issued.expiresAt.toISOString();
@@ -543,13 +592,14 @@ export class SessionService {
       remoteSessionId,
       state: "active",
       crossAccount,
-      relayAllowed,
+      relayAllowed: relayOpen,
       ticket,
       ticketExpiresAt,
       bitrateKbps: this.config.freeBitrateKbps,
       maxFps: this.config.freeMaxFps,
       remainingBytes,
-      notice: relayAllowed ? null : "免费中继时长已用完，可以改走直连",
+      notice: prompt?.message ?? (relayOpen ? null : "免费中继时长已用完，可以改走直连"),
+      realName: prompt,
     };
   }
 
@@ -740,6 +790,50 @@ export class SessionService {
     return null;
   }
 
+  /** 跨账号不构成这里的原因。两条都不中就返回空，调用方不得自己补提示。 */
+  private async realNamePrompt(
+    runner: Pool | PoolClient,
+    accountId: string,
+    controllerFingerprint: string | null,
+    now: Date,
+  ): Promise<RealNamePrompt | null> {
+    const verified = await runner.query<{ real_name_verified_at: Date | null }>(
+      "SELECT real_name_verified_at FROM accounts WHERE account_id = $1",
+      [accountId],
+    );
+    if (verified.rows[0]?.real_name_verified_at) return null;
+    const fingerprint = controllerFingerprint?.trim() ?? "";
+    let frequent = false;
+    if (fingerprint.length >= 8) {
+      const hosts = await runner.query<{ host_count: number }>(
+        `SELECT COUNT(DISTINCT host_device_id)::int AS host_count
+           FROM remote_sessions
+          WHERE account_id = $1 AND controller_fingerprint = $2 AND created_at > $3`,
+        [accountId, fingerprint, new Date(now.getTime() - REAL_NAME_WINDOW_MS)],
+      );
+      frequent = (hosts.rows[0]?.host_count ?? 0) >= REAL_NAME_DISTINCT_HOSTS;
+    }
+    const totalBytes = await this.grantTotal(runner, accountId, now);
+    const remainingBytes = await this.remainingBytes(runner, accountId, now);
+    const halfUsed = totalBytes > 0 && (totalBytes - remainingBytes) * REAL_NAME_USED_SHARE >= totalBytes;
+    if (!frequent && !halfUsed) return null;
+    const reason = frequent ? "controller_frequency" : "relay_threshold";
+    const message = frequent
+      ? "这台控制端 7 天内连接了多台不同的电脑。中继要实名后才能继续。直连、登录和设备管理仍然可用。"
+      : "免费中继时长已用到一半。中继要实名后才能继续。直连、登录和设备管理仍然可用。";
+    return {
+      required: true,
+      reason,
+      message,
+      postpone: true,
+      stillWorks: [
+        { code: "login", title: "登录" },
+        { code: "devices", title: "设备管理" },
+        { code: "direct", title: "直连" },
+      ],
+    };
+  }
+
   private sharedSecretAllowed(presented: string | null, expected: string | null, missingCode: string, missingMessage: string): Failure | null {
     if (!expected) return fail(503, missingCode, missingMessage);
     if (!presented || presented.length !== expected.length) return fail(401, "relay_unauthorized", "调用方未授权");
@@ -788,6 +882,14 @@ type LoadedTicket = {
   hostFingerprint: string;
   state: string;
   bitrateKbps: number;
+};
+
+type RealNamePrompt = {
+  required: true;
+  reason: "controller_frequency" | "relay_threshold";
+  message: string;
+  postpone: true;
+  stillWorks: Array<{ code: string; title: string }>;
 };
 
 function connectionDisclosure(): Record<string, string> {
