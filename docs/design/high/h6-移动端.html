@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>高保真 · 移动端</title>
+    <link rel="stylesheet" href="tokens.css" />
+    <link rel="stylesheet" href="high.css" />
+  </head>
+  <body>
+    <nav class="site-nav">
+      <a href="index.html">视觉系统</a>
+      <a href="h1-控制端.html">控制端</a>
+      <a href="h2-被控端.html">被控端</a>
+      <a href="h4-计费.html">计费</a>
+      <a href="h6-移动端.html" aria-current="page">移动端</a>
+      <a href="../wireframe/w6-移动端手持.html">对照低保真 W6 / W7</a>
+    </nav>
+
+    <main class="wrap">
+      <p class="kicker">Android 控制端 · Android 被控端</p>
+      <h1>小屏不能成为放松纪律的理由。</h1>
+      <p class="lede">
+        手持会话默认只显示「直连」，不把剩余分钟贴在顶栏。被控手机上没有时长、没有金额。
+        触控按钮视觉高度按 44px 画，和拇指热区一致。
+      </p>
+
+      <div class="phones">
+        <section class="shot" style="margin-top: 0">
+          <div class="meta"><span class="chip-id">W6-02</span></div>
+          <h2>手持会话</h2>
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status"><span>14:28</span><span>5G</span></div>
+              <div class="phone-top">
+                <span class="pill pill-on">直连</span>
+                <span>我的台式机</span>
+                <span class="spacer"></span>
+                <span class="btn btn-quiet">免费中继时长</span>
+              </div>
+              <div class="screen-view">
+                <div class="remote">
+                  <div class="rw" style="left: 16px; top: 16px; width: 180px">
+                    <div class="rw-h">家庭相册</div>
+                    <div class="rw-b">
+                      <div class="photo"></div>
+                      <div class="photo"></div>
+                    </div>
+                  </div>
+                  <div class="task"><span>开始</span><span class="spacer"></span><span>14:28</span></div>
+                </div>
+              </div>
+              <div class="modes">
+                <span class="pill pill-on">触控板模式</span>
+                <span class="pill">直接触摸</span>
+                <span class="pill">焦点跟随</span>
+                <span class="pill">放大镜</span>
+              </div>
+              <div class="gesture">
+                <b>当前手势</b>
+                <p>单指移动光标 · 双指滚动 · 双指轻点是右键</p>
+              </div>
+              <div class="phone-tools">
+                <span class="btn">键盘</span>
+                <span class="btn">快捷键</span>
+                <span class="btn">全屏</span>
+                <span class="btn">断开</span>
+              </div>
+              <div class="gesture-bar"><i></i></div>
+            </div>
+          </div>
+          <p class="note">
+            画面上下留黑，保持比例，不拉伸填满。顶栏「免费中继时长」是折叠入口，点开才见明细，不常驻剩余数字。
+          </p>
+        </section>
+
+        <section class="shot" style="margin-top: 0">
+          <div class="meta"><span class="chip-id">W7-02</span></div>
+          <h2>安卓被控</h2>
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status"><span>14:28</span><span>电量 78%</span></div>
+              <div class="phone-top">
+                <b>远程桌面 · 本机</b>
+                <span class="spacer"></span>
+                <span class="btn btn-primary" style="min-height: 36px">允许被连接</span>
+              </div>
+              <div style="padding: 0 12px" class="stack">
+                <section class="panel">
+                  <span class="field-label">本机识别码</span>
+                  <div class="split">
+                    <span class="pass">123 456 789</span>
+                    <span class="spacer"></span>
+                    <span class="btn">复制</span>
+                  </div>
+                </section>
+                <section class="panel">
+                  <span class="field-label">临时密码</span>
+                  <div class="split">
+                    <span class="pass">a7k2f9</span>
+                    <span class="spacer"></span>
+                    <span class="btn">换一个</span>
+                  </div>
+                  <p class="note">每次连接后自动更换。</p>
+                </section>
+                <section class="panel">
+                  <span class="pill">未被连接</span>
+                </section>
+                <section class="panel">
+                  <b>授权自检</b>
+                  <div class="check-row"><span>屏幕录制</span><span class="spacer"></span><span class="pill pill-on">正常</span></div>
+                  <div class="check-row"><span>无障碍服务</span><span class="spacer"></span><span class="pill pill-on">正常</span></div>
+                  <div class="check-row"><span>电池与自启白名单</span><span class="spacer"></span><span class="pill">未设置</span></div>
+                  <div class="check-row"><span>通知权限</span><span class="spacer"></span><span class="pill pill-on">正常</span></div>
+                </section>
+                <section class="fraud">
+                  <b>只告诉信任的人</b>
+                  <p class="note" style="margin: 6px 0 0">
+                    任何人以「客服需要看屏幕」为由索要识别码，都是诈骗。
+                  </p>
+                </section>
+              </div>
+              <div class="phone-tools" style="grid-template-columns: 1fr 1fr 1fr">
+                <span class="btn btn-quiet">本机</span>
+                <span class="btn btn-quiet">被谁连</span>
+                <span class="btn btn-quiet">设置</span>
+              </div>
+              <div class="gesture-bar"><i></i></div>
+            </div>
+          </div>
+          <p class="note">
+            「未设置」白名单是降级说明，不是阻断，更不是付费入口。前台服务通知里的断开不在这一屏，见低保真 W7-03。
+          </p>
+        </section>
+      </div>
+    </main>
+  </body>
+</html>

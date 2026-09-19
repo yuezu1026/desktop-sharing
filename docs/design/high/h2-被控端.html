@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>高保真 · 被控端</title>
+    <link rel="stylesheet" href="tokens.css" />
+    <link rel="stylesheet" href="high.css" />
+  </head>
+  <body>
+    <nav class="site-nav">
+      <a href="index.html">视觉系统</a>
+      <a href="h1-控制端.html">控制端</a>
+      <a href="h2-被控端.html" aria-current="page">被控端</a>
+      <a href="h4-计费.html">计费</a>
+      <a href="h6-移动端.html">移动端</a>
+      <a href="h-红线组件.html">红线组件</a>
+      <a href="../wireframe/w2-被控端.html">对照低保真 W2</a>
+    </nav>
+
+    <main class="wrap">
+      <section class="shot">
+        <div class="meta"><span class="chip-id">W2-01</span></div>
+        <h2>本机正在等待</h2>
+        <p class="lede">
+          被帮助的一方打开软件，第一眼要能抄识别码，第二眼要能确认现在没有人在看屏幕。
+          这一页不出现金额、余额、充值、会员。
+        </p>
+        <div class="window">
+          <div class="chrome">
+            <span class="title">远程桌面 · 本机</span>
+            <span class="spacer"></span>
+            <span class="win-btn">—</span>
+            <span class="win-btn">□</span>
+            <span class="win-btn">×</span>
+          </div>
+          <div class="host">
+            <section class="panel stack">
+              <div>
+                <span class="field-label">本机识别码</span>
+                <div class="split">
+                  <span class="id">123 456 789</span>
+                  <span class="spacer"></span>
+                  <span class="btn">复制</span>
+                </div>
+              </div>
+              <div>
+                <span class="field-label">临时密码</span>
+                <div class="split">
+                  <span class="pass">a7k2f9</span>
+                  <span class="spacer"></span>
+                  <span class="btn">换一个</span>
+                </div>
+                <p class="note">每次连接后自动更换；也可设为固定密码（不推荐）。</p>
+              </div>
+              <div class="switch-row">
+                <span class="pill pill-on">允许被连接</span>
+                <span class="spacer"></span>
+                <span class="btn">不允许</span>
+              </div>
+            </section>
+            <div class="stack">
+              <section class="panel">
+                <b>当前状态</b>
+                <div style="margin-top: 10px"><span class="pill">未被连接</span></div>
+                <p class="hint-inline">现在没有人在看你的屏幕。</p>
+              </section>
+              <section class="panel">
+                <b>常用开关</b>
+                <div class="split" style="margin-top: 8px"><span>开机自动启动</span><span class="spacer"></span><span class="pill pill-on">开</span></div>
+                <div class="split" style="margin-top: 8px"><span>空闲时近零占用</span><span class="spacer"></span><span class="pill pill-on">开</span></div>
+                <div class="split" style="margin-top: 8px"><span>资源档位</span><span class="spacer"></span><span class="pill">均衡</span></div>
+              </section>
+              <section class="fraud">
+                <b>只把识别码和密码告诉你信任的人</b>
+                <p class="note" style="margin: 6px 0 0">
+                  任何人以「客服 / 公检法需要看屏幕」为由索要，都是诈骗。
+                </p>
+              </section>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="shot">
+        <div class="meta"><span class="chip-id">W2-02</span></div>
+        <h2>有人请求控制本设备</h2>
+        <p class="lede">
+          反诈块不放进「展开更多」。两个按钮一样大。「拒绝」是唯一的实心按钮，回车不能当成同意。
+        </p>
+        <div class="window stage-host">
+          <div class="chrome">
+            <span class="title">远程桌面 · 本机</span>
+          </div>
+          <div class="host" style="filter: blur(1px); min-height: 480px; pointer-events: none">
+            <section class="panel">
+              <span class="field-label">本机识别码</span>
+              <div class="id">123 456 789</div>
+            </section>
+            <section class="panel">
+              <span class="pill">未被连接</span>
+            </section>
+          </div>
+          <div class="scrim">
+            <div class="dialog" role="dialog" aria-labelledby="ask-title">
+              <h3 id="ask-title">有人请求控制本设备</h3>
+              <div class="body">
+                <div class="who">
+                  <div class="avatar" aria-hidden="true">张</div>
+                  <div>
+                    <b>账号 138****6721（张三）</b>
+                    <div class="note" style="margin: 0">设备：我的台式机 · Windows 11 · 来自北京 · 刚刚</div>
+                  </div>
+                  <span class="pill pill-fact">首次连接</span>
+                </div>
+                <div>
+                  <span class="field-label">允许后，对方可以</span>
+                  <div>看到你屏幕上的所有内容</div>
+                  <div>操作你的鼠标与键盘</div>
+                  <div>在你允许时传输文件</div>
+                </div>
+                <div class="fraud">
+                  <b>请确认你认识对方</b>
+                  <ol>
+                    <li>你正在允许对方控制本设备。</li>
+                    <li>对方能看到并操作你屏幕上的一切。</li>
+                    <li>不要向陌生人开启。自称客服或公检法、要求打开屏幕的，都是诈骗。</li>
+                  </ol>
+                </div>
+              </div>
+              <footer>
+                <span class="btn">允许本次</span>
+                <span class="btn btn-ink is-keyfocus">拒绝</span>
+              </footer>
+            </div>
+          </div>
+        </div>
+        <p class="note">
+          「有人连上时换成对方是谁，并给出一键断开、不再二次确认」是实现说明，不进界面。
+          「首次连接」用中性描边，不用中继的琥珀色。焦点停在「拒绝」上，回车不能当成同意。
+        </p>
+      </section>
+    </main>
+  </body>
+</html>
