@@ -7,6 +7,11 @@ services:
       POSTGRES_DB: desktop
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U desktop -d desktop"]
+      interval: 2s
+      timeout: 5s
+      retries: 20
     volumes:
       - desktop-pg:/var/lib/postgresql/data
   control-plane:
@@ -15,10 +20,17 @@ services:
     environment:
       DATABASE_URL: postgres://desktop:desktop@postgres:5432/desktop
       DEVICE_QUOTA: "150"
+      FREE_RELAY_BYTES: "2000000000"
+      FREE_BITRATE_KBPS: "4000"
+      FREE_MAX_FPS: "30"
+      TICKET_TTL_SECONDS: "90"
       SMS_DEV_EXPOSE: "1"
+      # 仅本地编排。上线必须换成独立密钥，不能沿用这一行。
+      RELAY_SHARED_SECRET: local-relay
     ports:
       - "8080:8080"
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
 volumes:
   desktop-pg:

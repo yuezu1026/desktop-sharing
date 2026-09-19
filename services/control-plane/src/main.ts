@@ -2,6 +2,7 @@ import { Pool } from "pg";
 import { AccountService } from "./account-service.js";
 import { loadConfig } from "./config.js";
 import { createHttpServer } from "./server.js";
+import { SessionService } from "./session-service.js";
 
 const MAINTENANCE_INTERVAL_MS = 60 * 60 * 1000;
 
@@ -10,13 +11,14 @@ async function main(): Promise<void> {
   const pool = new Pool({ connectionString: config.databaseUrl });
   await waitForDatabase(pool);
   const service = new AccountService(pool, config, () => new Date());
+  const sessions = new SessionService(pool, config, service, () => new Date());
   await service.applySchema();
   const timer = setInterval(() => {
     void service.runMaintenance();
   }, MAINTENANCE_INTERVAL_MS);
   timer.unref();
 
-  const server = createHttpServer(pool, config, service);
+  const server = createHttpServer(pool, config, service, sessions);
   server.listen(config.port, "0.0.0.0");
 }
 

@@ -76,4 +76,66 @@ CREATE TABLE IF NOT EXISTS audit_events (
   detail jsonb NOT NULL DEFAULT '{}'::jsonb,
   created_at timestamptz NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS relay_grants (
+  relay_grant_id uuid PRIMARY KEY,
+  account_id uuid NOT NULL REFERENCES accounts (account_id),
+  kind text NOT NULL,
+  bytes_total bigint NOT NULL,
+  expires_at timestamptz NOT NULL,
+  period_start timestamptz NOT NULL,
+  created_at timestamptz NOT NULL,
+  CONSTRAINT relay_grants_kind_check CHECK (kind IN ('promo', 'plugin', 'subscription', 'free')),
+  CONSTRAINT relay_grants_bytes_check CHECK (bytes_total >= 0),
+  UNIQUE (account_id, kind, period_start)
+);
+
+CREATE TABLE IF NOT EXISTS remote_sessions (
+  remote_session_id uuid PRIMARY KEY,
+  account_id uuid NOT NULL REFERENCES accounts (account_id),
+  host_device_id uuid NOT NULL REFERENCES host_devices (host_device_id),
+  host_account_id uuid NOT NULL REFERENCES accounts (account_id),
+  controller_fingerprint text NOT NULL,
+  host_fingerprint text NOT NULL,
+  state text NOT NULL,
+  cross_account boolean NOT NULL,
+  bitrate_kbps integer NOT NULL,
+  created_at timestamptz NOT NULL,
+  closed_at timestamptz,
+  direct_started_at timestamptz,
+  direct_stopped_at timestamptz,
+  punch_result text,
+  reported_bitrate_kbps integer,
+  CONSTRAINT remote_sessions_state_check CHECK (state IN ('awaiting_host_consent', 'active', 'relay_stopped', 'closed'))
+);
+
+CREATE TABLE IF NOT EXISTS relay_tickets (
+  relay_ticket_id uuid PRIMARY KEY,
+  remote_session_id uuid NOT NULL REFERENCES remote_sessions (remote_session_id),
+  secret_hash text NOT NULL UNIQUE,
+  expires_at timestamptz NOT NULL,
+  admitted_at timestamptz,
+  revoked_at timestamptz,
+  created_at timestamptz NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS relay_ledger (
+  relay_ledger_id uuid PRIMARY KEY,
+  account_id uuid NOT NULL REFERENCES accounts (account_id),
+  relay_grant_id uuid NOT NULL REFERENCES relay_grants (relay_grant_id),
+  remote_session_id uuid NOT NULL REFERENCES remote_sessions (remote_session_id),
+  bytes bigint NOT NULL,
+  created_at timestamptz NOT NULL,
+  CONSTRAINT relay_ledger_bytes_check CHECK (bytes > 0)
+);
+
+CREATE TABLE IF NOT EXISTS relay_heartbeats (
+  heartbeat_id uuid PRIMARY KEY,
+  remote_session_id uuid NOT NULL REFERENCES remote_sessions (remote_session_id),
+  bytes_reported bigint NOT NULL,
+  duration_seconds integer NOT NULL,
+  directive text NOT NULL,
+  response jsonb NOT NULL,
+  created_at timestamptz NOT NULL
+);
 `;

@@ -2,12 +2,13 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import type { Pool } from "pg";
 import type { AppConfig } from "./config.js";
 import { AccountService, type Failure } from "./account-service.js";
+import { SessionService } from "./session-service.js";
 
 type Json = Record<string, unknown>;
 
-export function createHttpServer(pool: Pool, config: AppConfig, service: AccountService) {
+export function createHttpServer(pool: Pool, config: AppConfig, service: AccountService, sessions: SessionService) {
   return createServer((request, response) => {
-    void handle(request, response, pool, config, service);
+    void handle(request, response, pool, config, service, sessions);
   });
 }
 
@@ -17,6 +18,7 @@ async function handle(
   pool: Pool,
   config: AppConfig,
   service: AccountService,
+  sessions: SessionService,
 ): Promise<void> {
   const url = new URL(request.url ?? "/", "http://127.0.0.1");
   const method = request.method ?? "GET";
@@ -27,13 +29,20 @@ async function handle(
       return;
     }
     if (method === "GET" && url.pathname === "/v1/config/public") {
-      send(response, 200, { deviceQuota: config.deviceQuota });
+      send(response, 200, {
+        deviceQuota: config.deviceQuota,
+        freeRelayBytes: config.freeRelayBytes,
+        freeBitrateKbps: config.freeBitrateKbps,
+        freeMaxFps: config.freeMaxFps,
+        channelLimit: config.channelLimit,
+        sessionsPerChannel: config.sessionsPerChannel,
+      });
       return;
     }
 
     const body = method === "GET" || method === "DELETE" ? {} : await readJson(request);
     const token = bearer(request);
-    const result = await dispatch(service, method, url.pathname, body, token);
+    const result = await dispatch(service, sessions, method, url.pathname, body, token, relaySecret(request));
     if (!result) {
       send(response, 404, { ok: false, code: "not_found", message: "路径不存在" });
       return;
@@ -67,10 +76,12 @@ async function handle(
 
 async function dispatch(
   service: AccountService,
+  sessions: SessionService,
   method: string,
   pathname: string,
   body: Json,
   token: string | null,
+  relaySecret: string | null,
 ): Promise<Record<string, unknown> | Failure | null> {
   if (method === "POST" && pathname === "/v1/challenges") {
     return service.createChallenge({
@@ -170,12 +181,54 @@ async function dispatch(
   if (method === "GET" && pathname === "/v1/notices") return service.listNotices(token);
   const notice = pathname.match(/^\/v1\/notices\/([^/]+)\/read$/);
   if (method === "POST" && notice?.[1]) return service.markNoticeRead(token, notice[1]);
+
+  if (method === "GET" && pathname === "/v1/relay-balance") return sessions.balance(token);
+  if (method === "POST" && pathname === "/v1/remote-sessions") {
+    return sessions.requestSession(token, text(body, "hostDeviceId") ?? "", text(body, "controllerFingerprint") ?? "");
+  }
+  const remoteAction = pathname.match(/^\/v1\/remote-sessions\/([^/]+)\/(consent|direct)$/);
+  if (method === "POST" && remoteAction?.[1] && remoteAction[2] === "consent") {
+    return sessions.consent(token, remoteAction[1], body.confirmedOnHost === true);
+  }
+  if (method === "POST" && remoteAction?.[1] && remoteAction[2] === "direct") {
+    return sessions.reportDirect(token, remoteAction[1], {
+      event: text(body, "event") ?? "",
+      punchResult: text(body, "punchResult"),
+      bitrateKbps: integer(body, "bitrateKbps"),
+    });
+  }
+  if (method === "POST" && pathname === "/v1/relay/tickets/admit") {
+    return sessions.admit(relaySecret, {
+      ticket: text(body, "ticket") ?? "",
+      controllerFingerprint: text(body, "controllerFingerprint") ?? "",
+      hostFingerprint: text(body, "hostFingerprint") ?? "",
+    });
+  }
+  if (method === "POST" && pathname === "/v1/relay/heartbeats") {
+    return sessions.heartbeat(relaySecret, {
+      ticket: text(body, "ticket") ?? "",
+      heartbeatId: text(body, "heartbeatId") ?? "",
+      bytes: integer(body, "bytes") ?? -1,
+      durationSeconds: integer(body, "durationSeconds") ?? -1,
+      acceptDegrade: body.acceptDegrade === true,
+    });
+  }
   return null;
 }
 
 function text(body: Json, key: string): string | null {
   const value = body[key];
   return typeof value === "string" ? value : null;
+}
+
+function integer(body: Json, key: string): number | null {
+  const value = body[key];
+  return typeof value === "number" && Number.isInteger(value) ? value : null;
+}
+
+function relaySecret(request: IncomingMessage): string | null {
+  const header = request.headers["x-relay-secret"];
+  return typeof header === "string" && header.length > 0 ? header : null;
 }
 
 function bearer(request: IncomingMessage): string | null {

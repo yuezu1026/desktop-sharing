@@ -35,7 +35,7 @@ export type Failure = {
 
 type Success<T extends Record<string, unknown>> = { ok: true } & T;
 
-type SessionContext = {
+export type SessionContext = {
   loginSessionId: string;
   accountId: string;
   phone: string;
@@ -887,6 +887,10 @@ export class AccountService {
       `DELETE FROM audit_events WHERE created_at < $1::timestamptz - ($2 || ' days')::interval`,
       [now, String(AUDIT_RETENTION_DAYS)],
     );
+  }
+
+  async authenticate(token: string | null): Promise<SessionContext | Failure> {
+    return this.requireSession(token);
   }
 
   private async requireSession(token: string | null): Promise<SessionContext | Failure> {
