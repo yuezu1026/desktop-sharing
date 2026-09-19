@@ -163,4 +163,47 @@ CREATE TABLE IF NOT EXISTS orders (
   CONSTRAINT orders_state_check CHECK (state IN ('unfinished', 'confirming', 'opened', 'closed')),
   CONSTRAINT orders_amount_check CHECK (amount_cents > 0)
 );
+
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS wants_invoice boolean NOT NULL DEFAULT false;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS invoice_title_kind text;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS invoice_title text;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS invoice_tax_number text;
+
+CREATE TABLE IF NOT EXISTS invoice_profiles (
+  account_id uuid PRIMARY KEY REFERENCES accounts (account_id),
+  wants_invoice boolean NOT NULL,
+  title_kind text,
+  title text,
+  tax_number text,
+  updated_at timestamptz NOT NULL,
+  CONSTRAINT invoice_profiles_kind_check CHECK (title_kind IS NULL OR title_kind IN ('personal', 'enterprise'))
+);
+
+CREATE TABLE IF NOT EXISTS subscriptions (
+  subscription_id uuid PRIMARY KEY,
+  account_id uuid NOT NULL UNIQUE REFERENCES accounts (account_id),
+  plan text NOT NULL,
+  amount_cents integer NOT NULL,
+  price_version text NOT NULL,
+  auto_renew boolean NOT NULL,
+  next_charge_at timestamptz,
+  reminder_for_charge_at timestamptz,
+  opened_order_id uuid NOT NULL REFERENCES orders (order_id),
+  created_at timestamptz NOT NULL,
+  updated_at timestamptz NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS renewal_reminders (
+  renewal_reminder_id uuid PRIMARY KEY,
+  account_id uuid NOT NULL REFERENCES accounts (account_id),
+  subscription_id uuid NOT NULL REFERENCES subscriptions (subscription_id),
+  charge_at timestamptz NOT NULL,
+  channel text NOT NULL,
+  body text NOT NULL,
+  status text NOT NULL,
+  created_at timestamptz NOT NULL,
+  CONSTRAINT renewal_reminders_channel_check CHECK (channel IN ('app', 'email', 'wechat', 'alipay')),
+  CONSTRAINT renewal_reminders_status_check CHECK (status IN ('queued', 'recorded')),
+  UNIQUE (subscription_id, charge_at, channel)
+);
 `;

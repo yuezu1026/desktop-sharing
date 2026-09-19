@@ -17,6 +17,7 @@ async function main(): Promise<void> {
   await service.applySchema();
   const timer = setInterval(() => {
     void service.runMaintenance();
+    void orders.remindDueRenewals();
   }, MAINTENANCE_INTERVAL_MS);
   timer.unref();
 

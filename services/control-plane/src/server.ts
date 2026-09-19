@@ -2,7 +2,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import type { Pool } from "pg";
 import type { AppConfig } from "./config.js";
 import { AccountService, type Failure } from "./account-service.js";
-import { OrderService } from "./order-service.js";
+import { OrderService, type InvoiceInput } from "./order-service.js";
 import { SessionService } from "./session-service.js";
 
 type Json = Record<string, unknown>;
@@ -202,8 +202,19 @@ async function dispatch(
 
   if (method === "GET" && pathname === "/v1/relay-balance") return sessions.balance(token);
   if (method === "GET" && pathname === "/v1/catalog") return orders.catalog();
+  if (method === "GET" && pathname === "/v1/invoice") return orders.getInvoice(token);
+  if (method === "POST" && pathname === "/v1/invoice") return orders.saveInvoice(token, invoiceInput(body));
+  if (method === "GET" && pathname === "/v1/subscription") return orders.getSubscription(token);
+  if (method === "POST" && pathname === "/v1/subscription/auto-renew") {
+    if (typeof body.enabled !== "boolean") {
+      return { ok: false, status: 400, code: "auto_renew_invalid", message: "需要明确是否继续自动续费" };
+    }
+    return orders.setAutoRenew(token, body.enabled);
+  }
   if (method === "GET" && pathname === "/v1/orders") return orders.list(token);
-  if (method === "POST" && pathname === "/v1/orders") return orders.create(token, text(body, "plan") ?? "");
+  if (method === "POST" && pathname === "/v1/orders") {
+    return orders.create(token, text(body, "plan") ?? "", invoiceInput(body));
+  }
   const orderProvider = pathname.match(/^\/v1\/orders\/([^/]+)\/provider$/);
   if (method === "POST" && orderProvider?.[1]) {
     return orders.applyProviderResult(orderSecretHeader, orderProvider[1], text(body, "state") ?? "");
@@ -252,6 +263,15 @@ async function dispatch(
     });
   }
   return null;
+}
+
+function invoiceInput(body: Json): InvoiceInput {
+  return {
+    wantsInvoice: typeof body.wantsInvoice === "boolean" ? body.wantsInvoice : null,
+    titleKind: text(body, "titleKind"),
+    title: text(body, "title"),
+    taxNumber: text(body, "taxNumber"),
+  };
 }
 
 function text(body: Json, key: string): string | null {
