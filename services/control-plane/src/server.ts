@@ -34,6 +34,7 @@ async function handle(
         freeRelayBytes: config.freeRelayBytes,
         freeBitrateKbps: config.freeBitrateKbps,
         freeMaxFps: config.freeMaxFps,
+        displayMinuteFloorKbps: config.displayMinuteFloorKbps,
         channelLimit: config.channelLimit,
         sessionsPerChannel: config.sessionsPerChannel,
       });
@@ -200,12 +201,15 @@ async function dispatch(
   if (method === "POST" && pathname === "/v1/remote-sessions") {
     return sessions.requestSession(token, text(body, "hostDeviceId") ?? "", text(body, "controllerFingerprint") ?? "");
   }
-  const remoteAction = pathname.match(/^\/v1\/remote-sessions\/([^/]+)\/(consent|direct|reject)$/);
+  const remoteAction = pathname.match(/^\/v1\/remote-sessions\/([^/]+)\/(consent|direct|reject|input)$/);
   if (method === "POST" && remoteAction?.[1] && remoteAction[2] === "consent") {
     return sessions.consent(token, remoteAction[1], body.confirmedOnHost === true);
   }
   if (method === "POST" && remoteAction?.[1] && remoteAction[2] === "reject") {
     return sessions.rejectIncoming(token, remoteAction[1]);
+  }
+  if (method === "POST" && remoteAction?.[1] && remoteAction[2] === "input") {
+    return sessions.setInputAllowed(token, remoteAction[1], body.allowed === true);
   }
   if (method === "POST" && remoteAction?.[1] && remoteAction[2] === "direct") {
     return sessions.reportDirect(token, remoteAction[1], {

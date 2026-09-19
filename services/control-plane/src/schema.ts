@@ -143,6 +143,7 @@ ALTER TABLE host_devices ADD COLUMN IF NOT EXISTS device_code text;
 ALTER TABLE host_devices ADD COLUMN IF NOT EXISTS temp_password_hash text;
 ALTER TABLE host_devices ADD COLUMN IF NOT EXISTS accepting_connections boolean NOT NULL DEFAULT true;
 ALTER TABLE remote_sessions ADD COLUMN IF NOT EXISTS controller_phone_mask text;
+ALTER TABLE remote_sessions ADD COLUMN IF NOT EXISTS input_revoked boolean NOT NULL DEFAULT false;
 ALTER TABLE remote_sessions DROP CONSTRAINT IF EXISTS remote_sessions_state_check;
 ALTER TABLE remote_sessions ADD CONSTRAINT remote_sessions_state_check
   CHECK (state IN ('awaiting_host_consent', 'active', 'relay_stopped', 'closed', 'rejected'));

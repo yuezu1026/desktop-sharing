@@ -23,6 +23,7 @@ services:
       FREE_RELAY_BYTES: "2000000000"
       FREE_BITRATE_KBPS: "4000"
       FREE_MAX_FPS: "30"
+      DISPLAY_MINUTE_FLOOR_KBPS: "2000"
       TICKET_TTL_SECONDS: "90"
       SMS_DEV_EXPOSE: "1"
       # 仅本地编排。上线必须换成独立密钥，不能沿用这两行。

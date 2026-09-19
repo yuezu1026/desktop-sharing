@@ -175,6 +175,20 @@ export class SessionService {
     return { ok: true };
   }
 
+  async setInputAllowed(token: string | null, remoteSessionId: string, allowed: boolean): Promise<{ ok: true } | Failure> {
+    if (!isUuid(remoteSessionId)) return fail(400, "session_invalid", "会话不正确");
+    const session = await this.accounts.authenticate(token);
+    if (isAuthFailure(session)) return session;
+    const updated = await this.pool.query(
+      `UPDATE remote_sessions
+          SET input_revoked = $3
+        WHERE remote_session_id = $1 AND host_account_id = $2 AND state = 'active'`,
+      [remoteSessionId, session.accountId, !allowed],
+    );
+    if (!updated.rowCount) return fail(404, "session_missing", "会话不存在");
+    return { ok: true };
+  }
+
   async stopControlled(token: string | null, hostDeviceId: string): Promise<{ ok: true } | Failure> {
     if (!isUuid(hostDeviceId)) return fail(400, "host_device_invalid", "被控设备不正确");
     const session = await this.accounts.authenticate(token);
@@ -240,6 +254,48 @@ export class SessionService {
     const now = this.now();
     const remainingBytes = await this.remainingBytes(this.pool, session.accountId, now);
     const totalBytes = await this.grantTotal(this.pool, session.accountId, now);
+    const usedRatio = totalBytes <= 0 ? 1 : (totalBytes - remainingBytes) / totalBytes;
+    const showBalance = usedRatio >= 0.8 || remainingBytes <= 0;
+    const latest = await this.pool.query<{ bitrate_kbps: number; state: string; input_revoked: boolean }>(
+      `SELECT bitrate_kbps, state, input_revoked
+         FROM remote_sessions
+        WHERE account_id = $1 AND state IN ('active', 'relay_stopped')
+        ORDER BY created_at DESC
+        LIMIT 1`,
+      [session.accountId],
+    );
+    const current = latest.rows[0];
+    const bitrateKbps = current?.bitrate_kbps ?? this.config.freeBitrateKbps;
+    const rateKbps = Math.max(bitrateKbps, this.config.displayMinuteFloorKbps);
+    const displayMinutes = remainingBytes <= 0 ? null : Math.floor((remainingBytes * 8) / (rateKbps * 1000 * 60));
+    const relayStopped = remainingBytes <= 0 || current?.state === "relay_stopped";
+    const viewOnly = relayStopped ? "resource" : current?.input_revoked ? "permission" : null;
+    let directive: Directive = "continue";
+    let notice: string | null = null;
+    if (relayStopped) {
+      directive = "stop_relay";
+      notice = "中继已停，会话还在。画面已停在最后一帧";
+    } else if (usedRatio >= 0.95) {
+      directive = "suggest_direct";
+      notice = "免费中继时长将尽，可以重新尝试直连";
+    } else if (showBalance) {
+      directive = "warn";
+      notice = "免费中继时长已用到约八成";
+    }
+    const heartbeat = await this.pool.query<{ directive: string; response: { notice?: string } }>(
+      `SELECT h.directive, h.response
+         FROM relay_heartbeats h
+         JOIN remote_sessions s ON s.remote_session_id = h.remote_session_id
+        WHERE s.account_id = $1
+        ORDER BY h.created_at DESC
+        LIMIT 1`,
+      [session.accountId],
+    );
+    const lastNotice = heartbeat.rows[0];
+    if (!relayStopped && lastNotice?.directive === "degraded" && typeof lastNotice.response?.notice === "string") {
+      directive = "degraded";
+      notice = lastNotice.response.notice;
+    }
     return {
       ok: true,
       remainingBytes,
@@ -247,6 +303,20 @@ export class SessionService {
       freeRelayBytes: this.config.freeRelayBytes,
       freeBitrateKbps: this.config.freeBitrateKbps,
       freeMaxFps: this.config.freeMaxFps,
+      showBalance,
+      displayMinutes,
+      footnote: showBalance && displayMinutes !== null ? "按当前画质估算 · 切换画质会变" : null,
+      directive,
+      notice,
+      viewOnly,
+      ways: relayStopped
+        ? [
+            { id: "direct", title: "直连", paid: false },
+            { id: "lan", title: "局域网直连", paid: false },
+            { id: "reverse", title: "让对方来连你", paid: false },
+            { id: "purchase", title: "购买中继时长", paid: true },
+          ]
+        : [],
     };
   }
 

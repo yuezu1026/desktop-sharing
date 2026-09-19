@@ -42,6 +42,7 @@ mod windows_controller {
     const TOOLBAR_HEIGHT: i32 = 48;
     const BADGE_HEIGHT: i32 = 28;
     const HIDE_TIMER: usize = 1;
+    const METER_TIMER: usize = 2;
     const KEY_ESCAPE: u16 = 0x1b;
     const COLOR_BLACK: u32 = 0x0000_0000;
     const COLOR_PICTURE: u32 = 0x0017_1A1C;
@@ -64,6 +65,13 @@ mod windows_controller {
         link_direct: bool,
         saved_style: isize,
         saved_placement: WINDOWPLACEMENT,
+        show_balance: bool,
+        display_minutes: Option<i64>,
+        footnote: String,
+        notice: String,
+        view_only: String,
+        ways_open: bool,
+        way_titles: Vec<(String, bool)>,
     }
 
     unsafe impl Send for Model {}
@@ -79,6 +87,13 @@ mod windows_controller {
             link_direct,
             saved_style: 0,
             saved_placement: empty_placement(),
+            show_balance: false,
+            display_minutes: None,
+            footnote: String::new(),
+            notice: String::new(),
+            view_only: String::new(),
+            ways_open: false,
+            way_titles: Vec::new(),
         });
         unsafe { message_loop() }
     }
@@ -127,6 +142,10 @@ mod windows_controller {
                 if let Some(model) = lock_model().as_mut() {
                     model.main_window = window;
                 }
+                if std::env::var("CONTROLLER_TOKEN").ok().filter(|value| !value.is_empty()).is_some() {
+                    let _ = windows::Win32::UI::WindowsAndMessaging::SetTimer(Some(window), METER_TIMER, 5000, None);
+                    poll_meter();
+                }
                 LRESULT(0)
             }
             WM_SIZE | WM_MOUSEMOVE => {
@@ -141,6 +160,10 @@ mod windows_controller {
                     hide_toolbar_if_fullscreen();
                     let _ = InvalidateRect(Some(window), None, false);
                 }
+                if wparam.0 == METER_TIMER {
+                    poll_meter();
+                    let _ = InvalidateRect(Some(window), None, false);
+                }
                 LRESULT(0)
             }
             WM_LBUTTONUP => {
@@ -149,6 +172,12 @@ mod windows_controller {
                 let click_y = ((packed >> 16) & 0xffff) as i16 as i32;
                 if toolbar_hit(window, click_x, click_y) {
                     toggle_fullscreen(window);
+                } else if ways_hit(click_x, click_y) {
+                    if let Some(model) = lock_model().as_mut() {
+                        if model.view_only == "resource" {
+                            model.ways_open = !model.ways_open;
+                        }
+                    }
                 }
                 LRESULT(0)
             }
@@ -293,6 +322,7 @@ mod windows_controller {
                 let hint = wide_chars(if link_direct { "不消耗免费中继时长" } else { "在消耗免费中继时长" });
                 draw_text(device_context, &hint, 140, picture_bottom, client_width - 160, TOOLBAR_HEIGHT, true);
             }
+            paint_meter(device_context, client_width);
         }
         let _ = EndPaint(window, &paint_struct);
     }
@@ -404,5 +434,118 @@ mod windows_controller {
 
     fn wide_chars(text: &str) -> Vec<u16> {
         text.encode_utf16().collect()
+    }
+
+    unsafe fn paint_meter(device_context: windows::Win32::Graphics::Gdi::HDC, client_width: i32) {
+        let snapshot = lock_model().as_ref().map(|model| {
+            (
+                model.show_balance,
+                model.display_minutes,
+                model.footnote.clone(),
+                model.notice.clone(),
+                model.view_only.clone(),
+                model.ways_open,
+                model.way_titles.clone(),
+            )
+        });
+        let Some((show_balance, display_minutes, footnote, notice, view_only, ways_open, way_titles)) = snapshot else { return };
+        SetBkMode(device_context, TRANSPARENT);
+        let _ = SetTextColor(device_context, COLORREF(0x00E7_EFF3));
+        let mut top = 48;
+        if show_balance {
+            if let Some(minutes) = display_minutes {
+                let line = wide_chars(&format!("免费中继时长剩余约 {minutes} 分钟"));
+                draw_text(device_context, &line, 16, top, client_width - 120, 24, false);
+                top += 24;
+                if !footnote.is_empty() {
+                    let note = wide_chars(&footnote);
+                    draw_text(device_context, &note, 16, top, client_width - 120, 20, false);
+                    top += 22;
+                }
+            }
+        }
+        if !notice.is_empty() {
+            let line = wide_chars(&notice);
+            draw_text(device_context, &line, 16, top, client_width - 32, 24, false);
+            top += 28;
+        }
+        if view_only == "resource" {
+            let frozen = wide_chars("画面已停在最后一帧，暂时无法继续");
+            draw_text(device_context, &frozen, 16, top, client_width - 32, 24, false);
+            let opener = wide_chars("还有什么办法");
+            let button = ways_button();
+            draw_text(device_context, &opener, button.left, button.top, button.width, button.height, false);
+            if ways_open {
+                let mut row = button.top + button.height + 8;
+                for (title, paid) in &way_titles {
+                    let prefix = if *paid { "付费" } else { "免费" };
+                    let line = wide_chars(&format!("{prefix}  {title}"));
+                    draw_text(device_context, &line, 16, row, client_width - 32, 22, false);
+                    row += 24;
+                }
+            }
+        } else if view_only == "permission" {
+            let moving = wide_chars("画面仍在实时更新，只是你的键盘鼠标不再发送到对方电脑。");
+            draw_text(device_context, &moving, 16, top, client_width - 32, 40, false);
+            let restore = wide_chars("请求恢复控制");
+            draw_text(device_context, &restore, 16, top + 44, 160, 24, false);
+        }
+    }
+
+    fn ways_button() -> FrameRect {
+        FrameRect { left: 16, top: 150, width: 140, height: 28 }
+    }
+
+    fn ways_hit(click_x: i32, click_y: i32) -> bool {
+        let button = ways_button();
+        click_x >= button.left && click_x < button.left + button.width && click_y >= button.top && click_y < button.top + button.height
+    }
+
+    fn poll_meter() {
+        let Some(token) = std::env::var("CONTROLLER_TOKEN").ok().filter(|value| !value.is_empty()) else { return };
+        let origin = std::env::var("CONTROL_PLANE_URL").unwrap_or_else(|_| "http://127.0.0.1:8080".to_string());
+        let Ok(body) = get_json(&origin, "/v1/relay-balance", &token) else { return };
+        let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&body) else { return };
+        if parsed.get("ok").and_then(|value| value.as_bool()) != Some(true) {
+            return;
+        }
+        let mut way_titles = Vec::new();
+        if let Some(ways) = parsed.get("ways").and_then(|value| value.as_array()) {
+            for item in ways {
+                let Some(title) = item.get("title").and_then(|value| value.as_str()) else { continue };
+                let paid = item.get("paid").and_then(|value| value.as_bool()).unwrap_or(false);
+                way_titles.push((title.to_string(), paid));
+            }
+        }
+        if let Some(model) = lock_model().as_mut() {
+            model.show_balance = parsed.get("showBalance").and_then(|value| value.as_bool()).unwrap_or(false);
+            model.display_minutes = parsed.get("displayMinutes").and_then(|value| value.as_i64());
+            model.footnote = parsed.get("footnote").and_then(|value| value.as_str()).unwrap_or("").to_string();
+            model.notice = parsed.get("notice").and_then(|value| value.as_str()).unwrap_or("").to_string();
+            model.view_only = parsed.get("viewOnly").and_then(|value| value.as_str()).unwrap_or("").to_string();
+            model.way_titles = way_titles;
+            if model.view_only != "resource" {
+                model.ways_open = false;
+            }
+        }
+    }
+
+    fn get_json(origin: &str, path: &str, token: &str) -> Result<String, String> {
+        use std::io::{Read, Write};
+        use std::net::TcpStream;
+        use std::time::Duration;
+        let rest = origin.strip_prefix("http://").ok_or("控制面地址不正确")?;
+        let (host, port_text) = rest.split_once(':').ok_or("控制面地址不正确")?;
+        let port: u16 = port_text.parse().map_err(|_| "控制面地址不正确")?;
+        let mut stream = TcpStream::connect(format!("{host}:{port}")).map_err(|_| "控制面不可达")?;
+        stream.set_read_timeout(Some(Duration::from_secs(3))).ok();
+        let request = format!(
+            "GET {path} HTTP/1.1\r\nhost: {host}\r\nauthorization: Bearer {token}\r\nconnection: close\r\n\r\n"
+        );
+        stream.write_all(request.as_bytes()).map_err(|_| "控制面不可达")?;
+        let mut buffer = Vec::new();
+        stream.read_to_end(&mut buffer).map_err(|_| "控制面不可达")?;
+        let text = String::from_utf8_lossy(&buffer);
+        Ok(text.split("\r\n\r\n").nth(1).unwrap_or("").to_string())
     }
 }

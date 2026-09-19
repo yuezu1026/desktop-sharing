@@ -10,6 +10,8 @@ export type AppConfig = {
   freeRelayBytes: number;
   freeBitrateKbps: number;
   freeMaxFps: number;
+  /** 分钟只是展示。折算地板见成本测算表，低于此档不把分钟写大。 */
+  displayMinuteFloorKbps: number;
   ticketTtlSeconds: number;
   relaySharedSecret: string | null;
   signalSharedSecret: string | null;
@@ -23,6 +25,7 @@ const DEFAULT_TOKEN_TTL_MINUTES = 20;
 const DEFAULT_FREE_RELAY_BYTES = 2_000_000_000;
 const DEFAULT_FREE_BITRATE_KBPS = 4000;
 const DEFAULT_FREE_MAX_FPS = 30;
+const DEFAULT_DISPLAY_MINUTE_FLOOR_KBPS = 2000;
 const DEFAULT_TICKET_TTL_SECONDS = 90;
 
 export function loadConfig(env: NodeJS.ProcessEnv): AppConfig {
@@ -44,6 +47,7 @@ export function loadConfig(env: NodeJS.ProcessEnv): AppConfig {
     freeRelayBytes: readPositiveInt(env.FREE_RELAY_BYTES, DEFAULT_FREE_RELAY_BYTES),
     freeBitrateKbps: readPositiveInt(env.FREE_BITRATE_KBPS, DEFAULT_FREE_BITRATE_KBPS),
     freeMaxFps: readPositiveInt(env.FREE_MAX_FPS, DEFAULT_FREE_MAX_FPS),
+    displayMinuteFloorKbps: readPositiveInt(env.DISPLAY_MINUTE_FLOOR_KBPS, DEFAULT_DISPLAY_MINUTE_FLOOR_KBPS),
     ticketTtlSeconds: readPositiveInt(env.TICKET_TTL_SECONDS, DEFAULT_TICKET_TTL_SECONDS),
     relaySharedSecret: relaySharedSecret.length > 0 ? relaySharedSecret : null,
     signalSharedSecret: signalSharedSecret.length > 0 ? signalSharedSecret : null,
