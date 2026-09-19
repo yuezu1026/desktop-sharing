@@ -189,9 +189,20 @@ CREATE TABLE IF NOT EXISTS subscriptions (
   next_charge_at timestamptz,
   reminder_for_charge_at timestamptz,
   opened_order_id uuid NOT NULL REFERENCES orders (order_id),
+  charge_failed_at timestamptz,
+  charge_channel text,
+  next_retry_at timestamptz,
+  retries_remaining integer,
+  entitlement_ends_at timestamptz,
   created_at timestamptz NOT NULL,
   updated_at timestamptz NOT NULL
 );
+
+ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS charge_failed_at timestamptz;
+ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS charge_channel text;
+ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS next_retry_at timestamptz;
+ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS retries_remaining integer;
+ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS entitlement_ends_at timestamptz;
 
 CREATE TABLE IF NOT EXISTS renewal_reminders (
   renewal_reminder_id uuid PRIMARY KEY,

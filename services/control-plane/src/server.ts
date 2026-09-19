@@ -2,7 +2,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import type { Pool } from "pg";
 import type { AppConfig } from "./config.js";
 import { AccountService, type Failure } from "./account-service.js";
-import { OrderService, type InvoiceInput } from "./order-service.js";
+import { OrderService, type ChargeFailureInput, type InvoiceInput } from "./order-service.js";
 import { SessionService } from "./session-service.js";
 
 type Json = Record<string, unknown>;
@@ -211,6 +211,19 @@ async function dispatch(
     }
     return orders.setAutoRenew(token, body.enabled);
   }
+  const chargeResult = pathname.match(/^\/v1\/subscriptions\/([^/]+)\/charge-result$/);
+  if (method === "POST" && chargeResult?.[1]) {
+    const remaining = retriesRemaining(body);
+    if (remaining === undefined) {
+      return { ok: false, status: 400, code: "charge_retry_invalid", message: "重试次数不正确" };
+    }
+    const input: ChargeFailureInput = {
+      channel: text(body, "channel"),
+      retriesRemaining: remaining,
+      nextRetryAt: text(body, "nextRetryAt"),
+    };
+    return orders.recordChargeFailure(orderSecretHeader, chargeResult[1], input);
+  }
   if (method === "GET" && pathname === "/v1/orders") return orders.list(token);
   if (method === "POST" && pathname === "/v1/orders") {
     return orders.create(token, text(body, "plan") ?? "", invoiceInput(body));
@@ -272,6 +285,12 @@ function invoiceInput(body: Json): InvoiceInput {
     title: text(body, "title"),
     taxNumber: text(body, "taxNumber"),
   };
+}
+
+function retriesRemaining(body: Json): number | null | undefined {
+  if (!Object.prototype.hasOwnProperty.call(body, "retriesRemaining") || body.retriesRemaining == null) return null;
+  const value = body.retriesRemaining;
+  return typeof value === "number" && Number.isInteger(value) ? value : undefined;
 }
 
 function text(body: Json, key: string): string | null {

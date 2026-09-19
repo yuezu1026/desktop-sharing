@@ -72,6 +72,7 @@ mod windows_controller {
         view_only: String,
         ways_open: bool,
         way_titles: Vec<(String, bool)>,
+        subscription_badge: String,
     }
 
     unsafe impl Send for Model {}
@@ -94,6 +95,7 @@ mod windows_controller {
             view_only: String::new(),
             ways_open: false,
             way_titles: Vec::new(),
+            subscription_badge: String::new(),
         });
         unsafe { message_loop() }
     }
@@ -293,10 +295,10 @@ mod windows_controller {
         if GetClientRect(window, &mut client).is_ok() {
             let client_width = client.right - client.left;
             let client_height = client.bottom - client.top;
-            let (toolbar_visible, link_direct) = lock_model()
+            let (toolbar_visible, link_direct, subscription_badge) = lock_model()
                 .as_ref()
-                .map(|model| (model.toolbar_visible, model.link_direct))
-                .unwrap_or((true, false));
+                .map(|model| (model.toolbar_visible, model.link_direct, model.subscription_badge.clone()))
+                .unwrap_or((true, false, String::new()));
             let picture_bottom = if toolbar_visible { client_height - TOOLBAR_HEIGHT } else { client_height };
             fill(&client, device_context, COLOR_BLACK);
             let picture = letterbox(client_width, picture_bottom.max(0), PICTURE_WIDTH, PICTURE_HEIGHT);
@@ -306,6 +308,9 @@ mod windows_controller {
             let waiting = wide_chars("等待画面");
             draw_text(device_context, &waiting, picture.left, picture.top, picture.width, picture.height, true);
             paint_badge(device_context, client_width, link_direct);
+            if !subscription_badge.is_empty() {
+                paint_subscription_badge(device_context, client_width, &subscription_badge);
+            }
             if toolbar_visible {
                 let toolbar = RECT {
                     left: 0,
@@ -337,6 +342,19 @@ mod windows_controller {
         fill_frame(&badge, device_context, if link_direct { COLOR_TEAL } else { COLOR_AMBER });
         let _ = SetTextColor(device_context, COLORREF(0x00F3_EFE7));
         let label = wide_chars(if link_direct { "● 直连" } else { "● 中继" });
+        draw_text(device_context, &label, badge.left, badge.top, badge.width, badge.height, true);
+    }
+
+    unsafe fn paint_subscription_badge(device_context: windows::Win32::Graphics::Gdi::HDC, client_width: i32, label_text: &str) {
+        let badge = FrameRect {
+            left: client_width - 236,
+            top: 12,
+            width: 128,
+            height: BADGE_HEIGHT,
+        };
+        fill_frame(&badge, device_context, COLOR_PAPER);
+        let _ = SetTextColor(device_context, COLORREF(COLOR_INK));
+        let label = wide_chars(label_text);
         draw_text(device_context, &label, badge.left, badge.top, badge.width, badge.height, true);
     }
 
@@ -524,6 +542,11 @@ mod windows_controller {
             model.notice = parsed.get("notice").and_then(|value| value.as_str()).unwrap_or("").to_string();
             model.view_only = parsed.get("viewOnly").and_then(|value| value.as_str()).unwrap_or("").to_string();
             model.way_titles = way_titles;
+            model.subscription_badge = parsed
+                .get("subscriptionBadge")
+                .and_then(|value| value.as_str())
+                .unwrap_or("")
+                .to_string();
             if model.view_only != "resource" {
                 model.ways_open = false;
             }

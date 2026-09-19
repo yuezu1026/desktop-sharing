@@ -161,6 +161,7 @@ export class SessionService {
     };
   }
 
+  /** 拒绝只结束这一次请求。扣款失败不在会话断开时推送。 */
   async rejectIncoming(token: string | null, remoteSessionId: string): Promise<{ ok: true } | Failure> {
     if (!isUuid(remoteSessionId)) return fail(400, "session_invalid", "会话不正确");
     const session = await this.accounts.authenticate(token);
@@ -296,6 +297,13 @@ export class SessionService {
       directive = "degraded";
       notice = lastNotice.response.notice;
     }
+    const charge = await this.pool.query<{ pending: boolean }>(
+      `SELECT (charge_failed_at IS NOT NULL
+               AND (entitlement_ends_at IS NULL OR entitlement_ends_at > $2)) AS pending
+         FROM subscriptions
+        WHERE account_id = $1`,
+      [session.accountId, now],
+    );
     return {
       ok: true,
       remainingBytes,
@@ -317,6 +325,7 @@ export class SessionService {
             { id: "purchase", title: "购买中继时长", paid: true },
           ]
         : [],
+      subscriptionBadge: charge.rows[0]?.pending ? "订阅待处理" : null,
     };
   }
 
