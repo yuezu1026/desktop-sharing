@@ -623,12 +623,14 @@ export class AccountService {
 
     return this.withTransaction(async (client) => {
       await this.lockAccount(client, session.accountId);
-      const live = await client.query(
+      const live = await client.query<{ host_device_id: string }>(
         `SELECT host_device_id FROM host_devices
           WHERE account_id = $1 AND hardware_fingerprint = $2 AND removed_at IS NULL`,
         [session.accountId, fingerprint],
       );
-      if (live.rowCount) return fail(409, "device_exists", "这台设备已在列表中");
+      if (live.rowCount) {
+        return fail(409, "device_exists", "这台设备已在列表中", { hostDeviceId: live.rows[0]?.host_device_id });
+      }
 
       const rebound = await client.query<{ unbound_at: Date }>(
         `SELECT unbound_at FROM host_devices
@@ -767,6 +769,58 @@ export class AccountService {
     );
     if (!updated.rowCount) return fail(404, "device_missing", "设备不存在");
     return { ok: true };
+  }
+
+  async publishCredentials(
+    token: string | null,
+    hostDeviceId: string,
+    deviceCode: string,
+    tempPasswordHash: string,
+  ): Promise<{ ok: true } | Failure> {
+    if (!/^\d{9}$/.test(deviceCode)) return fail(400, "device_code_invalid", "识别码必须是 9 位数字");
+    if (!/^[0-9a-f]{64}$/i.test(tempPasswordHash)) return fail(400, "password_hash_invalid", "临时密码哈希不正确");
+    const session = await this.requireSession(token);
+    if (isAuthFailure(session)) return session;
+    try {
+      const updated = await this.pool.query(
+        `UPDATE host_devices
+            SET device_code = $3, temp_password_hash = $4
+          WHERE host_device_id = $1 AND account_id = $2 AND removed_at IS NULL`,
+        [hostDeviceId, session.accountId, deviceCode, tempPasswordHash.toLowerCase()],
+      );
+      if (!updated.rowCount) return fail(404, "device_missing", "设备不存在");
+    } catch (error) {
+      if (isUniqueViolation(error)) return fail(409, "device_code_taken", "识别码已被占用");
+      throw error;
+    }
+    return { ok: true };
+  }
+
+  async setAcceptingConnections(token: string | null, hostDeviceId: string, accepting: boolean): Promise<{ ok: true } | Failure> {
+    const session = await this.requireSession(token);
+    if (isAuthFailure(session)) return session;
+    const updated = await this.pool.query(
+      `UPDATE host_devices SET accepting_connections = $3
+        WHERE host_device_id = $1 AND account_id = $2 AND removed_at IS NULL`,
+      [hostDeviceId, session.accountId, accepting],
+    );
+    if (!updated.rowCount) return fail(404, "device_missing", "设备不存在");
+    return { ok: true };
+  }
+
+  async verifyHostPassword(deviceCode: string, tempPassword: string): Promise<Success<{ hostDeviceId: string }> | Failure> {
+    if (!/^\d{9}$/.test(deviceCode) || tempPassword.length < 4) return fail(401, "host_access_invalid", "识别码或临时密码不正确");
+    const found = await this.pool.query<{ host_device_id: string; temp_password_hash: string | null; accepting_connections: boolean }>(
+      `SELECT host_device_id, temp_password_hash, accepting_connections
+         FROM host_devices
+        WHERE device_code = $1 AND removed_at IS NULL AND authorization_state = 'authorized'`,
+      [deviceCode],
+    );
+    const row = found.rows[0];
+    if (!row || !row.accepting_connections || !row.temp_password_hash || !secretsMatch(tempPassword, row.temp_password_hash)) {
+      return fail(401, "host_access_invalid", "识别码或临时密码不正确");
+    }
+    return { ok: true, hostDeviceId: row.host_device_id };
   }
 
   async listNotices(token: string | null): Promise<Success<{ notices: Array<Record<string, unknown>> }> | Failure> {

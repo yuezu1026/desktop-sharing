@@ -166,6 +166,18 @@ async function dispatch(
   if (deviceAction?.[1] && method === "PATCH" && !deviceAction[2]) {
     return service.renameHostDevice(token, deviceAction[1], text(body, "displayName") ?? "");
   }
+  if (deviceAction?.[1] && deviceAction[2] === "stop" && method === "POST") {
+    return sessions.stopControlled(token, deviceAction[1]);
+  }
+  if (deviceAction?.[1] && deviceAction[2] === "credentials" && method === "POST") {
+    return service.publishCredentials(token, deviceAction[1], text(body, "deviceCode") ?? "", text(body, "tempPasswordHash") ?? "");
+  }
+  if (deviceAction?.[1] && deviceAction[2] === "accepting" && method === "POST") {
+    if (typeof body.accepting !== "boolean") {
+      return { ok: false, status: 400, code: "accepting_invalid", message: "需要明确是否允许被连接" };
+    }
+    return service.setAcceptingConnections(token, deviceAction[1], body.accepting);
+  }
   if (deviceAction?.[1] && deviceAction[2] === "cancel-authorization" && method === "POST") {
     return service.cancelAuthorization(token, deviceAction[1]);
   }
@@ -184,12 +196,16 @@ async function dispatch(
   if (method === "POST" && notice?.[1]) return service.markNoticeRead(token, notice[1]);
 
   if (method === "GET" && pathname === "/v1/relay-balance") return sessions.balance(token);
+  if (method === "GET" && pathname === "/v1/remote-sessions/incoming") return sessions.listIncoming(token);
   if (method === "POST" && pathname === "/v1/remote-sessions") {
     return sessions.requestSession(token, text(body, "hostDeviceId") ?? "", text(body, "controllerFingerprint") ?? "");
   }
-  const remoteAction = pathname.match(/^\/v1\/remote-sessions\/([^/]+)\/(consent|direct)$/);
+  const remoteAction = pathname.match(/^\/v1\/remote-sessions\/([^/]+)\/(consent|direct|reject)$/);
   if (method === "POST" && remoteAction?.[1] && remoteAction[2] === "consent") {
     return sessions.consent(token, remoteAction[1], body.confirmedOnHost === true);
+  }
+  if (method === "POST" && remoteAction?.[1] && remoteAction[2] === "reject") {
+    return sessions.rejectIncoming(token, remoteAction[1]);
   }
   if (method === "POST" && remoteAction?.[1] && remoteAction[2] === "direct") {
     return sessions.reportDirect(token, remoteAction[1], {
@@ -197,6 +213,9 @@ async function dispatch(
       punchResult: text(body, "punchResult"),
       bitrateKbps: integer(body, "bitrateKbps"),
     });
+  }
+  if (method === "POST" && pathname === "/v1/host-access/verify") {
+    return service.verifyHostPassword(text(body, "deviceCode") ?? "", text(body, "tempPassword") ?? "");
   }
   if (method === "POST" && pathname === "/v1/relay/tickets/inspect") {
     return sessions.inspect(signalSecretHeader, text(body, "ticket") ?? "");

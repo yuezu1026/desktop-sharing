@@ -106,7 +106,7 @@ CREATE TABLE IF NOT EXISTS remote_sessions (
   direct_stopped_at timestamptz,
   punch_result text,
   reported_bitrate_kbps integer,
-  CONSTRAINT remote_sessions_state_check CHECK (state IN ('awaiting_host_consent', 'active', 'relay_stopped', 'closed'))
+  CONSTRAINT remote_sessions_state_check CHECK (state IN ('awaiting_host_consent', 'active', 'relay_stopped', 'closed', 'rejected'))
 );
 
 CREATE TABLE IF NOT EXISTS relay_tickets (
@@ -138,4 +138,15 @@ CREATE TABLE IF NOT EXISTS relay_heartbeats (
   response jsonb NOT NULL,
   created_at timestamptz NOT NULL
 );
+
+ALTER TABLE host_devices ADD COLUMN IF NOT EXISTS device_code text;
+ALTER TABLE host_devices ADD COLUMN IF NOT EXISTS temp_password_hash text;
+ALTER TABLE host_devices ADD COLUMN IF NOT EXISTS accepting_connections boolean NOT NULL DEFAULT true;
+ALTER TABLE remote_sessions ADD COLUMN IF NOT EXISTS controller_phone_mask text;
+ALTER TABLE remote_sessions DROP CONSTRAINT IF EXISTS remote_sessions_state_check;
+ALTER TABLE remote_sessions ADD CONSTRAINT remote_sessions_state_check
+  CHECK (state IN ('awaiting_host_consent', 'active', 'relay_stopped', 'closed', 'rejected'));
+CREATE UNIQUE INDEX IF NOT EXISTS host_devices_device_code
+  ON host_devices (device_code)
+  WHERE device_code IS NOT NULL AND removed_at IS NULL;
 `;

@@ -3,7 +3,7 @@ import { timingSafeEqual } from "node:crypto";
 import type { Pool, PoolClient } from "pg";
 import { AccountService, type Failure, type SessionContext } from "./account-service.js";
 import type { AppConfig } from "./config.js";
-import { createToken, hashSecret } from "./passwords.js";
+import { createToken, hashSecret, maskPhone } from "./passwords.js";
 
 const SHANGHAI_OFFSET_MS = 8 * 60 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -43,6 +43,7 @@ export class SessionService {
       await client.query("SELECT account_id FROM accounts WHERE account_id = $1 FOR UPDATE", [session.accountId]);
       const host = await this.loadHost(client, hostDeviceId);
       if (!host) return fail(404, "device_missing", "设备不存在");
+      if (!host.acceptingConnections) return fail(409, "host_not_accepting", "这台电脑现在不允许被连接");
       if (host.authorizationState !== "authorized") {
         return fail(409, "host_needs_confirmation", "被控端需要先在本机确认");
       }
@@ -50,14 +51,22 @@ export class SessionService {
       if (concurrency) return concurrency;
 
       const crossAccount = host.accountId !== session.accountId;
+      const prior = await client.query(
+        `SELECT remote_session_id FROM remote_sessions
+          WHERE host_device_id = $1 AND controller_fingerprint = $2
+            AND state IN ('active', 'relay_stopped')
+          LIMIT 1`,
+        [host.hostDeviceId, controllerFingerprint],
+      );
+      const needsHostConsent = crossAccount || !prior.rowCount;
       const remoteSessionId = randomUUID();
       const now = this.now();
-      const state = crossAccount ? "awaiting_host_consent" : "active";
+      const state = needsHostConsent ? "awaiting_host_consent" : "active";
       await client.query(
         `INSERT INTO remote_sessions
           (remote_session_id, account_id, host_device_id, host_account_id, controller_fingerprint,
-           host_fingerprint, state, cross_account, bitrate_kbps, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+           host_fingerprint, state, cross_account, bitrate_kbps, created_at, controller_phone_mask)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
         [
           remoteSessionId,
           session.accountId,
@@ -69,15 +78,16 @@ export class SessionService {
           crossAccount,
           this.config.freeBitrateKbps,
           now,
+          maskPhone(session.phone),
         ],
       );
-      await this.audit(client, session.accountId, "remote_session.request", { remoteSessionId, crossAccount });
-      if (crossAccount) {
+      await this.audit(client, session.accountId, "remote_session.request", { remoteSessionId, crossAccount, needsHostConsent });
+      if (needsHostConsent) {
         return {
           ok: true as const,
           remoteSessionId,
           state,
-          crossAccount: true,
+          crossAccount,
           relayAllowed: false,
           ticket: null,
           ticketExpiresAt: null,
@@ -86,7 +96,7 @@ export class SessionService {
           remainingBytes: await this.remainingBytes(client, session.accountId, now),
         };
       }
-      return this.openRelay(client, session, remoteSessionId, controllerFingerprint, now, false);
+      return this.openRelay(client, session, remoteSessionId, controllerFingerprint, now, crossAccount);
     });
   }
 
@@ -117,6 +127,82 @@ export class SessionService {
       await this.audit(client, session.accountId, "remote_session.consent", { remoteSessionId });
       return this.openRelay(client, { ...session, accountId: row.account_id }, remoteSessionId, row.controller_fingerprint, now, true);
     });
+  }
+
+  async listIncoming(token: string | null): Promise<Record<string, unknown> | Failure> {
+    const session = await this.accounts.authenticate(token);
+    if (isAuthFailure(session)) return session;
+    const rows = await this.pool.query<{
+      remote_session_id: string;
+      controller_phone_mask: string | null;
+      cross_account: boolean;
+      first_connection: boolean;
+    }>(
+      `SELECT remote_session_id, controller_phone_mask, cross_account,
+              NOT EXISTS (
+                SELECT 1 FROM remote_sessions older
+                 WHERE older.host_device_id = remote_sessions.host_device_id
+                   AND older.controller_fingerprint = remote_sessions.controller_fingerprint
+                   AND older.state IN ('active', 'relay_stopped')
+              ) AS first_connection
+         FROM remote_sessions
+        WHERE host_account_id = $1 AND state = 'awaiting_host_consent'
+        ORDER BY created_at`,
+      [session.accountId],
+    );
+    return {
+      ok: true,
+      incoming: rows.rows.map((row) => ({
+        remoteSessionId: row.remote_session_id,
+        controllerPhoneMask: row.controller_phone_mask,
+        crossAccount: row.cross_account,
+        firstConnection: row.first_connection,
+      })),
+    };
+  }
+
+  async rejectIncoming(token: string | null, remoteSessionId: string): Promise<{ ok: true } | Failure> {
+    if (!isUuid(remoteSessionId)) return fail(400, "session_invalid", "会话不正确");
+    const session = await this.accounts.authenticate(token);
+    if (isAuthFailure(session)) return session;
+    const updated = await this.pool.query(
+      `UPDATE remote_sessions
+          SET state = 'rejected', closed_at = $3
+        WHERE remote_session_id = $1 AND host_account_id = $2 AND state = 'awaiting_host_consent'`,
+      [remoteSessionId, session.accountId, this.now()],
+    );
+    if (!updated.rowCount) return fail(404, "session_missing", "会话不存在");
+    return { ok: true };
+  }
+
+  async stopControlled(token: string | null, hostDeviceId: string): Promise<{ ok: true } | Failure> {
+    if (!isUuid(hostDeviceId)) return fail(400, "host_device_invalid", "被控设备不正确");
+    const session = await this.accounts.authenticate(token);
+    if (isAuthFailure(session)) return session;
+    const now = this.now();
+    const device = await this.pool.query(
+      `UPDATE host_devices SET accepting_connections = false
+        WHERE host_device_id = $1 AND account_id = $2 AND removed_at IS NULL`,
+      [hostDeviceId, session.accountId],
+    );
+    if (!device.rowCount) return fail(404, "device_missing", "设备不存在");
+    await this.pool.query(
+      `UPDATE relay_tickets SET revoked_at = $2
+        WHERE revoked_at IS NULL AND remote_session_id IN (
+          SELECT remote_session_id FROM remote_sessions
+           WHERE host_device_id = $1 AND host_account_id = $3
+             AND state IN ('active', 'awaiting_host_consent', 'relay_stopped')
+        )`,
+      [hostDeviceId, now, session.accountId],
+    );
+    await this.pool.query(
+      `UPDATE remote_sessions
+          SET state = 'closed', closed_at = $3
+        WHERE host_device_id = $1 AND host_account_id = $2
+          AND state IN ('active', 'awaiting_host_consent', 'relay_stopped')`,
+      [hostDeviceId, session.accountId, now],
+    );
+    return { ok: true };
   }
 
   async reportDirect(
@@ -488,14 +574,15 @@ export class SessionService {
     };
   }
 
-  private async loadHost(client: PoolClient, hostDeviceId: string): Promise<{ hostDeviceId: string; accountId: string; fingerprint: string; authorizationState: string } | null> {
+  private async loadHost(client: PoolClient, hostDeviceId: string): Promise<{ hostDeviceId: string; accountId: string; fingerprint: string; authorizationState: string; acceptingConnections: boolean } | null> {
     const found = await client.query<{
       host_device_id: string;
       account_id: string;
       hardware_fingerprint: string;
       authorization_state: string;
+      accepting_connections: boolean;
     }>(
-      `SELECT host_device_id, account_id, hardware_fingerprint, authorization_state
+      `SELECT host_device_id, account_id, hardware_fingerprint, authorization_state, accepting_connections
          FROM host_devices
         WHERE host_device_id = $1 AND removed_at IS NULL`,
       [hostDeviceId],
@@ -507,6 +594,7 @@ export class SessionService {
       accountId: row.account_id,
       fingerprint: row.hardware_fingerprint,
       authorizationState: row.authorization_state,
+      acceptingConnections: row.accepting_connections,
     };
   }
 
