@@ -13,5 +13,5 @@ applyTo: ["**/.git-msg.txt"]
   `powershell -NoProfile -File docs\design\wireframe\tools\round-close.ps1 -MsgFile .\.git-msg.txt -Commit`
   （脚本：跑双门禁 → 校验 msg → `git add` → commit → 写 `.rounds/last.md`；暂存清单见脚本内 `$targets`。）
 - 🔴 **评审已完成且两个门禁都 EXIT=0 之后才 push** 到 `https://github.com/yuezu1026/desktop-sharing`。禁止 force push，不探测代理。门禁红了不要推。
-- 🔴 **无构建 / 无依赖**：禁 `npm install`、禁起服务、禁加 `package.json`。
+- 🔴 **仓库根禁止** `npm install`、禁止起服务、禁止根目录 `package.json`、禁止把 Playwright 装进仓库。`services/control-plane/package.json` 可以有。
 - 临时脚本写 `.mjs` 用 `node` 跑；**别用终端整文件改写源码**（GBK 会把中文写成 mojibake）。

@@ -1164,6 +1164,26 @@ if (harnessRun.status === 0) {
 }
 
 /* ============================================================
+   ⑬ 代码门禁（C22）—— 没有代码就通过；有了就必须编得过
+   ============================================================ */
+const CODE_TOOL = join(WIREFRAME_DIR, "tools", "code-check.mjs");
+const codeRun = spawnSync(process.execPath, [CODE_TOOL, "--check"], {
+  encoding: "utf8",
+});
+const codeOut = `${codeRun.stdout ?? ""}${codeRun.stderr ?? ""}`.trim();
+if (codeRun.status === 0) {
+  ok("C22", "tools/code-check.mjs", codeOut || "code check passed");
+} else {
+  fail(
+    "C22",
+    "tools/code-check.mjs",
+    "code check failed",
+    "no code, or cargo check and control-plane tsc pass",
+    codeOut.split("\n").slice(0, 20),
+  );
+}
+
+/* ============================================================
    ⑩ 落报告
    ============================================================ */
 const counts = { FAIL: 0, WARN: 0, PASS: 0 };

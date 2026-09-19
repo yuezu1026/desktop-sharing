@@ -186,7 +186,7 @@ Write-Host ('wrote : ' + $snapshotPath)
 Write-Host ('changed paths : ' + $changed.Count)
 
 Write-Step "git add"
-$targets = @('AGENTS.md', 'docs', '.github', '.cursor', '.editorconfig', '.prettierignore', '.vscode', '.gitignore', '.rounds') |
+$targets = @('AGENTS.md', 'docs', '.github', '.cursor', '.editorconfig', '.prettierignore', '.vscode', '.gitignore', '.rounds', 'crates', 'services', 'apps', 'deploy') |
   Where-Object { Test-Path -LiteralPath (Join-Path $root $_) }
 Push-Location $root
 try {

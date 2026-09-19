@@ -100,6 +100,15 @@ export const ROUTES = [
     read: [{ rel: "docs/design/high/README.md" }],
     deny: ["docs/design/high/评审.md unless reviewing"],
   },
+  {
+    id: "code",
+    keys: ["code", "dev", "开发"],
+    read: [
+      { rel: "docs/plans/技术方案.md", section: "1" },
+      { rel: "docs/plans/MVP.md" },
+    ],
+    deny: ["whole requirements doc", "docs/archive", "do not scaffold every app at once"],
+  },
 ];
 
 const HEADING_NUM = /^(?:§\s*)?(\d+(?:\.\d+)*)(?!\d)(?!\.\d)/;
