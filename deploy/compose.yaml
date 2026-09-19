@@ -44,5 +44,17 @@ services:
       - "8081:8081"
     depends_on:
       - control-plane
+  relay:
+    build:
+      context: ../services/relay
+    environment:
+      CONTROL_PLANE_URL: http://control-plane:8080
+      RELAY_SHARED_SECRET: local-relay
+      RELAY_PORT: "443"
+      HEARTBEAT_SECONDS: "30"
+    ports:
+      - "443:443"
+    depends_on:
+      - control-plane
 volumes:
   desktop-pg:
