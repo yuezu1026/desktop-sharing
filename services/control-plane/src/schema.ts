@@ -14,8 +14,11 @@ CREATE TABLE IF NOT EXISTS accounts (
   deletion_requested_at timestamptz,
   created_at timestamptz NOT NULL,
   updated_at timestamptz NOT NULL,
+  connection_disclosure_at timestamptz,
   CONSTRAINT accounts_status_check CHECK (status IN ('active', 'locked', 'pending_deletion', 'deleted'))
 );
+
+ALTER TABLE accounts ADD COLUMN IF NOT EXISTS connection_disclosure_at timestamptz;
 
 CREATE TABLE IF NOT EXISTS login_sessions (
   login_session_id uuid PRIMARY KEY,

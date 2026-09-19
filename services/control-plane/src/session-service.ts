@@ -38,6 +38,13 @@ export class SessionService {
     }
     const session = await this.accounts.authenticate(token);
     if (isAuthFailure(session)) return session;
+    const disclosed = await this.pool.query<{ connection_disclosure_at: Date | null }>(
+      "SELECT connection_disclosure_at FROM accounts WHERE account_id = $1",
+      [session.accountId],
+    );
+    if (!disclosed.rows[0]?.connection_disclosure_at) {
+      return fail(409, "disclosure_required", "连接前需要先确认隐私说明", connectionDisclosure());
+    }
 
     return this.withTransaction(async (client) => {
       await client.query("SELECT account_id FROM accounts WHERE account_id = $1 FOR UPDATE", [session.accountId]);
@@ -159,6 +166,34 @@ export class SessionService {
         firstConnection: row.first_connection,
       })),
     };
+  }
+
+  /** 首次连接前只确认一次。文案在服务端，避免客户端写成「端到端加密」或「看不到任何数据」。 */
+  async connectionDisclosure(token: string | null): Promise<Record<string, unknown> | Failure> {
+    const session = await this.accounts.authenticate(token);
+    if (isAuthFailure(session)) return session;
+    const found = await this.pool.query<{ connection_disclosure_at: Date | null }>(
+      "SELECT connection_disclosure_at FROM accounts WHERE account_id = $1",
+      [session.accountId],
+    );
+    return {
+      ok: true,
+      acknowledged: Boolean(found.rows[0]?.connection_disclosure_at),
+      ...connectionDisclosure(),
+    };
+  }
+
+  async acknowledgeDisclosure(token: string | null): Promise<Record<string, unknown> | Failure> {
+    const session = await this.accounts.authenticate(token);
+    if (isAuthFailure(session)) return session;
+    const now = this.now();
+    await this.pool.query(
+      `UPDATE accounts
+          SET connection_disclosure_at = COALESCE(connection_disclosure_at, $2), updated_at = $2
+        WHERE account_id = $1`,
+      [session.accountId, now],
+    );
+    return this.connectionDisclosure(token);
   }
 
   /** 拒绝只结束这一次请求。扣款失败不在会话断开时推送。 */
@@ -754,6 +789,14 @@ type LoadedTicket = {
   state: string;
   bitrateKbps: number;
 };
+
+function connectionDisclosure(): Record<string, string> {
+  return {
+    title: "连接前，有两件事需要你知道",
+    relay: "走中继时，画面数据会经过我们的服务器转发。转发全程加密传输，但我们可以在转发环节看到流量大小，因此中继连接不属于端到端加密。",
+    direct: "走直连时，我们只记录会话起止时间，不记录流量大小，不采集画面，也不据此计费。",
+  };
+}
 
 function shanghaiMonth(now: Date): { start: Date; end: Date } {
   const shifted = new Date(now.getTime() + SHANGHAI_OFFSET_MS);

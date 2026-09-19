@@ -232,6 +232,8 @@ async function dispatch(
   if (method === "POST" && orderProvider?.[1]) {
     return orders.applyProviderResult(orderSecretHeader, orderProvider[1], text(body, "state") ?? "");
   }
+  if (method === "GET" && pathname === "/v1/connection-disclosure") return sessions.connectionDisclosure(token);
+  if (method === "POST" && pathname === "/v1/connection-disclosure") return sessions.acknowledgeDisclosure(token);
   if (method === "GET" && pathname === "/v1/remote-sessions/incoming") return sessions.listIncoming(token);
   if (method === "POST" && pathname === "/v1/remote-sessions") {
     return sessions.requestSession(token, text(body, "hostDeviceId") ?? "", text(body, "controllerFingerprint") ?? "");
