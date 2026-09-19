@@ -1,8 +1,8 @@
 {
   "AGENTS.md": {
     "lines": 68,
-    "tokens": 1462,
-    "hash": "d2de23653256cb84"
+    "tokens": 1486,
+    "hash": "52a42e9e26fa8016"
   },
   "docs/成本测算表.md": {
     "lines": 772,
@@ -80,18 +80,53 @@
     "hash": "43a55215e0b52a7c"
   },
   "docs/design/high/评审.md": {
-    "lines": 123,
-    "tokens": 2836,
-    "hash": "1406d596b3cb626f"
+    "lines": 125,
+    "tokens": 2901,
+    "hash": "3af4e8b6f429c40c"
   },
   "docs/design/high/README.md": {
-    "lines": 49,
-    "tokens": 837,
-    "hash": "14993c3c28f3a4fa"
+    "lines": 50,
+    "tokens": 947,
+    "hash": "1613882f632fda52"
   },
   "docs/design/wireframe/README.md": {
     "lines": 1119,
-    "tokens": 38603,
-    "hash": "9a83a96dd55dc6f4"
+    "tokens": 38636,
+    "hash": "f0b1fbb84d122e8a"
+  },
+  "docs/plans/技术方案.md": {
+    "lines": 160,
+    "tokens": 4433,
+    "hash": "03cbd7b9053fefae"
+  },
+  "docs/plans/MVP.md": {
+    "lines": 47,
+    "tokens": 1835,
+    "hash": "db6983e903b05838"
+  },
+  "docs/plans/README.md": {
+    "lines": 44,
+    "tokens": 793,
+    "hash": "aff9349dcd432336"
+  },
+  "docs/plans/S1.md": {
+    "lines": 49,
+    "tokens": 971,
+    "hash": "d6aa3bb1381ab4de"
+  },
+  "docs/plans/S2.md": {
+    "lines": 45,
+    "tokens": 1031,
+    "hash": "2fb6d2dc7764819c"
+  },
+  "docs/plans/S3.md": {
+    "lines": 24,
+    "tokens": 332,
+    "hash": "8aeca074c25582fd"
+  },
+  "docs/plans/S4.md": {
+    "lines": 16,
+    "tokens": 229,
+    "hash": "2f7e272f687cc3ff"
   }
 }

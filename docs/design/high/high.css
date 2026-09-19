@@ -908,6 +908,7 @@ h2 {
 .phone-top {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   padding: 8px 14px;
   font-size: 13px;

@@ -1144,6 +1144,26 @@ if (!instrFiles.length) {
 }
 
 /* ============================================================
+   ⑫ 阅读路由没漂（C21）—— 防「省 token 的表自己指到不存在的节」
+   ============================================================ */
+const HARNESS_TOOL = join(WIREFRAME_DIR, "tools", "harness-route.mjs");
+const harnessRun = spawnSync(process.execPath, [HARNESS_TOOL, "--check"], {
+  encoding: "utf8",
+});
+const harnessOut = `${harnessRun.stdout ?? ""}${harnessRun.stderr ?? ""}`.trim();
+if (harnessRun.status === 0) {
+  ok("C21", "tools/harness-route.mjs", harnessOut || "routes resolve");
+} else {
+  fail(
+    "C21",
+    "tools/harness-route.mjs",
+    "reading routes point at a missing file or section",
+    "every route target exists",
+    harnessOut.split("\n").slice(0, 20),
+  );
+}
+
+/* ============================================================
    ⑩ 落报告
    ============================================================ */
 const counts = { FAIL: 0, WARN: 0, PASS: 0 };

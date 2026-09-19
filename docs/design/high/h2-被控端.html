@@ -54,9 +54,10 @@
                 <p class="note">每次连接后自动更换；也可设为固定密码（不推荐）。</p>
               </div>
               <div class="switch-row">
-                <span class="pill pill-on">允许被连接</span>
-                <span class="spacer"></span>
-                <span class="btn">不允许</span>
+                <button type="button" class="switch is-on" aria-pressed="true">
+                  <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
+                  允许被连接
+                </button>
               </div>
             </section>
             <div class="stack">
@@ -137,7 +138,7 @@
         </div>
         <p class="note">
           「有人连上时换成对方是谁，并给出一键断开、不再二次确认」是实现说明，不进界面。
-          「首次连接」用中性描边，不用中继的琥珀色。焦点停在「拒绝」上，回车不能当成同意。
+          「首次连接」表示这个账号从未连过本机，用中性描边，不用中继的琥珀色。焦点停在「拒绝」上，回车不能当成同意。
         </p>
       </section>
     </main>

@@ -1098,7 +1098,7 @@ powershell -NoProfile -File docs\design\wireframe\tools\round-close.ps1 -MsgFile
 ```
 
 - 参数：`-MsgFile`（必填，UTF-8 提交信息文件）· `-Commit`（开关，缺省 = DRY RUN）· `-SkipGates`（仅在确认门禁已单独跑过时使用）
-- 脚本**纯 ASCII**、**永不 push**、提交前强制校验 msg 文件前 3 字节 ≠ `EF BB BF`（BOM 会让 GitHub 标题出现隐藏字符）
+- 脚本**纯 ASCII**、门禁通过并提交后**推到** `https://github.com/yuezu1026/desktop-sharing`（禁止 force push、不探测代理）、提交前强制校验 msg 文件前 3 字节 ≠ `EF BB BF`（BOM 会让 GitHub 标题出现隐藏字符）
 - 提交信息风格：**中文**、简短概括（如「防漂移工具链：计数 / 画布台账 / 引用 / 红线四类门禁」）
 - 🔁 脚本还会把本轮快照写到 **`.rounds/last.md`**（约 300 tok：提交信息 / 门禁退出码 / 真值 / 改动文件清单）⇒ **下一次开新会话时先读它**，省掉「重新侦察上一轮干了什么」的开销。
 

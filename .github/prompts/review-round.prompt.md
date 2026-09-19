@@ -10,7 +10,7 @@ agent: "agent"
    - 某帧：`node tools/frame.mjs <帧id> --brief`
    - 某节：`node tools/doc-outline.mjs --section <文档文件名> <x.y>`
    - 找位置：`docs/OUTLINE.md`（L1 精简档）；要行号加 `--doc <路径>`，要完整档加 `--full`。
-   - 决策落点：`docs/IMPACT.md`。
+   - 决策落点：`node tools/harness-route.mjs D25`（把编号换成这一轮的）。不要通读 `docs/IMPACT.md`。
 3. **出报告**：问题 → 落点（`文件 §x.y`，**禁 `L###`**）→ 处置建议（登记 / 补帧 / 改稿）。
 4. **登记**：结论写入 `docs/需求规划评审意见.md`（🔴 活跃待办 = §10）。新决策占号 → 走 `/add-decision`。
 5. **收尾**：`/round-close`。

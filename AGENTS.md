@@ -8,7 +8,7 @@
 - **个人消费级远程桌面**（对标 ToDesk / 向日葵）· 当前 = **P0 低保真线框 + 需求定稿**。
 - 产物 = `docs/**/*.md` 规划文档 + `docs/design/wireframe/**` 静态 HTML 线框（7 页 + 索引 + 1 原型 · **83 帧**）。
 - **无构建 / 无依赖 / 无 remote**：纯静态 HTML+CSS+Markdown。别 `npm install`，别起服务。
-- 分支 `master`：**只 commit，永不 push，永不探测代理**。
+- 分支 `master`：评审和两道门禁都通过后，推到 `https://github.com/yuezu1026/desktop-sharing`。不探测代理，禁止 force push。
 
 ## 1. 铁律（违反即返工）
 

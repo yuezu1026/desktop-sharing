@@ -11,7 +11,7 @@ applyTo: ["docs/**/*.md", "**/AGENTS.md"]
 - **改完必跑**（cwd = `docs/design/wireframe`，脚本在 `tools/` 下）：
   - `node tools/doc-outline.mjs` → 重生 `docs/OUTLINE.md`（`C11` 校验过期）
   - `node tools/impact-index.mjs` → 重生 `docs/IMPACT.md`（`C12` 校验过期）
-- **改任何已拍板 `D##` 的落点前，先读 `docs/IMPACT.md`** 查影响面（决策 → 文件:行号），别靠 grep 现找。
+- 🔴 **改之前先路由，不要通读**（cwd = `docs/design/wireframe`）：`node tools/harness-route.mjs <topic|Dxx>`，要正文再加 `--text`。不要打开归档，不要通读需求规划 / 成本测算表 / IMPACT。决策只看它抽出的那一节。
 - 🔴 **只改目标段**：不要整文件重写（必带格式器重排漂移 + token 浪费）。
 - **UI 面术语**：规范词 = **仅查看**；禁「只读（模式义）/ 观察模式 / 纯观察模式 / 仅观看」⇒ `C16`。
 - 数字/台账漂移可一键回写：`node tools/wireframe-consistency.mjs --fix`

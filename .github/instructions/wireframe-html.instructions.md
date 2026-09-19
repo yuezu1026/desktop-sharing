@@ -13,4 +13,4 @@ cwd **必须**是 `docs/design/wireframe`（脚本在 `tools/` 下）。
 - 🔴 **授权项禁用 `.btn.solid`**（授权动作 vs 安全出口的权重差是红线）⇒ `C19` family。
 - 术语：规范词 = **仅查看**；禁「只读（模式义）/ 观察模式 / 纯观察模式 / 仅观看」⇒ `C16`。
 - 收尾跑 `node tools/wireframe-consistency.mjs`（`C2` 计数 / `C5` 台账 / `C6-b` 锚点 / `C17` 危险动作台账）。
-- 新增帧要同步 **4 处**：本页 HTML / `README.md` §6.2 台账 / `index.html` 帧清单 / 计数句 ⇒ 走 `/add-frame`。
+- 改规格前先 `node tools/harness-route.mjs wire`，不要通读 README。新增帧要同步 **4 处**：本页 HTML / `README.md` §6.2 台账 / `index.html` 帧清单 / 计数句 ⇒ 走 `/add-frame`。

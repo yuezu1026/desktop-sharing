@@ -14,6 +14,7 @@
       <a href="h2-被控端.html">被控端</a>
       <a href="h4-计费.html">计费</a>
       <a href="h6-移动端.html" aria-current="page">移动端</a>
+      <a href="h-红线组件.html">红线组件</a>
       <a href="../wireframe/w6-移动端手持.html">对照低保真 W6 / W7</a>
     </nav>
 
@@ -51,10 +52,10 @@
                 </div>
               </div>
               <div class="modes">
-                <span class="pill pill-on">触控板模式</span>
-                <span class="pill">直接触摸</span>
-                <span class="pill">焦点跟随</span>
-                <span class="pill">放大镜</span>
+                <button type="button" class="mode-btn is-on" aria-pressed="true">触控板模式</button>
+                <button type="button" class="mode-btn" aria-pressed="false">直接触摸</button>
+                <button type="button" class="mode-btn" aria-pressed="false">焦点跟随</button>
+                <button type="button" class="mode-btn" aria-pressed="false">放大镜</button>
               </div>
               <div class="gesture">
                 <b>当前手势</b>
@@ -64,7 +65,7 @@
                 <span class="btn">键盘</span>
                 <span class="btn">快捷键</span>
                 <span class="btn">全屏</span>
-                <span class="btn">断开</span>
+                <span class="btn btn-exit">断开</span>
               </div>
               <div class="gesture-bar"><i></i></div>
             </div>
@@ -83,7 +84,10 @@
               <div class="phone-top">
                 <b>远程桌面 · 本机</b>
                 <span class="spacer"></span>
-                <span class="btn btn-primary" style="min-height: 36px">允许被连接</span>
+                <button type="button" class="switch is-on" aria-pressed="true">
+                  <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
+                  允许被连接
+                </button>
               </div>
               <div style="padding: 0 12px" class="stack">
                 <section class="panel">
@@ -110,7 +114,12 @@
                   <b>授权自检</b>
                   <div class="check-row"><span>屏幕录制</span><span class="spacer"></span><span class="pill pill-on">正常</span></div>
                   <div class="check-row"><span>无障碍服务</span><span class="spacer"></span><span class="pill pill-on">正常</span></div>
-                  <div class="check-row"><span>电池与自启白名单</span><span class="spacer"></span><span class="pill">未设置</span></div>
+                  <button type="button" class="check-hit">
+                    <span>电池与自启白名单</span>
+                    <span class="spacer"></span>
+                    <span class="pill">未设置</span>
+                  </button>
+                  <p class="hint-inline">不设置仍可被连接，只是息屏后可能被系统停掉。</p>
                   <div class="check-row"><span>通知权限</span><span class="spacer"></span><span class="pill pill-on">正常</span></div>
                 </section>
                 <section class="fraud">
@@ -129,7 +138,8 @@
             </div>
           </div>
           <p class="note">
-            「未设置」白名单是降级说明，不是阻断，更不是付费入口。前台服务通知里的断开不在这一屏，见低保真 W7-03。
+            「允许被连接」是开关，表示当前已打开，不是再点一次的主按钮。模式切换命中高度 44px。
+            白名单未设置仍可用，行内写了后果，没有付费入口。
           </p>
         </section>
       </div>

@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>高保真 · 红线组件</title>
+    <link rel="stylesheet" href="tokens.css" />
+    <link rel="stylesheet" href="high.css" />
+  </head>
+  <body>
+    <nav class="site-nav">
+      <a href="index.html">视觉系统</a>
+      <a href="h1-控制端.html">控制端</a>
+      <a href="h2-被控端.html">被控端</a>
+      <a href="h4-计费.html">计费</a>
+      <a href="h6-移动端.html">移动端</a>
+      <a href="h-红线组件.html" aria-current="page">红线组件</a>
+      <a href="../wireframe/index.html">返回低保真</a>
+    </nav>
+
+    <main class="wrap">
+      <p class="kicker">给前端抄的图案，不是新流程</p>
+      <h1>红线要有样子，不能只给颜色。</h1>
+      <p class="lede">
+        这些屏低保真已经定了文案和顺序。这里只规定它们长什么样。
+        分钟、倒计时、等待时长写成 xx，由服务端下发。画布里没有购买按钮，除非那一屏明确把购买放在最后。
+      </p>
+
+      <section class="shot">
+        <div class="meta"><span class="chip-id">W1-05</span></div>
+        <h2>降级四态</h2>
+        <p class="note">横幅贴在画面上方，不盖住操作，可以收起。四态都没有购买。</p>
+        <div class="meters">
+          <article class="window">
+            <div class="chrome"><span class="title">态 A · 预警</span></div>
+            <div class="banner">
+              <div>
+                <b>免费中继时长剩余约 xx 分钟</b>
+                <div>用尽后将自动尝试直连</div>
+                <div class="hint-inline">按当前画质估算 · 切换画质会变</div>
+              </div>
+              <span class="spacer"></span>
+              <span class="btn">了解</span>
+            </div>
+          </article>
+          <article class="window">
+            <div class="chrome"><span class="title">态 B · 已切直连</span></div>
+            <div class="banner banner-direct">
+              <b>中继已暂停 · 已切换为直连</b>
+              <span class="spacer"></span>
+              <span class="pill pill-on">直连</span>
+            </div>
+          </article>
+          <article class="window">
+            <div class="chrome"><span class="title">态 C · 画质已降低</span></div>
+            <div class="banner">
+              <div>
+                <b>画质已降低：1080p/30 → 720p/30</b>
+                <div>中继时长已用尽。改走直连后，当前网络带宽不足，已下调画质以保证可操作。</div>
+              </div>
+            </div>
+            <div class="tools">
+              <span class="btn">尝试恢复画质</span>
+            </div>
+          </article>
+          <article class="window">
+            <div class="chrome"><span class="title">态 D · 结束前</span></div>
+            <div class="banner">
+              <div>
+                <b>本次会话将在 xx 秒后结束</b>
+                <div>之后画面停止刷新，保留最后一帧。</div>
+              </div>
+            </div>
+            <div class="tools">
+              <span class="btn btn-ink">继续以「仅查看」保持</span>
+              <span class="btn btn-exit">立即结束</span>
+            </div>
+          </article>
+        </div>
+        <p class="note">
+          态 C 必须写明降到了哪一档，不能只说「画质已调整」。态 D 不能写「画面仍会更新」。档位和秒数是示例句，具体值以后端下发为准。
+        </p>
+      </section>
+
+      <section class="shot">
+        <div class="meta"><span class="chip-id">W1-06</span><span class="chip-id">W1-06b</span></div>
+        <h2>两种仅查看</h2>
+        <div class="meters">
+          <article class="window">
+            <div class="chrome"><span class="title">资源式 · 画面已经停住</span></div>
+            <div class="mask">
+              <div class="frozen" aria-hidden="true"></div>
+              <div class="mask-card">
+                <b>画面已停在最后一帧，暂时无法继续</b>
+                <p>原因：免费中继时长已用尽，且当前网络暂时无法直连。</p>
+                <div class="card-actions" style="justify-content: center; margin-top: 12px">
+                  <span class="btn btn-primary">再试一次直连</span>
+                  <span class="btn">查看原因</span>
+                </div>
+              </div>
+            </div>
+          </article>
+          <article class="window">
+            <div class="chrome"><span class="title">权限式 · 画面还在动</span></div>
+            <div class="fact fact-relay">
+              <span class="dot dot-amber" aria-hidden="true"></span>
+              <b>本次连接：中继</b>
+              <span>在消耗免费中继时长</span>
+              <span class="spacer"></span>
+              <span class="pill">仅查看</span>
+            </div>
+            <div class="mask">
+              <div class="live" aria-hidden="true"></div>
+              <div class="mask-card">
+                <b>对方收回了操作权</b>
+                <p>画面仍在实时更新，只是你的键盘和鼠标不再送到对方电脑。</p>
+                <div class="card-actions" style="justify-content: center; margin-top: 12px">
+                  <span class="btn btn-ink">请求恢复控制</span>
+                  <span class="btn btn-exit">断开</span>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+        <p class="note">
+          两张不能合成一张。资源式没有「请求恢复控制」，因为没有通道。权限式没有「再试一次直连」。两张都没有金额。
+        </p>
+      </section>
+
+      <section class="shot">
+        <div class="meta"><span class="chip-id">W1-11</span></div>
+        <h2>全屏静止态</h2>
+        <div class="window">
+          <div class="stage" style="height: 360px">
+            <div class="remote">
+              <span class="corner-badge"><span class="dot" aria-hidden="true"></span>直连</span>
+              <div class="task"><span>开始</span><span class="spacer"></span><span>14:28</span></div>
+            </div>
+          </div>
+        </div>
+        <p class="note">
+          这是工具条已经收起的样子。顶边悬停或快捷键可以唤出「退出全屏」，唤出之后右上角的「直连」或「中继」仍然在。中继时角标改成琥珀，文案改成「中继」。
+        </p>
+      </section>
+
+      <section class="shot">
+        <div class="meta"><span class="chip-id">W4-10c</span></div>
+        <h2>支付确认中</h2>
+        <div class="window">
+          <div class="chrome"><span class="title">支付结果 · 正在确认</span></div>
+          <div class="guide">
+            <div class="panel">
+              <div class="split">
+                <b style="font-size: 20px">正在确认支付结果</b>
+                <span class="pill pill-fact">请勿重复支付</span>
+              </div>
+              <p class="hint-inline">订单号已锁定。重复下单会被拦住。已等待 xx:xx。这是正常的中间状态，不是出错。</p>
+            </div>
+            <div class="card-actions">
+              <span class="btn btn-ink">我已付款 · 继续等待</span>
+              <span class="btn">返回设备列表</span>
+            </div>
+          </div>
+        </div>
+        <p class="note">
+          不用进度条。不写「支付失败」，不放「重新支付」。iOS 同一版式，标题改成「正在与 App Store 确认」。结果出来之前，权益还没到，也不要推荐别的商品。
+        </p>
+      </section>
+
+      <section class="shot">
+        <div class="meta"><span class="chip-id">W1-14</span></div>
+        <h2>用尽之后的四条路</h2>
+        <div class="window">
+          <div class="chrome"><span class="title">免费中继时长已用完</span></div>
+          <div class="guide">
+            <div>
+              <b>还有三条路是免费的，只有最后一条要钱</b>
+              <p class="hint-inline">中继只是其中一种通道。先看你现在要做的事，再决定要不要付钱。</p>
+            </div>
+            <div class="panel" style="padding: 0">
+              <div class="path">
+                <span class="pill pill-on">免费</span>
+                <span><b>直连</b><br /><span class="hint-inline">不限时长。双方网络能通时走这条，不经过服务器。</span></span>
+                <span class="spacer"></span>
+                <span class="btn btn-primary">重试直连</span>
+              </div>
+              <div class="path">
+                <span class="pill pill-on">免费</span>
+                <span><b>局域网直连</b><br /><span class="hint-inline">同一 Wi-Fi 或同一办公室，不经互联网。</span></span>
+                <span class="spacer"></span>
+                <span class="btn">查看如何同网</span>
+              </div>
+              <div class="path">
+                <span class="pill pill-on">免费</span>
+                <span><b>让对方来连你</b><br /><span class="hint-inline">他看你的屏幕不消耗你的时长。手机被控也免费。</span></span>
+                <span class="spacer"></span>
+                <span class="btn">复制识别码给他</span>
+              </div>
+              <div class="path">
+                <span class="pill">付费</span>
+                <span><b>购买中继时长</b><br /><span class="hint-inline">只有跨网络、你要控制对方、又不在同一网络时才需要。</span></span>
+                <span class="spacer"></span>
+                <span class="btn">查看中继时长套餐</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="note">
+          这页从「还有什么办法」点进来，不是断线瞬间弹出来的。三条免费路必须在购买前面。购买按钮不用青绿，也不能排到第一。
+        </p>
+      </section>
+    </main>
+  </body>
+</html>

@@ -19,6 +19,7 @@
            chat session; see "progressive disclosure" in AGENTS.md)
          - git add <AGENTS.md docs .github .editorconfig .prettierignore .vscode .gitignore .rounds>
          - git commit -F <msgfile>
+         - git push -u origin HEAD  (desktop-sharing only; never --force)
          - print the short hash
 
   USAGE
@@ -30,7 +31,8 @@
 
   NOTES
     - Exit code: 0 = all good, 1 = a gate failed or git failed.
-    - This repo has NO remote: the script never pushes and never probes a proxy.
+    - After a successful commit, push HEAD to origin
+      https://github.com/yuezu1026/desktop-sharing (never --force, never probe a proxy).
     - The message file is NOT deleted, so you can inspect what was committed; it is
       listed in the root .gitignore so it can never be staged by accident.
 #>
@@ -184,7 +186,7 @@ Write-Host ('wrote : ' + $snapshotPath)
 Write-Host ('changed paths : ' + $changed.Count)
 
 Write-Step "git add"
-$targets = @('AGENTS.md', 'docs', '.github', '.editorconfig', '.prettierignore', '.vscode', '.gitignore', '.rounds') |
+$targets = @('AGENTS.md', 'docs', '.github', '.cursor', '.editorconfig', '.prettierignore', '.vscode', '.gitignore', '.rounds') |
   Where-Object { Test-Path -LiteralPath (Join-Path $root $_) }
 Push-Location $root
 try {
@@ -202,7 +204,25 @@ try {
   $hash = (& git rev-parse --short HEAD)
   Write-Host ""
   Write-Host ("committed : " + $hash)
-  Write-Host "no remote configured -> nothing to push."
+
+  Write-Step "git push"
+  $originUrl = "https://github.com/yuezu1026/desktop-sharing.git"
+  $hasOrigin = $false
+  & git remote get-url origin 2>$null | Out-Null
+  if ($LASTEXITCODE -eq 0) { $hasOrigin = $true }
+  if (-not $hasOrigin) {
+    & git remote add origin $originUrl
+    if ($LASTEXITCODE -ne 0) { Write-Host "BLOCKED: git remote add failed"; exit 1 }
+  }
+  $currentUrl = (& git remote get-url origin).Trim()
+  if ($currentUrl -ne $originUrl -and $currentUrl -ne "https://github.com/yuezu1026/desktop-sharing") {
+    Write-Host "BLOCKED: origin is not the desktop-sharing repo"
+    Write-Host $currentUrl
+    exit 1
+  }
+  & git push -u origin HEAD 2>&1 | ForEach-Object { Write-Host $_ }
+  if ($LASTEXITCODE -ne 0) { Write-Host "BLOCKED: git push failed"; exit 1 }
+  Write-Host "pushed : origin HEAD"
 }
 finally {
   Pop-Location
