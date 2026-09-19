@@ -6,7 +6,7 @@
 > **范围**：`docs/**` 的 `.md` 与 `design/wireframe/**` 的 `.html`；🔴 不含 `archive/`（历史快照，不是落点）与 `tools/`（生成物）。
 > **过期判定**：门禁 `C12`（`wireframe-consistency.mjs`）拿本文件与重新扫描结果逐字对拍 ⇒ 任何文档增删行都会让它 FAIL 提示重跑。
 
-**共 64 个决策 / 688 处落点 / 17 个文件。**
+**共 64 个决策 / 688 处落点 / 24 个文件。**
 
 ---
 
@@ -268,7 +268,7 @@
 
 ### `D22` · 33 处 / 6 个文件
 - `design/wireframe/README.md`: 36, 55, 72, 168, 171, 307, 361, 580, 754, 873
-- `design/wireframe/index.html`: 950
+- `design/wireframe/index.html`: 951
 - `design/wireframe/w1-控制端-连接与额度.html`: 42, 268, 440, 1046, 1105, 1337, 1344
 - `design/wireframe/w6-移动端手持.html`: 35, 220, 281, 926, 931, 940, 1071, 1081, 1092
 - `商业化与计费设计.md`: 662
@@ -294,7 +294,7 @@
 
 ### `D23` · 32 处 / 6 个文件
 - `design/wireframe/README.md`: 37, 55, 112, 113, 114, 115, 344, 347, 348, 583, 587, 596, 758
-- `design/wireframe/index.html`: 185, 188, 953
+- `design/wireframe/index.html`: 186, 189, 954
 - `design/wireframe/w3-账号与设备管理.html`: 30, 685, 895
 - `design/wireframe/w5-合规实名与运营台.html`: 927, 1053, 1074
 - `账号与管理系统设计.md`: 79, 145, 171, 173, 180, 462, 504, 508
@@ -315,14 +315,14 @@
 
 ### `D24` · 25 处 / 5 个文件
 - `design/wireframe/README.md`: 38, 55, 152, 153, 278, 350, 351, 352, 353, 584, 762
-- `design/wireframe/index.html`: 192, 194, 957
+- `design/wireframe/index.html`: 193, 195, 958
 - `design/wireframe/w5-合规实名与运营台.html`: 830, 953, 1052
 - `账号与管理系统设计.md`: 373, 398, 483, 512, 516
 - `需求规划-v2-P0P3重构.md`: 124, 755, 1092
 
 ### `D25` · 39 处 / 6 个文件
 - `design/wireframe/README.md`: 39, 55, 131, 132, 133, 134, 135, 290, 588, 589, 590, 683, 766
-- `design/wireframe/index.html`: 200, 204, 933, 961
+- `design/wireframe/index.html`: 201, 205, 934, 962
 - `design/wireframe/w4-计费与个人中心.html`: 28, 953, 968, 1537, 1649, 1781
 - `商业化与计费设计.md`: 596, 627, 628, 629, 630, 663, 684, 705, 709
 - `账号与管理系统设计.md`: 279, 484, 518, 522
@@ -330,12 +330,12 @@
 
 ### `D26` · 24 处 / 3 个文件
 - `design/wireframe/README.md`: 40, 55, 73, 89, 90, 91, 92, 93, 94, 95, 96, 100, 307, 363, 365, 366, 683, 770, 810
-- `design/wireframe/index.html`: 210, 214, 968
+- `design/wireframe/index.html`: 211, 215, 969
 - `需求规划-v2-P0P3重构.md`: 447, 478
 
 ### `D27` · 45 处 / 8 个文件
 - `design/wireframe/README.md`: 41, 54, 55, 74, 75, 97, 98, 116, 117, 132, 135, 421, 423, 833, 844, 847, 848, 849, 853, 884, 889, 900
-- `design/wireframe/index.html`: 171, 220
+- `design/wireframe/index.html`: 172, 221
 - `design/wireframe/w1-控制端-连接与额度.html`: 1634
 - `design/wireframe/w2-被控端.html`: 244, 257, 269, 855
 - `design/wireframe/w3-账号与设备管理.html`: 32, 675, 1000, 1139, 1283
@@ -345,14 +345,14 @@
 
 ### `D28` · 22 处 / 5 个文件
 - `design/wireframe/README.md`: 42, 54, 55, 154, 168, 745, 846, 847, 850, 851, 852, 854, 860, 885, 894, 945
-- `design/wireframe/index.html`: 172, 228, 1034
+- `design/wireframe/index.html`: 173, 229, 1035
 - `design/wireframe/w2-被控端.html`: 969
 - `design/wireframe/w5-合规实名与运营台.html`: 1080
 - `design/wireframe/w7-安卓被控端.html`: 633
 
 ### `D29` · 12 处 / 5 个文件
 - `design/wireframe/README.md`: 430, 450, 471, 833, 842, 982
-- `design/wireframe/index.html`: 234
+- `design/wireframe/index.html`: 235
 - `design/wireframe/w2-被控端.html`: 244, 259, 756
 - `design/wireframe/w7-安卓被控端.html`: 733
 - `需求规划评审意见.md`: 350
