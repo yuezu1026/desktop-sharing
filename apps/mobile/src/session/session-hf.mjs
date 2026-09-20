@@ -35,6 +35,32 @@ export const VIEW_ONLY_HF = {
 /** 仅查看态禁写的催费文案。 */
 export const VIEW_ONLY_FORBIDDEN = ["开通会员即可控制", "开通会员就能控制"];
 
+/** 沉浸式手持（W6-09）：角标常驻，退出必须两条路径。 */
+export const IMMERSIVE_HF = {
+  exitBar: "退出沉浸式",
+  keyboard: "键盘",
+  pointer: "指针",
+  disconnect: "断开",
+  badgePrefix: "● ",
+};
+
+export const IMMERSIVE_EXIT_PATHS = ["bar", "back"];
+
+/**
+ * @param {string[]} paths
+ */
+export function hasDualImmersiveExitPaths(paths) {
+  const list = Array.isArray(paths) ? paths : [];
+  return IMMERSIVE_EXIT_PATHS.every((path) => list.includes(path));
+}
+
+/**
+ * @param {string} linkLabel
+ */
+export function immersiveBadgeLabel(linkLabel) {
+  return IMMERSIVE_HF.badgePrefix + String(linkLabel ?? "");
+}
+
 /**
  * @param {string|null|undefined} deviceName
  */

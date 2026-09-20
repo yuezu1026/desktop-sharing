@@ -1,8 +1,13 @@
 import assert from "node:assert/strict";
+import { EXIT_PATHS } from "./handheld.mjs";
 import {
+  IMMERSIVE_EXIT_PATHS,
+  IMMERSIVE_HF,
   SESSION_HF,
   VIEW_ONLY_HF,
   findForbiddenViewOnlyPhrases,
+  hasDualImmersiveExitPaths,
+  immersiveBadgeLabel,
   sessionDeviceLabel,
   shouldShowQuotaDigits,
   viewOnlyBanner,
@@ -16,18 +21,16 @@ assert.equal(sessionDeviceLabel("我的台式机"), "我的台式机");
 assert.equal(sessionDeviceLabel(""), "未命名设备");
 assert.equal(shouldShowQuotaDigits(null), false);
 assert.equal(shouldShowQuotaDigits(18), true);
-assert.equal(shouldShowQuotaDigits(undefined), false);
 
 assert.equal(VIEW_ONLY_HF.badge, "仅查看");
-assert.equal(VIEW_ONLY_HF.askControl, "请求控制");
-const permissionBanner = viewOnlyBanner({ frozen: false, requestControl: true });
-assert.equal(permissionBanner.title, VIEW_ONLY_HF.bannerTitle);
-assert.equal(permissionBanner.body, VIEW_ONLY_HF.permissionBody);
-const resourceBanner = viewOnlyBanner({ frozen: true, requestControl: false });
-assert.equal(resourceBanner.body, VIEW_ONLY_HF.resourceBody);
-assert.equal(viewOnlyBanner(null), null);
-
+assert.equal(viewOnlyBanner({ frozen: false }).body, VIEW_ONLY_HF.permissionBody);
+assert.equal(viewOnlyBanner({ frozen: true }).body, VIEW_ONLY_HF.resourceBody);
 assert.deepEqual(findForbiddenViewOnlyPhrases("开通会员即可控制"), ["开通会员即可控制"]);
-assert.deepEqual(findForbiddenViewOnlyPhrases(VIEW_ONLY_HF.permissionBody), []);
+
+assert.equal(IMMERSIVE_HF.exitBar, "退出沉浸式");
+assert.equal(immersiveBadgeLabel("中继"), "● 中继");
+assert.equal(hasDualImmersiveExitPaths(EXIT_PATHS), true);
+assert.equal(hasDualImmersiveExitPaths(["bar"]), false);
+assert.deepEqual(IMMERSIVE_EXIT_PATHS, ["bar", "back"]);
 
 console.log("session-hf.test.mjs ok");

@@ -1,6 +1,7 @@
-import React from "react";
-import { Pressable, SafeAreaView, ScrollView, Text, TextInput, View } from "react-native";
+import React, { useEffect } from "react";
+import { BackHandler, Platform, Pressable, SafeAreaView, ScrollView, Text, TextInput, View } from "react-native";
 import {
+  IMMERSIVE_HF,
   SESSION_HF,
   VIEW_ONLY_HF,
   sessionDeviceLabel,
@@ -11,8 +12,11 @@ import { hit, linkToneColor, radius, space } from "../theme.mjs";
 import { HitButton } from "./HitButton.js";
 import { SessionStage } from "./SessionStage.js";
 
+/** Android 手势条会裁切底栏；无 safe-area 依赖时用固定垫高保住 44px 触控。 */
+const bottomBarPad = Platform.OS === "android" ? space["5"] : space["2"];
+
 /**
- * 手持会话屏，对齐 W6-02 / W6-03。
+ * 手持会话屏，对齐 W6-02 / W6-03 / W6-09。
  * 触控与键盘事件由上层注入，本组件不直接碰中继。
  */
 export function SessionScreen(props) {
@@ -45,6 +49,16 @@ export function SessionScreen(props) {
   const showQuota = shouldShowQuotaDigits(chrome.quotaNumber);
   const viewOnly = chrome.viewOnly;
   const banner = viewOnlyBanner(viewOnly);
+
+  useEffect(() => {
+    if (!chrome.immersive) return undefined;
+    const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
+      onLeaveImmersive("back");
+      return true;
+    });
+    return () => subscription.remove();
+  }, [chrome.immersive, onLeaveImmersive]);
+
   const tag = (label, selected, onPress) => (
     <Pressable
       key={label}
@@ -81,6 +95,92 @@ export function SessionScreen(props) {
       </Text>
     </View>
   );
+
+  if (chrome.immersive) {
+    return (
+      <View style={{ flex: 1, backgroundColor: "#000" }}>
+        <View style={{ flex: 1 }} {...panHandlers}>
+          <SessionStage
+            palette={palette}
+            chrome={chrome}
+            picture={picture}
+            panHandlers={{}}
+            RemoteFrameView={RemoteFrameView}
+            fill
+          />
+          {/* 下缘热区：上滑唤出条 */}
+          <Pressable
+            onPress={() => onSummonEdge("bottom")}
+            style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 28 }}
+          />
+          {/* 右缘热区 */}
+          <Pressable
+            onPress={() => onSummonEdge("right")}
+            style={{ position: "absolute", top: 0, right: 0, bottom: 0, width: 28 }}
+          />
+        </View>
+
+        {chrome.summoned ? (
+          <View
+            style={{
+              position: "absolute",
+              left: space["2"],
+              right: space["2"],
+              bottom: space["2"],
+              flexDirection: "row",
+              alignItems: "center",
+              gap: space["2"],
+              padding: space["2"],
+              borderRadius: radius.m,
+              backgroundColor: palette.surface,
+              borderWidth: 1,
+              borderColor: palette.line,
+            }}
+          >
+            <HitButton
+              palette={palette}
+              label={IMMERSIVE_HF.exitBar}
+              onPress={() => onLeaveImmersive("bar")}
+            />
+            <HitButton palette={palette} label={IMMERSIVE_HF.keyboard} onPress={onToggleKeyboard} />
+            <HitButton
+              palette={palette}
+              label={IMMERSIVE_HF.pointer}
+              onPress={() =>
+                onSetPointerMode(chrome.pointerMode === "trackpad" ? "direct" : "trackpad")
+              }
+            />
+            <View style={{ flex: 1 }} />
+            <HitButton palette={palette} label={IMMERSIVE_HF.disconnect} onPress={onDisconnect} />
+          </View>
+        ) : null}
+
+        {session.keyboardOpen ? (
+          <TextInput
+            autoFocus
+            value=""
+            onChangeText={onKeyboardChar}
+            onKeyPress={(event) => onKeyboardKeyName(event.nativeEvent.key)}
+            placeholder="输入会发到对方电脑"
+            placeholderTextColor={palette.text3}
+            style={{
+              position: "absolute",
+              left: space["2"],
+              right: space["2"],
+              bottom: chrome.summoned ? 72 : space["2"],
+              minHeight: hit.touchMinPx,
+              borderWidth: 1,
+              borderColor: palette.line,
+              borderRadius: radius.m,
+              paddingHorizontal: space["2"],
+              color: palette.text,
+              backgroundColor: palette.surface,
+            }}
+          />
+        ) : null}
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: palette.bg }}>
@@ -227,14 +327,6 @@ export function SessionScreen(props) {
           </Text>
         ))}
         {chrome.notice ? <Text style={{ color: palette.err }}>{chrome.notice}</Text> : null}
-
-        {chrome.immersive ? (
-          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: space["2"] }}>
-            <HitButton palette={palette} label="下缘上滑" onPress={() => onSummonEdge("bottom")} />
-            <HitButton palette={palette} label="横屏" onPress={onRotate} />
-            <HitButton palette={palette} label={SESSION_HF.back} onPress={() => onLeaveImmersive("back")} />
-          </View>
-        ) : null}
       </ScrollView>
 
       <View
@@ -243,7 +335,8 @@ export function SessionScreen(props) {
           alignItems: "center",
           gap: space["2"],
           paddingHorizontal: space["3"],
-          paddingVertical: space["2"],
+          paddingTop: space["2"],
+          paddingBottom: bottomBarPad,
           borderTopWidth: 1,
           borderTopColor: palette.line,
           backgroundColor: palette.surface,
@@ -273,11 +366,7 @@ export function SessionScreen(props) {
             <HitButton palette={palette} label={SESSION_HF.keyboard} onPress={onToggleKeyboard} />
             <HitButton palette={palette} label={SESSION_HF.shortcuts} onPress={onOpenWays} />
             <View style={{ flex: 1 }} />
-            {!chrome.immersive ? (
-              <HitButton palette={palette} label={SESSION_HF.fullscreen} onPress={onEnterImmersive} />
-            ) : (
-              <HitButton palette={palette} label={SESSION_HF.exitImmersive} onPress={() => onLeaveImmersive("bar")} />
-            )}
+            <HitButton palette={palette} label={SESSION_HF.fullscreen} onPress={onEnterImmersive} />
             <HitButton palette={palette} label={SESSION_HF.disconnect} onPress={onDisconnect} />
           </>
         )}

@@ -70,7 +70,7 @@ import {
 
 const RemoteFrameView = Platform.OS === "android" ? requireNativeComponent("RemoteFrameView") : null;
 
-/** 真机 UI 巡检种子：不连控制面也能看登录后壳。巡检完必须改回 false。 */
+/** 真机 UI 巡检种子：不连控制面也能看登录后壳。默认关；离线巡检壳时再改 true。 */
 const UI_PATROL_SEED = false;
 
 function newFingerprint() {
@@ -204,10 +204,13 @@ export function App() {
   const sessionRef = useRef(session);
   sessionRef.current = session;
   const windowSize = Dimensions.get("window");
-  // 真机全宽铺画面；高度按比例留出顶栏/按钮，避免 360 假尺寸把桌面压成细条。
+  // 真机全宽铺画面；沉浸态尽量占满可视高度。
+  const pictureHeight = session.immersive
+    ? Math.max(320, Math.round(windowSize.height - 24))
+    : Math.round(windowSize.height * 0.48);
   const picture = layoutPicture({
     containerWidth: Math.max(280, windowSize.width - 24),
-    containerHeight: Math.round(windowSize.height * 0.48),
+    containerHeight: pictureHeight,
     pictureWidth: session.pictureWidth,
     pictureHeight: session.pictureHeight,
     keyboardOpen: session.keyboardOpen,
