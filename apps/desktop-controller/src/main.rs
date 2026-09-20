@@ -1116,11 +1116,15 @@ mod windows_controller {
     }
 
     fn apply_video_frame(payload: &[u8]) {
-        let Ok((width, height, _codec, jpeg)) = session_core::unpack_video(payload) else { return };
-        if jpeg.is_empty() {
+        let Ok((width, height, codec, body)) = session_core::unpack_video(payload) else { return };
+        if codec == session_core::VIDEO_CODEC_H264 {
+            // 协议已认 H264；硬解与硬编同批下一刀，本帧先跳过以免把 Annex-B 当 JPEG。
             return;
         }
-        let Ok(decoded) = image::load_from_memory(jpeg) else { return };
+        if codec != session_core::VIDEO_CODEC_JPEG || body.is_empty() {
+            return;
+        }
+        let Ok(decoded) = image::load_from_memory(body) else { return };
         let rgb = decoded.to_rgb8();
         let mut bgr = Vec::with_capacity(rgb.len());
         for pixel in rgb.chunks_exact(3) {
