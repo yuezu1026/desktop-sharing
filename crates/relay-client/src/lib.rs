@@ -1,5 +1,7 @@
 //! 连自家中继。画面字节只走内存，不落盘。
 
+mod tls_mode;
+
 use std::io::{Read, Write};
 use std::net::TcpStream;
 use std::sync::Arc;
@@ -7,11 +9,13 @@ use std::time::Duration;
 
 use rustls::client::danger::{HandshakeSignatureValid, ServerCertVerified, ServerCertVerifier};
 use rustls::pki_types::{CertificateDer, ServerName, UnixTime};
-use rustls::{ClientConfig, ClientConnection, DigitallySignedStruct, Error as TlsError, SignatureScheme, StreamOwned};
+use rustls::{ClientConfig, ClientConnection, DigitallySignedStruct, Error as TlsError, RootCertStore, SignatureScheme, StreamOwned};
 use session_core::{
     decode_frame, encode_frame, encode_relay_hello, ticket_looks_usable, Frame, FrameError, FrameKind, HelloError,
     RelayRole, TicketError,
 };
+
+use tls_mode::{host_from_address, resolve_tls_verify_mode, TlsVerifyMode};
 
 const HEADER_BYTES: usize = 12;
 const READ_CHUNK: usize = 16 * 1024;
@@ -34,16 +38,20 @@ pub struct RelaySession {
 }
 
 impl RelaySession {
-    /// 连上中继并送出 hello。本地自签证书默认接受；上线再换成严格校验。
+    /// 连上中继并送出 hello。环回默认接受自签；非环回默认用公共根证书校验。
+    /// `RELAY_TLS_INSECURE=1` 强制跳过，`=0` 强制严格。
     pub fn connect(address: &str, ticket: &str, role: RelayRole, fingerprint: &str) -> Result<Self, RelayError> {
         ticket_looks_usable(ticket).map_err(RelayError::Ticket)?;
         let hello = encode_relay_hello(ticket, role, fingerprint).map_err(RelayError::Hello)?;
+        let host = host_from_address(address);
+        let insecure_env = std::env::var("RELAY_TLS_INSECURE").ok();
+        let mode = resolve_tls_verify_mode(host, insecure_env.as_deref());
         let tcp = TcpStream::connect(address).map_err(|_| RelayError::Connect)?;
         tcp.set_nodelay(true).ok();
         tcp.set_read_timeout(Some(Duration::from_millis(200))).ok();
         tcp.set_write_timeout(Some(Duration::from_secs(5))).ok();
-        let server_name = ServerName::try_from("localhost").map_err(|_| RelayError::Address)?;
-        let config = client_config();
+        let server_name = ServerName::try_from(host.to_string()).map_err(|_| RelayError::Address)?;
+        let config = client_config(mode);
         let connection = ClientConnection::new(Arc::new(config), server_name).map_err(|_| RelayError::Tls)?;
         let mut stream = StreamOwned::new(connection, tcp);
         stream.write_all(&hello).map_err(|_| RelayError::Io)?;
@@ -97,20 +105,28 @@ impl RelaySession {
     }
 }
 
-fn client_config() -> ClientConfig {
+fn client_config(mode: TlsVerifyMode) -> ClientConfig {
     let provider = Arc::new(rustls::crypto::ring::default_provider());
-    ClientConfig::builder_with_provider(provider)
+    let builder = ClientConfig::builder_with_provider(provider)
         .with_safe_default_protocol_versions()
-        .expect("tls versions")
-        .dangerous()
-        .with_custom_certificate_verifier(Arc::new(AcceptLocalRelay))
-        .with_no_client_auth()
+        .expect("tls versions");
+    match mode {
+        TlsVerifyMode::InsecureSkip => builder
+            .dangerous()
+            .with_custom_certificate_verifier(Arc::new(AcceptAnyRelayCert))
+            .with_no_client_auth(),
+        TlsVerifyMode::Strict => {
+            let mut roots = RootCertStore::empty();
+            roots.extend(webpki_roots::TLS_SERVER_ROOTS.iter().cloned());
+            builder.with_root_certificates(roots).with_no_client_auth()
+        }
+    }
 }
 
 #[derive(Debug)]
-struct AcceptLocalRelay;
+struct AcceptAnyRelayCert;
 
-impl ServerCertVerifier for AcceptLocalRelay {
+impl ServerCertVerifier for AcceptAnyRelayCert {
     fn verify_server_cert(
         &self,
         _end_entity: &CertificateDer<'_>,
@@ -119,7 +135,6 @@ impl ServerCertVerifier for AcceptLocalRelay {
         _ocsp_response: &[u8],
         _now: UnixTime,
     ) -> Result<ServerCertVerified, TlsError> {
-        // 中继本地用自签证书。上线后换成系统信任链，不能沿用这一条。
         Ok(ServerCertVerified::assertion())
     }
 
