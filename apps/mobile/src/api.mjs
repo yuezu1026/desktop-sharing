@@ -49,6 +49,14 @@ export async function requestRemoteSession(origin, token, hostDeviceId, controll
   return { ok: response.ok, body };
 }
 
+export async function getRemoteSession(origin, token, remoteSessionId) {
+  const response = await fetch(origin + "/v1/remote-sessions/" + encodeURIComponent(remoteSessionId), {
+    headers: headers(token),
+  });
+  const body = await readJson(response);
+  return { ok: response.ok, body };
+}
+
 export async function loadBalance(origin, token) {
   const response = await fetch(origin + "/v1/relay-balance", { headers: headers(token) });
   const body = await readJson(response);

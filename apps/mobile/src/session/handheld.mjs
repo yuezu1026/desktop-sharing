@@ -61,6 +61,8 @@ export function createSession() {
     deviceName: "",
     pictureWidth: 16,
     pictureHeight: 9,
+    remoteSessionId: "",
+    ticket: "",
   };
 }
 
@@ -101,6 +103,34 @@ export function connectDevice(session, row) {
     deviceName: row.displayName ?? "",
     immersive: false,
     viewOnly: "",
+    notice: "正在请求会话",
+    remoteSessionId: "",
+    ticket: "",
+  };
+}
+
+/**
+ * 根据控制面远程会话状态更新角标文案。真解码另刀。
+ * @param {ReturnType<typeof createSession>} session
+ * @param {{ state?: string | null, ticket?: string | null }} body
+ */
+export function applyRemoteSessionState(session, body) {
+  const state = typeof body?.state === "string" ? body.state : "";
+  const ticket = typeof body?.ticket === "string" ? body.ticket : session.ticket || "";
+  let notice = session.notice;
+  let viewOnly = session.viewOnly;
+  if (state === "awaiting_host_consent") notice = "等待被控端确认";
+  else if (state === "rejected") notice = "被控端已拒绝";
+  else if (state === "active" || state === "relay_stopped") {
+    notice = ticket.length >= 20 ? "中继票已就绪" : "中继票未就绪";
+    if (state === "relay_stopped") viewOnly = "resource";
+  }
+  return {
+    ...session,
+    notice,
+    viewOnly,
+    ticket,
+    remoteSessionId: typeof body?.remoteSessionId === "string" ? body.remoteSessionId : session.remoteSessionId || "",
   };
 }
 
@@ -290,7 +320,7 @@ export function sessionChrome(session) {
     badgeVisible: true,
     deviceName: session.deviceName,
     quotaNumber,
-    waiting: "等待画面",
+    waiting: session.notice && session.notice.length > 0 ? session.notice : "等待画面",
     viewOnly,
     pointerMode: session.pointerMode,
     magnifier: session.magnifier,

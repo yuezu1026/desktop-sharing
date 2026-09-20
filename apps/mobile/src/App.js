@@ -3,6 +3,7 @@ import { Pressable, SafeAreaView, Text, TextInput, View } from "react-native";
 import { controlPlaneOrigin } from "./config.mjs";
 import {
   acknowledgeDisclosure,
+  getRemoteSession,
   listHostDevices,
   loadBalance,
   loadDisclosure,
@@ -12,6 +13,7 @@ import {
 import {
   MIN_HIT_PX,
   applyBalance,
+  applyRemoteSessionState,
   askControl,
   connectDevice,
   createSession,
@@ -65,6 +67,19 @@ export function App() {
 
   useEffect(() => {
     if (!token || !origin || session.screen !== "session") return undefined;
+    const remoteSessionId = session.remoteSessionId;
+    if (!remoteSessionId) return undefined;
+    const timer = setInterval(() => {
+      getRemoteSession(origin, token, remoteSessionId).then((result) => {
+        if (!result.ok) return;
+        setSession((current) => applyRemoteSessionState(current, result.body));
+      });
+    }, 800);
+    return () => clearInterval(timer);
+  }, [token, origin, session.screen, session.remoteSessionId]);
+
+  useEffect(() => {
+    if (!token || !origin || session.screen !== "session") return undefined;
     const timer = setInterval(() => {
       loadBalance(origin, token).then((result) => {
         if (result.ok) setSession((current) => applyBalance(current, result.body));
@@ -106,7 +121,13 @@ export function App() {
     const next = connectDevice(session, row);
     if (next === session) return;
     if (origin && token) {
-      await requestRemoteSession(origin, token, row.hostDeviceId, fingerprint);
+      const requested = await requestRemoteSession(origin, token, row.hostDeviceId, fingerprint);
+      if (requested.ok) {
+        setSession(applyRemoteSessionState(next, requested.body));
+        return;
+      }
+      setSession({ ...next, notice: requested.body.message || "未能发起会话" });
+      return;
     }
     setSession(next);
   }
