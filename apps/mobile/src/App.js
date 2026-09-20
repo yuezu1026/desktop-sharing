@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Image, PanResponder, Platform, Pressable, SafeAreaView, Text, TextInput, View } from "react-native";
-import { resolveControlPlaneOrigin, resolveRelayAddress } from "./config.mjs";
+import { resolveControlPlaneOrigin, resolveRelayAddress, LAB_CONTROL_PLANE_ORIGIN, LAB_RELAY_ADDRESS } from "./config.mjs";
 import {
   acknowledgeDisclosure,
   getRemoteSession,
@@ -89,10 +89,12 @@ export function App() {
   const [fingerprint] = useState(newFingerprint);
   const origin = resolveControlPlaneOrigin({
     envOrigin: typeof process !== "undefined" && process.env ? process.env.CONTROL_PLANE_URL : "",
+    labOrigin: LAB_CONTROL_PLANE_ORIGIN,
     platformOS: Platform.OS,
   });
   const relayAddress = resolveRelayAddress({
     envAddress: typeof process !== "undefined" && process.env ? process.env.RELAY_ADDR : "",
+    labAddress: LAB_RELAY_ADDRESS,
     platformOS: Platform.OS,
   });
 
