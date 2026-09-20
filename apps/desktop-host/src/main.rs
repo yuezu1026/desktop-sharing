@@ -34,6 +34,9 @@ mod h264_soft;
 mod inject;
 
 #[cfg(windows)]
+mod mf_async_credits;
+
+#[cfg(windows)]
 mod mf_h264;
 
 #[cfg(windows)]
