@@ -16,6 +16,7 @@ const buyPagePath = join(dirname(fileURLToPath(import.meta.url)), "..", "buy", "
 const buyUiPath = join(dirname(fileURLToPath(import.meta.url)), "..", "buy", "purchase-ui.mjs");
 const grantPagePath = join(dirname(fileURLToPath(import.meta.url)), "..", "grant", "index.html");
 const opsPagePath = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "apps", "ops", "index.html");
+const opsUiPath = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "apps", "ops", "ops-ui.mjs");
 const webControllerPagePath = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "apps", "web-controller", "index.html");
 const webControllerUiPath = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "apps", "web-controller", "session-ui.mjs");
 const webControllerFramePath = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "apps", "web-controller", "frame.mjs");
@@ -112,6 +113,16 @@ async function handle(
         "content-length": String(page.length),
       });
       response.end(page);
+      return;
+    }
+    if (method === "GET" && url.pathname === "/ops/ops-ui.mjs") {
+      const script = readFileSync(opsUiPath);
+      response.writeHead(200, {
+        "content-type": "text/javascript; charset=utf-8",
+        "cache-control": "no-store",
+        "content-length": String(script.length),
+      });
+      response.end(script);
       return;
     }
     if (url.pathname.startsWith("/v1/ops")) {

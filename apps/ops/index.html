@@ -8,6 +8,9 @@
     label, button, input { min-height: 36px; }
     button { margin-right: 8px; }
     section { margin-top: 16px; }
+    .muted { color: #5c6570; font-size: 13px; line-height: 1.5; }
+    code { user-select: all; background: #f4f5f7; padding: 4px 8px; }
+    #setupBox[hidden], #desk[hidden] { display: none !important; }
   </style>
 </head>
 <body>
@@ -16,10 +19,17 @@
   <form id="loginForm">
     <label>邮箱 <input id="email" autocomplete="username"></label>
     <label>密码 <input id="password" type="password" autocomplete="current-password"></label>
-    <label>动态码 <input id="totpCode" inputmode="numeric"></label>
+    <label>动态码 <input id="totpCode" inputmode="numeric" autocomplete="one-time-code"></label>
     <p><button type="submit">进入运营台</button></p>
-    <p id="loginError"></p>
+    <p id="loginError" class="muted"></p>
   </form>
+  <section id="setupBox" hidden>
+    <p id="setupHint" class="muted"></p>
+    <p>密钥（只出现这一次）：<code id="totpSecret"></code></p>
+    <label>验证器当前动态码 <input id="setupTotpCode" inputmode="numeric" autocomplete="one-time-code"></label>
+    <p><button type="button" id="confirmTotp">确认绑定</button></p>
+    <p id="setupError" class="muted"></p>
+  </section>
   <section id="desk" hidden>
     <label>用户手机号 <input id="phone"></label>
     <p><button type="button" id="lookup">查用户</button></p>
@@ -37,11 +47,18 @@
     </p>
     <p><button type="button" id="refund">退款跳到渠道后台</button></p>
   </section>
-  <script>
+  <script type="module">
+    import { confirmTotpOutcome, loginOutcome } from "/ops/ops-ui.mjs";
+
     // 退款不在这页收款。计量只读账本，不另造一份汇总。
     const loginError = document.getElementById("loginError");
+    const setupBox = document.getElementById("setupBox");
+    const setupHint = document.getElementById("setupHint");
+    const setupError = document.getElementById("setupError");
+    const totpSecret = document.getElementById("totpSecret");
     const result = document.getElementById("result");
     let staffToken = "";
+    let setupToken = "";
     let accountId = "";
     let orderId = "";
 
@@ -57,6 +74,7 @@
     document.getElementById("loginForm").addEventListener("submit", async (event) => {
       event.preventDefault();
       loginError.textContent = "";
+      setupError.textContent = "";
       const response = await callApi("/v1/ops/sessions", {
         method: "POST",
         body: JSON.stringify({
@@ -65,17 +83,42 @@
           totpCode: document.getElementById("totpCode").value,
         }),
       });
-      if (response.body.setupRequired) {
-        loginError.textContent = "首次进入要先保存动态码密钥，确认后再登录。密钥只出现这一次。";
+      const outcome = loginOutcome(response.body, response.ok);
+      if (outcome.kind === "setup") {
+        setupToken = outcome.setupToken;
+        totpSecret.textContent = outcome.totpSecret;
+        setupHint.textContent = outcome.hint;
+        setupBox.hidden = false;
+        document.getElementById("desk").hidden = true;
         return;
       }
-      if (!response.ok || !response.body.token) {
-        loginError.textContent = response.body.message || "登录失败";
+      if (outcome.kind !== "ready") {
+        loginError.textContent = outcome.hint;
         return;
       }
-      staffToken = response.body.token;
+      staffToken = outcome.token;
+      setupBox.hidden = true;
       document.getElementById("password").value = "";
       document.getElementById("desk").hidden = false;
+    });
+
+    document.getElementById("confirmTotp").addEventListener("click", async () => {
+      setupError.textContent = "";
+      const response = await callApi("/v1/ops/totp", {
+        method: "POST",
+        body: JSON.stringify({
+          setupToken,
+          totpCode: document.getElementById("setupTotpCode").value,
+        }),
+      });
+      const outcome = confirmTotpOutcome(response.body, response.ok);
+      setupError.textContent = outcome.hint;
+      if (outcome.kind === "confirmed") {
+        setupToken = "";
+        totpSecret.textContent = "";
+        document.getElementById("setupTotpCode").value = "";
+        setupBox.hidden = true;
+      }
     });
 
     document.getElementById("lookup").addEventListener("click", async () => {
