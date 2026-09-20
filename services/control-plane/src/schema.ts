@@ -173,6 +173,7 @@ ALTER TABLE orders ADD COLUMN IF NOT EXISTS wants_invoice boolean NOT NULL DEFAU
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS invoice_title_kind text;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS invoice_title text;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS invoice_tax_number text;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS pay_channel text;
 
 CREATE TABLE IF NOT EXISTS invoice_profiles (
   account_id uuid PRIMARY KEY REFERENCES accounts (account_id),

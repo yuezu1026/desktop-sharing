@@ -56,6 +56,7 @@ type OrderRow = {
   invoice_title_kind: string | null;
   invoice_title: string | null;
   invoice_tax_number: string | null;
+  pay_channel: string | null;
 };
 
 /** 订单只固化下单当时的价格。发票在付款前写入。确认中不是失败，也不自动重试扣款。 */
@@ -102,9 +103,17 @@ export class OrderService {
     return { ok: true, ...stored };
   }
 
-  async create(token: string | null, planRaw: string, input: InvoiceInput): Promise<Record<string, unknown> | Failure> {
+  async create(
+    token: string | null,
+    planRaw: string,
+    input: InvoiceInput,
+    payChannelRaw: string | null,
+  ): Promise<Record<string, unknown> | Failure> {
     const plan = planRaw.trim();
     if (plan !== "yearly" && plan !== "monthly") return fail(400, "plan_invalid", "套餐只能是年付或月付");
+    const channelOrFailure = normalizePayChannel(payChannelRaw);
+    if (channelOrFailure !== null && typeof channelOrFailure !== "string") return channelOrFailure;
+    const payChannel = channelOrFailure;
     const session = await this.accounts.authenticate(token);
     if (isAuthFailure(session)) return session;
     const snapshot = await this.snapshotForOrder(session.accountId, input);
@@ -116,8 +125,8 @@ export class OrderService {
     await this.pool.query(
       `INSERT INTO orders
         (order_id, account_id, plan, amount_cents, price_version, state, created_at,
-         wants_invoice, invoice_title_kind, invoice_title, invoice_tax_number)
-       VALUES ($1, $2, $3, $4, $5, 'unfinished', $6, $7, $8, $9, $10)`,
+         wants_invoice, invoice_title_kind, invoice_title, invoice_tax_number, pay_channel)
+       VALUES ($1, $2, $3, $4, $5, 'unfinished', $6, $7, $8, $9, $10, $11)`,
       [
         orderId,
         session.accountId,
@@ -129,9 +138,10 @@ export class OrderService {
         snapshot.titleKind,
         snapshot.title,
         snapshot.taxNumber,
+        payChannel,
       ],
     );
-    return this.present(orderId, plan, amountCents, this.config.priceVersion, "unfinished", createdAt, snapshot);
+    return this.present(orderId, plan, amountCents, this.config.priceVersion, "unfinished", createdAt, snapshot, payChannel);
   }
 
   async applyProviderResult(secret: string | null, orderId: string, providerStateRaw: string): Promise<Record<string, unknown> | Failure> {
@@ -144,7 +154,7 @@ export class OrderService {
     if (!/^[0-9a-f-]{36}$/i.test(orderId)) return fail(400, "order_invalid", "订单不正确");
     const found = await this.pool.query<OrderRow>(
       `SELECT order_id, account_id, plan, amount_cents, price_version, state, created_at,
-              wants_invoice, invoice_title_kind, invoice_title, invoice_tax_number
+              wants_invoice, invoice_title_kind, invoice_title, invoice_tax_number, pay_channel
          FROM orders WHERE order_id = $1`,
       [orderId],
     );
@@ -152,7 +162,7 @@ export class OrderService {
     if (!row) return fail(404, "order_missing", "订单不存在");
     const snapshot = snapshotFromRow(row);
     if (row.state === providerState) {
-      return this.present(row.order_id, row.plan, row.amount_cents, row.price_version, row.state, row.created_at, snapshot);
+      return this.present(row.order_id, row.plan, row.amount_cents, row.price_version, row.state, row.created_at, snapshot, row.pay_channel);
     }
     const allowed = row.state === "unfinished" || (row.state === "confirming" && (providerState === "opened" || providerState === "closed"));
     if (!allowed) return fail(409, "order_not_retryable", "确认中不是支付失败，不能再付一次");
@@ -161,7 +171,7 @@ export class OrderService {
     if (providerState === "opened" && row.plan === "monthly") {
       await this.openMonthlySubscription(row, changedAt);
     }
-    return this.present(row.order_id, row.plan, row.amount_cents, row.price_version, providerState, row.created_at, snapshot);
+    return this.present(row.order_id, row.plan, row.amount_cents, row.price_version, providerState, row.created_at, snapshot, row.pay_channel);
   }
 
   async list(token: string | null): Promise<Record<string, unknown> | Failure> {
@@ -169,7 +179,7 @@ export class OrderService {
     if (isAuthFailure(session)) return session;
     const rows = await this.pool.query<OrderRow>(
       `SELECT order_id, account_id, plan, amount_cents, price_version, state, created_at,
-              wants_invoice, invoice_title_kind, invoice_title, invoice_tax_number
+              wants_invoice, invoice_title_kind, invoice_title, invoice_tax_number, pay_channel
          FROM orders
         WHERE account_id = $1
         ORDER BY created_at DESC
@@ -186,6 +196,7 @@ export class OrderService {
         row.state,
         row.created_at,
         snapshotFromRow(row),
+        row.pay_channel,
       )),
     };
   }
@@ -507,6 +518,7 @@ export class OrderService {
     state: string,
     createdAt: Date,
     invoice: InvoiceSnapshot,
+    payChannel: string | null,
   ): Record<string, unknown> {
     return {
       ok: true,
@@ -521,8 +533,18 @@ export class OrderService {
       invoiceTitleKind: invoice.titleKind,
       invoiceTitle: invoice.title,
       invoiceTaxNumber: invoice.taxNumber,
+      payChannel,
     };
   }
+}
+
+function normalizePayChannel(raw: string | null): string | null | Failure {
+  if (!raw || raw.trim() === "") return null;
+  const channel = raw.trim();
+  if (channel !== "wechat" && channel !== "alipay") {
+    return fail(400, "pay_channel_invalid", "官网支付只能是微信或支付宝");
+  }
+  return channel;
 }
 
 function emptyInvoice(): InvoiceSnapshot {

@@ -1,4 +1,7 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import type { Pool } from "pg";
 import type { AppConfig } from "./config.js";
 import { AccountService, type Failure } from "./account-service.js";
@@ -6,6 +9,8 @@ import { OrderService, type ChargeFailureInput, type InvoiceInput } from "./orde
 import { SessionService } from "./session-service.js";
 
 type Json = Record<string, unknown>;
+
+const buyPagePath = join(dirname(fileURLToPath(import.meta.url)), "..", "buy", "index.html");
 
 export function createHttpServer(pool: Pool, config: AppConfig, service: AccountService, sessions: SessionService, orders: OrderService) {
   return createServer((request, response) => {
@@ -25,6 +30,16 @@ async function handle(
   const url = new URL(request.url ?? "/", "http://127.0.0.1");
   const method = request.method ?? "GET";
   try {
+    if (method === "GET" && (url.pathname === "/buy" || url.pathname === "/buy/")) {
+      const page = readFileSync(buyPagePath);
+      response.writeHead(200, {
+        "content-type": "text/html; charset=utf-8",
+        "cache-control": "no-store",
+        "content-length": String(page.length),
+      });
+      response.end(page);
+      return;
+    }
     if (method === "GET" && url.pathname === "/health") {
       await pool.query("SELECT 1");
       send(response, 200, { ok: true });
@@ -264,7 +279,7 @@ async function dispatch(
   }
   if (method === "GET" && pathname === "/v1/orders") return orders.list(token);
   if (method === "POST" && pathname === "/v1/orders") {
-    return orders.create(token, text(body, "plan") ?? "", invoiceInput(body));
+    return orders.create(token, text(body, "plan") ?? "", invoiceInput(body), text(body, "payChannel"));
   }
   const orderProvider = pathname.match(/^\/v1\/orders\/([^/]+)\/provider$/);
   if (method === "POST" && orderProvider?.[1]) {
