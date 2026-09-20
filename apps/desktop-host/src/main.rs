@@ -622,6 +622,7 @@ mod windows_host {
             model.status_line = "中继已接通".to_string();
         }
         refresh();
+        let (direct_sender, direct_receiver) = std::sync::mpsc::sync_channel::<direct_client::DirectLink>(1);
         if !remote_session_id.is_empty() && !token.is_empty() {
             let punch_ticket = ticket.clone();
             let punch_fingerprint = fingerprint.clone();
@@ -629,14 +630,17 @@ mod windows_host {
             let punch_token = token.clone();
             let punch_session = remote_session_id.clone();
             std::thread::spawn(move || {
-                probe_direct_quiet(
+                if let Some(link) = probe_and_upgrade_direct(
                     punch_origin,
                     punch_token,
                     punch_session,
                     punch_ticket,
                     session_core::RelayRole::Host,
+                    session_core::EndpointRole::Host,
                     punch_fingerprint,
-                );
+                ) {
+                    let _ = direct_sender.send(link);
+                }
             });
         }
         let mut grabber = crate::capture::ScreenGrabber::new();
@@ -644,6 +648,11 @@ mod windows_host {
         let mut frame_height = 360;
         crate::inject::set_input_allowed(true);
         'relay: loop {
+            if let Ok(link) = direct_receiver.try_recv() {
+                drop(session);
+                run_host_direct(link, grabber, frame_width, frame_height);
+                return;
+            }
             if let Some(frame) = grabber.grab_jpeg_frame() {
                 if let Ok((width, height, _, _)) = session_core::unpack_video(&frame.payload) {
                     frame_width = width as i32;
@@ -673,35 +682,112 @@ mod windows_host {
         finish_host_relay();
     }
 
+    fn run_host_direct(
+        mut link: direct_client::DirectLink,
+        mut grabber: crate::capture::ScreenGrabber,
+        mut frame_width: i32,
+        mut frame_height: i32,
+    ) {
+        if let Some(model) = lock_model().as_mut() {
+            model.status_line = "已升直连".to_string();
+        }
+        refresh();
+        loop {
+            if let Some(frame) = grabber.grab_jpeg_frame() {
+                if let Ok((width, height, _, _)) = session_core::unpack_video(&frame.payload) {
+                    frame_width = width as i32;
+                    frame_height = height as i32;
+                }
+                if link.send_frame(&frame).is_err() {
+                    break;
+                }
+            }
+            let mut saw_input = false;
+            loop {
+                match link.try_recv_frame() {
+                    Ok(Some(frame)) if frame.kind == session_core::FrameKind::Input => {
+                        saw_input = true;
+                        if let Ok(event) = session_core::decode_input(&frame.payload) {
+                            crate::inject::apply_input(&event, frame_width, frame_height);
+                        }
+                    }
+                    Ok(Some(_)) => {}
+                    Ok(None) => break,
+                    Err(_) => {
+                        crate::inject::set_input_allowed(false);
+                        finish_host_relay();
+                        return;
+                    }
+                }
+            }
+            std::thread::sleep(std::time::Duration::from_millis(if saw_input { 5 } else { 30 }));
+        }
+        crate::inject::set_input_allowed(false);
+        finish_host_relay();
+    }
+
     fn finish_host_relay() {
         if let Some(model) = lock_model().as_mut() {
-            model.status_line = "中继已断开".to_string();
+            model.status_line = "会话已断开".to_string();
             model.relay_ticket = None;
         }
         refresh();
     }
 
-    /// 后台打洞。失败只上报分桶，不改状态文案，不弹窗，不停中继。
-    fn probe_direct_quiet(
+    /// 后台打洞并握手。失败只记分桶，不弹窗，不停中继；成功则把直连句柄交回主循环。
+    fn probe_and_upgrade_direct(
         origin: String,
         token: String,
         remote_session_id: String,
         ticket: String,
-        role: session_core::RelayRole,
+        relay_role: session_core::RelayRole,
+        endpoint_role: session_core::EndpointRole,
         fingerprint: String,
-    ) {
+    ) -> Option<direct_client::DirectLink> {
         let signal_origin = std::env::var("SIGNAL_URL").unwrap_or_else(|_| "http://127.0.0.1:8081".to_string());
-        let Ok((socket, candidate)) = signal_client::bind_local_candidate() else { return };
+        let Ok((socket, candidate)) = signal_client::bind_local_candidate() else {
+            return None;
+        };
         let candidates = vec![candidate];
         let Ok((_session_id, peers)) =
-            signal_client::exchange_candidates(&signal_origin, &ticket, role, &fingerprint, &candidates)
+            signal_client::exchange_candidates(&signal_origin, &ticket, relay_role, &fingerprint, &candidates)
         else {
-            return;
+            return None;
         };
         let outcome = signal_client::probe_direct(&socket, &peers);
-        let event = if outcome.reached { "start" } else { "punch" };
+        if !outcome.reached {
+            let payload = serde_json::json!({
+                "event": "punch",
+                "punchResult": outcome.result,
+                "punchBucket": outcome.bucket,
+            })
+            .to_string();
+            let _ = post_json(
+                &origin,
+                &format!("/v1/remote-sessions/{remote_session_id}/direct"),
+                &token,
+                &payload,
+            );
+            return None;
+        }
+        let peer = outcome.peer?;
+        let Ok(link) = direct_client::DirectLink::handshake(socket, peer, endpoint_role) else {
+            let payload = serde_json::json!({
+                "event": "punch",
+                "punchResult": "handshake",
+                "punchBucket": outcome.bucket,
+            })
+            .to_string();
+            let _ = post_json(
+                &origin,
+                &format!("/v1/remote-sessions/{remote_session_id}/direct"),
+                &token,
+                &payload,
+            );
+            return None;
+        };
         let payload = serde_json::json!({
-            "event": event,
+            "event": "start",
             "punchResult": outcome.result,
             "punchBucket": outcome.bucket,
         })
@@ -712,6 +798,7 @@ mod windows_host {
             &token,
             &payload,
         );
+        Some(link)
     }
 
     unsafe fn open_confirm(parent: HWND) {

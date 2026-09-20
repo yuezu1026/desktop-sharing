@@ -915,46 +915,29 @@ mod windows_controller {
         if let Ok(mut guard) = INPUT_TX.lock() {
             *guard = Some(input_sender);
         }
+        let (direct_sender, direct_receiver) = mpsc::sync_channel::<direct_client::DirectLink>(1);
         let punch_origin = origin.clone();
         let punch_token = token.clone();
         let punch_session = remote_session_id.clone();
         let punch_ticket = ticket.clone();
         let punch_fingerprint = fingerprint.clone();
         std::thread::spawn(move || {
-            let signal_origin = std::env::var("SIGNAL_URL").unwrap_or_else(|_| "http://127.0.0.1:8081".to_string());
-            let Ok((socket, candidate)) = signal_client::bind_local_candidate() else { return };
-            let candidates = vec![candidate];
-            let Ok((_session_id, peers)) = signal_client::exchange_candidates(
-                &signal_origin,
-                &punch_ticket,
-                session_core::RelayRole::Controller,
-                &punch_fingerprint,
-                &candidates,
-            ) else {
-                return;
-            };
-            let outcome = signal_client::probe_direct(&socket, &peers);
-            let event = if outcome.reached { "start" } else { "punch" };
-            let payload = serde_json::json!({
-                "event": event,
-                "punchResult": outcome.result,
-                "punchBucket": outcome.bucket,
-            })
-            .to_string();
-            let _ = post_json(
-                &punch_origin,
-                &format!("/v1/remote-sessions/{punch_session}/direct"),
-                &punch_token,
-                &payload,
-            );
-            if outcome.reached {
-                if let Some(model) = lock_model().as_mut() {
-                    model.link_direct = true;
-                    model.notice = "已升直连".to_string();
-                }
+            if let Some(link) = upgrade_controller_direct(
+                punch_origin,
+                punch_token,
+                punch_session,
+                punch_ticket,
+                punch_fingerprint,
+            ) {
+                let _ = direct_sender.send(link);
             }
         });
         loop {
+            if let Ok(link) = direct_receiver.try_recv() {
+                drop(session);
+                run_controller_direct(link, input_receiver);
+                return;
+            }
             let mut send_failed = false;
             while let Ok(event) = input_receiver.try_recv() {
                 let payload = session_core::encode_input(&event);
@@ -986,8 +969,121 @@ mod windows_controller {
             *guard = None;
         }
         if let Some(model) = lock_model().as_mut() {
-            model.notice = "中继已断开".to_string();
+            model.notice = "会话已断开".to_string();
         }
+    }
+
+    fn run_controller_direct(
+        mut link: direct_client::DirectLink,
+        input_receiver: mpsc::Receiver<session_core::InputEvent>,
+    ) {
+        if let Some(model) = lock_model().as_mut() {
+            model.link_direct = true;
+            model.notice = "已升直连".to_string();
+        }
+        loop {
+            let mut send_failed = false;
+            while let Ok(event) = input_receiver.try_recv() {
+                let payload = session_core::encode_input(&event);
+                if link
+                    .send_frame(&session_core::Frame {
+                        kind: session_core::FrameKind::Input,
+                        flags: 0,
+                        payload,
+                    })
+                    .is_err()
+                {
+                    send_failed = true;
+                    break;
+                }
+            }
+            if send_failed {
+                break;
+            }
+            match link.try_recv_frame() {
+                Ok(Some(frame)) if frame.kind == session_core::FrameKind::Video => {
+                    apply_video_frame(&frame.payload);
+                }
+                Ok(Some(_)) => {}
+                Ok(None) => std::thread::sleep(std::time::Duration::from_millis(10)),
+                Err(_) => break,
+            }
+        }
+        if let Ok(mut guard) = INPUT_TX.lock() {
+            *guard = None;
+        }
+        if let Some(model) = lock_model().as_mut() {
+            model.link_direct = false;
+            model.notice = "会话已断开".to_string();
+        }
+    }
+
+    fn upgrade_controller_direct(
+        origin: String,
+        token: String,
+        remote_session_id: String,
+        ticket: String,
+        fingerprint: String,
+    ) -> Option<direct_client::DirectLink> {
+        let signal_origin = std::env::var("SIGNAL_URL").unwrap_or_else(|_| "http://127.0.0.1:8081".to_string());
+        let Ok((socket, candidate)) = signal_client::bind_local_candidate() else {
+            return None;
+        };
+        let candidates = vec![candidate];
+        let Ok((_session_id, peers)) = signal_client::exchange_candidates(
+            &signal_origin,
+            &ticket,
+            session_core::RelayRole::Controller,
+            &fingerprint,
+            &candidates,
+        ) else {
+            return None;
+        };
+        let outcome = signal_client::probe_direct(&socket, &peers);
+        if !outcome.reached {
+            let payload = serde_json::json!({
+                "event": "punch",
+                "punchResult": outcome.result,
+                "punchBucket": outcome.bucket,
+            })
+            .to_string();
+            let _ = post_json(
+                &origin,
+                &format!("/v1/remote-sessions/{remote_session_id}/direct"),
+                &token,
+                &payload,
+            );
+            return None;
+        }
+        let peer = outcome.peer?;
+        let Ok(link) = direct_client::DirectLink::handshake(socket, peer, session_core::EndpointRole::Controller) else {
+            let payload = serde_json::json!({
+                "event": "punch",
+                "punchResult": "handshake",
+                "punchBucket": outcome.bucket,
+            })
+            .to_string();
+            let _ = post_json(
+                &origin,
+                &format!("/v1/remote-sessions/{remote_session_id}/direct"),
+                &token,
+                &payload,
+            );
+            return None;
+        };
+        let payload = serde_json::json!({
+            "event": "start",
+            "punchResult": outcome.result,
+            "punchBucket": outcome.bucket,
+        })
+        .to_string();
+        let _ = post_json(
+            &origin,
+            &format!("/v1/remote-sessions/{remote_session_id}/direct"),
+            &token,
+            &payload,
+        );
+        Some(link)
     }
 
     fn apply_video_frame(payload: &[u8]) {

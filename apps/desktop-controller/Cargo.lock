@@ -140,6 +140,7 @@ dependencies = [
 name = "desktop-controller"
 version = "0.1.0"
 dependencies = [
+ "direct-client",
  "image",
  "relay-client",
  "serde_json",
@@ -157,6 +158,13 @@ dependencies = [
  "block-buffer",
  "crypto-common",
  "subtle",
+]
+
+[[package]]
+name = "direct-client"
+version = "0.1.0"
+dependencies = [
+ "session-core",
 ]
 
 [[package]]

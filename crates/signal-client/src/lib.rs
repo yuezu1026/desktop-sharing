@@ -27,6 +27,8 @@ pub struct PunchOutcome {
     /// 与控制面打洞分桶一致：home_home / one_hard_nat / both_hard_nat / udp_blocked
     pub bucket: &'static str,
     pub result: &'static str,
+    /// 探测成功时对端地址，供后续握手与直连传帧。
+    pub peer: Option<SocketAddr>,
 }
 
 #[derive(Deserialize)]
@@ -102,6 +104,7 @@ pub fn probe_direct(socket: &UdpSocket, peer_candidates: &[String]) -> PunchOutc
             reached: false,
             bucket: "udp_blocked",
             result: "no_peer",
+            peer: None,
         };
     }
     let deadline = Instant::now() + PROBE_WAIT;
@@ -117,6 +120,7 @@ pub fn probe_direct(socket: &UdpSocket, peer_candidates: &[String]) -> PunchOutc
                     reached: true,
                     bucket: "home_home",
                     result: "ok",
+                    peer: Some(from),
                 };
             }
             Ok(_) => {}
@@ -127,6 +131,7 @@ pub fn probe_direct(socket: &UdpSocket, peer_candidates: &[String]) -> PunchOutc
                     reached: false,
                     bucket: "udp_blocked",
                     result: "socket",
+                    peer: None,
                 };
             }
         }
@@ -136,6 +141,7 @@ pub fn probe_direct(socket: &UdpSocket, peer_candidates: &[String]) -> PunchOutc
         reached: false,
         bucket: "udp_blocked",
         result: "timeout",
+        peer: None,
     }
 }
 

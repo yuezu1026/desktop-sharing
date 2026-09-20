@@ -1,0 +1,8 @@
+[package]
+name = "direct-client"
+version = "0.1.0"
+edition = "2021"
+description = "打洞成功后的直连：X25519 握手与分片加密帧。密钥只在两端。"
+
+[dependencies]
+session-core = { path = "../session-core" }
