@@ -82,8 +82,8 @@ mod windows_host {
         GetMessageW, LoadIconW, PostQuitMessage, RegisterClassW, SetForegroundWindow, SetTimer,
         ShowWindow, TrackPopupMenu, TranslateMessage, CW_USEDEFAULT, HICON, IDI_APPLICATION, MF_GRAYED, MF_STRING,
         MSG, SW_SHOW, TPM_RIGHTALIGN, WINDOW_EX_STYLE, WM_CLOSE, WM_COMMAND, WM_CREATE, WM_DESTROY, WM_KEYDOWN,
-        WM_LBUTTONDOWN, WM_PAINT, WM_RBUTTONUP, WM_TIMER, WNDCLASSW, WS_CAPTION, WS_EX_TOPMOST, WS_OVERLAPPED,
-        WS_SYSMENU, WS_VISIBLE,
+        WM_LBUTTONDOWN, WM_PAINT, WM_RBUTTONUP, WM_TIMER, WNDCLASSW, WS_CAPTION, WS_EX_TOPMOST, WS_MINIMIZEBOX,
+        WS_OVERLAPPED, WS_SYSMENU, WS_VISIBLE,
     };
     use crate::host_hf;
     use crate::host_layout::{self, MainAction};
@@ -182,7 +182,7 @@ mod windows_host {
         RegisterClassW(&main_class);
         RegisterClassW(&confirm);
         let window_title = wide_string(host_hf::WINDOW_TITLE);
-        let main_style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_VISIBLE;
+        let main_style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE;
         let (outer_width, outer_height) =
             outer_size_for_client(MAIN_WIDTH, MAIN_HEIGHT, main_style, WINDOW_EX_STYLE::default());
         let window = CreateWindowExW(

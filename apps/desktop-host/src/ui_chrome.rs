@@ -474,7 +474,9 @@ fn wide_z(text: &str) -> Vec<u16> {
 mod tests {
     use super::{hit_accept_switch, hit_confirm_allow, hit_confirm_refuse, outer_size_for_client};
     use crate::host_layout;
-    use windows::Win32::UI::WindowsAndMessaging::{WINDOW_EX_STYLE, WS_CAPTION, WS_OVERLAPPED, WS_SYSMENU};
+    use windows::Win32::UI::WindowsAndMessaging::{
+        WINDOW_EX_STYLE, WS_CAPTION, WS_MINIMIZEBOX, WS_OVERLAPPED, WS_SYSMENU,
+    };
 
     #[test]
     fn 开关命中含轨道与标签() {
@@ -499,7 +501,7 @@ mod tests {
 
     #[test]
     fn 外框尺寸大于客户区() {
-        let style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU;
+        let style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
         let (outer_width, outer_height) =
             outer_size_for_client(host_layout::MAIN_WIDTH, host_layout::MAIN_HEIGHT, style, WINDOW_EX_STYLE::default());
         assert!(outer_width >= host_layout::MAIN_WIDTH);
@@ -507,7 +509,7 @@ mod tests {
         let (confirm_width, confirm_height) = outer_size_for_client(
             host_layout::CONFIRM_WIDTH,
             host_layout::CONFIRM_HEIGHT,
-            style,
+            WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU,
             WINDOW_EX_STYLE::default(),
         );
         assert!(confirm_width >= host_layout::CONFIRM_WIDTH);
