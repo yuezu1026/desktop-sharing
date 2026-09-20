@@ -44,6 +44,12 @@ pub const BTN_STOP: &str = "停止被控";
 pub const BTN_VIEW_ONLY: &str = "仅查看（停键鼠）";
 pub const BTN_RESTORE_INPUT: &str = "恢复键鼠";
 
+pub const TRAY_ACCEPTING: &str = "可被连接";
+pub const TRAY_NOT_ACCEPTING: &str = "不允许被连接";
+pub const TRAY_COPY_CODE: &str = "复制本机识别码";
+pub const TRAY_OPEN: &str = "打开主界面";
+pub const TRAY_EXIT: &str = "退出";
+
 /// 界面文案不得包含的催费词。
 pub const FORBIDDEN_BILLING: &[&str] = &["余额", "充值", "会员", "开通", "¥", "元/月"];
 
@@ -61,6 +67,15 @@ pub fn format_controller_line(phone_mask: &str) -> String {
         "账号 未知".to_string()
     } else {
         format!("账号 {mask}")
+    }
+}
+
+/// 确认页副行：服务端暂无控制端机型/城市时，用跨账号语义占位，不得编造机型。
+pub fn format_device_note(cross_account: bool) -> String {
+    if cross_account {
+        "跨账号请求 · 请确认你认识对方".to_string()
+    } else {
+        "同账号请求".to_string()
     }
 }
 
@@ -130,12 +145,12 @@ pub fn build_main_view(
 pub fn build_confirm_view(
     phone_mask: &str,
     first_connection: bool,
-    device_note: impl Into<String>,
+    cross_account: bool,
 ) -> HostConfirmView {
     HostConfirmView {
         controller_line: format_controller_line(phone_mask),
         first_connection,
-        device_note: device_note.into(),
+        device_note: format_device_note(cross_account),
     }
 }
 
@@ -187,9 +202,12 @@ mod tests {
 
     #[test]
     fn 确认页快照组装() {
-        let view = build_confirm_view("139****9000", true, "本机");
+        let view = build_confirm_view("139****9000", true, false);
         assert_eq!(view.controller_line, "账号 139****9000");
         assert!(view.first_connection);
-        assert_eq!(view.device_note, "本机");
+        assert_eq!(view.device_note, "同账号请求");
+        let cross = build_confirm_view("139****9000", false, true);
+        assert_eq!(cross.device_note, "跨账号请求 · 请确认你认识对方");
+        assert!(!cross.first_connection);
     }
 }

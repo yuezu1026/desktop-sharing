@@ -381,13 +381,17 @@ mod windows_host {
     unsafe fn show_tray_menu(window: HWND) {
         let Ok(menu) = CreatePopupMenu() else { return };
         let accepting = lock_model().as_ref().map(|model| model.accepting).unwrap_or(false);
-        let echo = wide_string(if accepting { "可被连接" } else { "不允许被连接" });
-        let stop = wide_string("停止被控");
-        let revoke = wide_string("仅查看（停键鼠）");
-        let restore = wide_string("恢复键鼠");
-        let copy = wide_string("复制本机识别码");
-        let open = wide_string("打开主界面");
-        let exit_label = wide_string("退出");
+        let echo = wide_string(if accepting {
+            host_hf::TRAY_ACCEPTING
+        } else {
+            host_hf::TRAY_NOT_ACCEPTING
+        });
+        let stop = wide_string(host_hf::BTN_STOP);
+        let revoke = wide_string(host_hf::BTN_VIEW_ONLY);
+        let restore = wide_string(host_hf::BTN_RESTORE_INPUT);
+        let copy = wide_string(host_hf::TRAY_COPY_CODE);
+        let open = wide_string(host_hf::TRAY_OPEN);
+        let exit_label = wide_string(host_hf::TRAY_EXIT);
         let _ = AppendMenuW(menu, MF_GRAYED | MF_STRING, 0, PCWSTR(echo.as_ptr()));
         let _ = AppendMenuW(menu, MF_STRING, STOP_CONTROL as usize, PCWSTR(stop.as_ptr()));
         let _ = AppendMenuW(menu, MF_STRING, REVOKE_INPUT as usize, PCWSTR(revoke.as_ptr()));
@@ -585,7 +589,8 @@ mod windows_host {
             }
             model.incoming_id = Some(first.remote_session_id);
             let phone_mask = first.controller_phone_mask.unwrap_or_default();
-            let confirm_view = host_hf::build_confirm_view(&phone_mask, first.first_connection, "本机");
+            let confirm_view =
+                host_hf::build_confirm_view(&phone_mask, first.first_connection, first.cross_account);
             model.incoming_who = confirm_view.controller_line;
             model.incoming_first = confirm_view.first_connection;
             model.incoming_device_note = confirm_view.device_note;
@@ -1074,6 +1079,8 @@ mod windows_host {
         controller_phone_mask: Option<String>,
         #[serde(rename = "firstConnection")]
         first_connection: bool,
+        #[serde(rename = "crossAccount", default)]
+        cross_account: bool,
     }
 
     #[derive(Deserialize)]
