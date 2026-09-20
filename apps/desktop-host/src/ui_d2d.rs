@@ -36,8 +36,6 @@ const PANEL_RADIUS: f32 = 14.0;
 const PILL_RADIUS: f32 = 14.0;
 const BUTTON_RADIUS: f32 = 10.0;
 const FRAUD_RADIUS: f32 = 12.0;
-const SHADOW_OFFSET: f32 = 3.0;
-const SHADOW_ALPHA: f32 = 0.10;
 
 static D2D_FACTORY: OnceLock<WinResult<ID2D1Factory>> = OnceLock::new();
 static DWRITE_FACTORY: OnceLock<WinResult<IDWriteFactory>> = OnceLock::new();
@@ -193,15 +191,8 @@ impl DcFrame {
         self.fill_round_rect(rect, colorref, radius)
     }
 
-    /// 半透明偏移阴影 + 面板填充 + 描边。
+    /// h2 `.panel`：白底 + 1px line，无投影。
     pub fn panel(&self, rect: LayoutRect, fill: u32, border: u32) -> WinResult<()> {
-        let shadow = LayoutRect {
-            left: rect.left + SHADOW_OFFSET as i32,
-            top: rect.top + SHADOW_OFFSET as i32,
-            right: rect.right + SHADOW_OFFSET as i32,
-            bottom: rect.bottom + SHADOW_OFFSET as i32,
-        };
-        self.fill_round_rect_alpha(shadow, COLOR_TEXT, SHADOW_ALPHA, PANEL_RADIUS)?;
         self.fill_round_rect(rect, fill, PANEL_RADIUS)?;
         self.stroke_round_rect(rect, border, PANEL_RADIUS, 1.0)?;
         Ok(())
@@ -230,9 +221,40 @@ impl DcFrame {
         };
         let format = make_text_format(face, size, weight, align, wrap)?;
         let brush = self.solid_brush(colorref, 1.0)?;
+        // h2 `.id` 0.08em / `.pass` 0.12em：逐字推进近似字距。
+        if matches!(style, TextStyle::Mono { .. }) && !wrap {
+            let tracking = if size >= 24.0 { size * 0.08 } else { size * 0.12 };
+            let mut cursor_x = rect.left as f32;
+            for character in text.chars() {
+                let mut utf16_buf = [0u16; 2];
+                let piece = character.encode_utf16(&mut utf16_buf);
+                let advance = if character == ' ' {
+                    size * 0.35
+                } else {
+                    size * 0.62 + tracking
+                };
+                let cell = D2D_RECT_F {
+                    left: cursor_x,
+                    top: rect.top as f32,
+                    right: cursor_x + advance,
+                    bottom: rect.bottom as f32,
+                };
+                unsafe {
+                    self.target.DrawText(
+                        piece,
+                        &format,
+                        &cell,
+                        &brush,
+                        D2D1_DRAW_TEXT_OPTIONS_NONE,
+                        DWRITE_MEASURING_MODE_NATURAL,
+                    );
+                }
+                cursor_x += advance;
+            }
+            return Ok(());
+        }
         let layout_rect = to_d2d_rect(rect);
         let wide: Vec<u16> = text.encode_utf16().collect();
-        // mono 字距：IDWriteTextLayout1::SetCharacterSpacing 需 windows_numerics，本刀跳过。
         unsafe {
             self.target.DrawText(
                 &wide,

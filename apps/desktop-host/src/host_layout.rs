@@ -42,74 +42,78 @@ pub struct NativeButton {
     pub rect: Rect,
 }
 
-pub const MAIN_WIDTH: i32 = 920;
-/// 对齐 h2 `.host` min-height=520，外加底栏会话三钮行。
-pub const MAIN_HEIGHT: i32 = 560;
+/// 对齐 h2 `.host`：padding 20 · 左栏 340 · gap 16 · 右栏弹性。
+pub const MAIN_WIDTH: i32 = 900;
+/// 空闲态贴齐卡片底；底行仅留给会话三钮（空闲不绘制）。
+pub const MAIN_HEIGHT: i32 = 476;
 pub const CONFIRM_WIDTH: i32 = 640;
 pub const CONFIRM_HEIGHT: i32 = 560;
 
 pub const LEFT_PANEL: Rect = Rect {
     left: 20,
     top: 20,
-    right: 340,
-    bottom: 480,
+    right: 360,
+    bottom: 420,
 };
 pub const RIGHT_STATUS: Rect = Rect {
-    left: 360,
+    left: 376,
     top: 20,
     right: 880,
-    bottom: 140,
+    bottom: 128,
 };
 pub const RIGHT_SWITCHES: Rect = Rect {
-    left: 360,
-    top: 156,
+    left: 376,
+    top: 140,
     right: 880,
-    bottom: 300,
+    bottom: 276,
 };
 pub const RIGHT_FRAUD: Rect = Rect {
-    left: 360,
-    top: 316,
+    left: 376,
+    top: 288,
     right: 880,
-    bottom: 444,
+    bottom: 420,
 };
 
-pub const LABEL_CODE: Rect = Rect::from_xywh(40, 40, 280, 18);
-pub const VALUE_CODE: Rect = Rect::from_xywh(40, 62, 200, 34);
-pub const LABEL_PASSWORD: Rect = Rect::from_xywh(40, 112, 280, 18);
-pub const VALUE_PASSWORD: Rect = Rect::from_xywh(40, 136, 200, 28);
-pub const PASSWORD_HINT: Rect = Rect::from_xywh(40, 170, 280, 48);
+pub const LABEL_CODE: Rect = Rect::from_xywh(40, 40, 220, 18);
+pub const VALUE_CODE: Rect = Rect::from_xywh(40, 64, 220, 34);
+pub const LABEL_PASSWORD: Rect = Rect::from_xywh(40, 118, 220, 18);
+pub const VALUE_PASSWORD: Rect = Rect::from_xywh(40, 142, 220, 28);
+pub const PASSWORD_HINT: Rect = Rect::from_xywh(40, 176, 300, 44);
 
-pub const ACCEPT_SWITCH_TRACK: Rect = Rect::from_xywh(40, 236, 44, 26);
-pub const ACCEPT_SWITCH_HIT: Rect = Rect::from_xywh(40, 232, 180, 36);
-pub const ACCEPT_SWITCH_LABEL: Rect = Rect::from_xywh(94, 236, 200, 26);
+/// 开关贴左栏底部，消除大块空白。
+pub const ACCEPT_SWITCH_TRACK: Rect = Rect::from_xywh(40, 372, 44, 26);
+pub const ACCEPT_SWITCH_HIT: Rect = Rect::from_xywh(40, 368, 200, 36);
+pub const ACCEPT_SWITCH_LABEL: Rect = Rect::from_xywh(94, 372, 220, 26);
 
-pub const STATUS_TITLE: Rect = Rect::from_xywh(380, 36, 460, 22);
-pub const STATUS_PILL: Rect = Rect::from_xywh(380, 66, 120, 22);
-pub const STATUS_HINT: Rect = Rect::from_xywh(380, 96, 460, 28);
+pub const STATUS_TITLE: Rect = Rect::from_xywh(396, 36, 460, 22);
+pub const STATUS_PILL: Rect = Rect::from_xywh(396, 66, 120, 22);
+pub const STATUS_HINT: Rect = Rect::from_xywh(396, 96, 460, 24);
 
-pub const SWITCHES_TITLE: Rect = Rect::from_xywh(380, 172, 460, 22);
-pub const SWITCH_ROW_1: Rect = Rect::from_xywh(380, 206, 300, 24);
-pub const SWITCH_ROW_2: Rect = Rect::from_xywh(380, 238, 300, 24);
-pub const SWITCH_ROW_3: Rect = Rect::from_xywh(380, 270, 300, 24);
-pub const SWITCH_ROW_PILL_OFFSET_X: i32 = 420;
+pub const SWITCHES_TITLE: Rect = Rect::from_xywh(396, 156, 460, 22);
+pub const SWITCH_ROW_1: Rect = Rect::from_xywh(396, 188, 320, 24);
+pub const SWITCH_ROW_2: Rect = Rect::from_xywh(396, 220, 320, 24);
+pub const SWITCH_ROW_3: Rect = Rect::from_xywh(396, 252, 320, 24);
+/// pill 右缘靠近右栏内边距（880 - 16 - pill宽）。
+pub const SWITCH_ROW_PILL_OFFSET_X: i32 = 400;
 
-pub const FRAUD_TITLE: Rect = Rect::from_xywh(380, 334, 460, 26);
-pub const FRAUD_BODY: Rect = Rect::from_xywh(380, 366, 460, 56);
+pub const FRAUD_TITLE: Rect = Rect::from_xywh(396, 306, 460, 26);
+pub const FRAUD_BODY: Rect = Rect::from_xywh(396, 338, 460, 60);
 
+/// h2 `.btn` min-height=36。
 pub const BTN_COPY: NativeButton = NativeButton {
-    rect: Rect::from_xywh(252, 62, 68, 32),
+    rect: Rect::from_xywh(276, 64, 68, 36),
 };
 pub const BTN_ROTATE: NativeButton = NativeButton {
-    rect: Rect::from_xywh(252, 136, 68, 32),
+    rect: Rect::from_xywh(276, 140, 68, 36),
 };
 pub const BTN_STOP: NativeButton = NativeButton {
-    rect: Rect::from_xywh(360, 468, 120, DESKTOP_MIN_PX),
+    rect: Rect::from_xywh(376, 428, 120, DESKTOP_MIN_PX),
 };
 pub const BTN_VIEW_ONLY: NativeButton = NativeButton {
-    rect: Rect::from_xywh(500, 468, 180, DESKTOP_MIN_PX),
+    rect: Rect::from_xywh(512, 428, 180, DESKTOP_MIN_PX),
 };
 pub const BTN_RESTORE_INPUT: NativeButton = NativeButton {
-    rect: Rect::from_xywh(700, 468, 120, DESKTOP_MIN_PX),
+    rect: Rect::from_xywh(708, 428, 120, DESKTOP_MIN_PX),
 };
 
 /// 主界面可点动作（与布局矩形一一对应）。
@@ -239,10 +243,13 @@ mod tests {
 
     #[test]
     fn 主界面高度对齐_h2_host() {
-        // h2 `.host` min-height=520；会话三钮贴底，整体客户区不超过 560。
-        assert_eq!(MAIN_HEIGHT, 560);
+        // 对照用户截图：h2 整窗约 506；客户区卡片底对齐，左栏无大块留白。
+        assert_eq!(MAIN_HEIGHT, 476);
+        assert_eq!(LEFT_PANEL.bottom, RIGHT_FRAUD.bottom);
+        assert!(ACCEPT_SWITCH_TRACK.bottom <= LEFT_PANEL.bottom - 12);
         assert!(RIGHT_FRAUD.bottom < BTN_STOP.rect.top);
-        assert!(BTN_STOP.rect.bottom <= MAIN_HEIGHT - 12);
-        assert!(LEFT_PANEL.bottom <= MAIN_HEIGHT - 40);
+        assert!(BTN_STOP.rect.bottom <= MAIN_HEIGHT);
+        assert_eq!(LEFT_PANEL.width(), 340);
+        assert_eq!(RIGHT_STATUS.left - LEFT_PANEL.right, 16);
     }
 }
