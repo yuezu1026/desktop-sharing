@@ -40,14 +40,67 @@ struct JoinOk {
     peer_candidates: Option<Vec<String>>,
 }
 
-/// 绑定本机 UDP，返回「host:port」候选。只报内网可达地址，不做 STUN。
-pub fn bind_local_candidate() -> Result<(UdpSocket, String), SignalError> {
+/// 绑定本机 UDP，返回内网可达候选列表。含环回以便本机自测；不做 STUN。
+pub fn bind_local_candidates() -> Result<(UdpSocket, Vec<String>), SignalError> {
     let socket = UdpSocket::bind("0.0.0.0:0").map_err(|_| SignalError::Address)?;
     socket
         .set_read_timeout(Some(Duration::from_millis(200)))
         .map_err(|_| SignalError::Address)?;
     let port = socket.local_addr().map_err(|_| SignalError::Address)?.port();
-    Ok((socket, format!("127.0.0.1:{port}")))
+    let mut candidates = local_ipv4_hosts()
+        .into_iter()
+        .map(|host| format!("{host}:{port}"))
+        .collect::<Vec<_>>();
+    candidates.push(format!("127.0.0.1:{port}"));
+    candidates.sort();
+    candidates.dedup();
+    Ok((socket, candidates))
+}
+
+fn local_ipv4_hosts() -> Vec<String> {
+    let Ok(interfaces) = local_ip_addresses() else {
+        return Vec::new();
+    };
+    interfaces
+}
+
+/// 用 UDP connect 试探本机出口，再列出常见网卡地址；失败时至少仍有环回候选。
+fn local_ip_addresses() -> Result<Vec<String>, SignalError> {
+    let mut hosts = Vec::new();
+    if let Ok(probe) = UdpSocket::bind("0.0.0.0:0") {
+        if probe.connect("8.8.8.8:80").is_ok() {
+            if let Ok(address) = probe.local_addr() {
+                if let SocketAddr::V4(v4) = address {
+                    let ip = v4.ip();
+                    if !ip.is_loopback() && !ip.is_unspecified() {
+                        hosts.push(ip.to_string());
+                    }
+                }
+            }
+        }
+    }
+    if let Ok(hostname) = hostname_string() {
+        if let Ok(entries) = std::net::ToSocketAddrs::to_socket_addrs(&(hostname.as_str(), 0u16)) {
+            for entry in entries {
+                if let SocketAddr::V4(v4) = entry {
+                    let ip = *v4.ip();
+                    if !ip.is_loopback() && !ip.is_unspecified() {
+                        let text = ip.to_string();
+                        if !hosts.contains(&text) {
+                            hosts.push(text);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    Ok(hosts)
+}
+
+fn hostname_string() -> Result<String, SignalError> {
+    std::env::var("COMPUTERNAME")
+        .or_else(|_| std::env::var("HOSTNAME"))
+        .map_err(|_| SignalError::Address)
 }
 
 /// 向信令登记本端候选，并轮询直到拿到对端候选或超时。

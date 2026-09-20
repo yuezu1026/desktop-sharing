@@ -1026,10 +1026,9 @@ mod windows_controller {
         fingerprint: String,
     ) -> Option<direct_client::DirectLink> {
         let signal_origin = std::env::var("SIGNAL_URL").unwrap_or_else(|_| "http://127.0.0.1:8081".to_string());
-        let Ok((socket, candidate)) = signal_client::bind_local_candidate() else {
+        let Ok((socket, candidates)) = signal_client::bind_local_candidates() else {
             return None;
         };
-        let candidates = vec![candidate];
         let Ok((_session_id, peers)) = signal_client::exchange_candidates(
             &signal_origin,
             &ticket,
