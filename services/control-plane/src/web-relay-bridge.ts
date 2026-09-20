@@ -75,6 +75,15 @@ async function bridgeClient(websocket: WebSocket, _request: IncomingMessage): Pr
     });
     relay.on("error", cleanup);
     relay.on("close", cleanup);
+    websocket.on("message", (data, isBinary) => {
+      if (!relay || relay.destroyed) return;
+      if (!isBinary) return;
+      const bytes = Buffer.isBuffer(data) ? data : Buffer.from(data as ArrayBuffer);
+      if (bytes.length < FRAME_HEADER_BYTES) return;
+      if (bytes.subarray(0, 4).toString("ascii") !== "RDS1") return;
+      if (bytes[5] !== 2) return; // 只转发输入帧，防止浏览器误注视频
+      relay.write(bytes);
+    });
   } catch {
     if (websocket.readyState === websocket.OPEN) {
       websocket.send(JSON.stringify({ ok: false, code: "relay_connect_failed", message: "中继未接通" }));

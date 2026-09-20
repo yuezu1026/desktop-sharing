@@ -41,19 +41,33 @@
   <script type="module">
     import { PHASE, badgeText, nextPhase, pictureText, shouldPoll } from "/web/session-ui.mjs";
     import {
+      FRAME_KIND_INPUT,
       FRAME_KIND_VIDEO,
       VIDEO_CODEC_JPEG,
       VIDEO_CODEC_H264,
       frameKind,
       framePayload,
+      packFrame,
       unpackVideo,
     } from "/web/frame.mjs";
     import { createH264Painter } from "/web/h264-painter.mjs";
+    import {
+      INPUT_KEY_DOWN,
+      INPUT_KEY_UP,
+      INPUT_POINTER_DOWN,
+      INPUT_POINTER_MOVE,
+      INPUT_POINTER_UP,
+      encodeKey,
+      encodePointer,
+      encodeWheel,
+      mapPointerToPicture,
+    } from "/web/input.mjs";
 
     const errorLine = document.getElementById("error");
     const linkBadge = document.getElementById("linkBadge");
     const pictureLabel = document.getElementById("pictureLabel");
     const frameCanvas = document.getElementById("frameCanvas");
+    const pictureBox = document.getElementById("picture");
     const frameContext = frameCanvas.getContext("2d");
     const h264Painter = createH264Painter(frameCanvas);
     const controllerFingerprint = crypto.randomUUID();
@@ -62,6 +76,9 @@
     let heldTicket = "";
     let heldSessionId = "";
     let relaySocket = null;
+    let pictureWidth = 0;
+    let pictureHeight = 0;
+    let relayReady = false;
 
     function paint() {
       linkBadge.textContent = badgeText(phase);
@@ -84,6 +101,28 @@
         relaySocket = null;
       }
       h264Painter.close();
+      relayReady = false;
+      pictureWidth = 0;
+      pictureHeight = 0;
+    }
+
+    function sendInputPayload(payload) {
+      if (!relaySocket || relaySocket.readyState !== WebSocket.OPEN || !relayReady) return;
+      const frame = packFrame(FRAME_KIND_INPUT, payload);
+      if (frame) relaySocket.send(frame);
+    }
+
+    function pointerFromEvent(event) {
+      const rect = pictureBox.getBoundingClientRect();
+      return mapPointerToPicture(event.clientX, event.clientY, rect, pictureWidth, pictureHeight);
+    }
+
+    /** 浏览器 button：0 左 1 中 2 右 → 协议：0 左 1 右 2 中 */
+    function browserButtonToProtocol(button) {
+      if (button === 0) return 0;
+      if (button === 2) return 1;
+      if (button === 1) return 2;
+      return 0;
     }
 
     function openRelayBridge() {
@@ -91,6 +130,7 @@
       const protocol = location.protocol === "https:" ? "wss:" : "ws:";
       const socket = new WebSocket(`${protocol}//${location.host}/v1/web-relay`);
       relaySocket = socket;
+      relayReady = false;
       socket.binaryType = "arraybuffer";
       socket.addEventListener("open", () => {
         socket.send(JSON.stringify({ ticket: heldTicket, fingerprint: controllerFingerprint }));
@@ -104,6 +144,7 @@
               applyEvent({ error: "relay" });
               closeRelayBridge();
             } else if (body.ok === true) {
+              relayReady = true;
               linkBadge.textContent = "中继";
             }
           } catch {
@@ -115,6 +156,8 @@
         if (frameKind(bytes) !== FRAME_KIND_VIDEO) return;
         const video = unpackVideo(framePayload(bytes));
         if (!video) return;
+        pictureWidth = video.width;
+        pictureHeight = video.height;
         if (video.codec === VIDEO_CODEC_JPEG) {
           await drawJpeg(video.body, video.width, video.height);
         } else if (video.codec === VIDEO_CODEC_H264) {
@@ -130,6 +173,7 @@
       });
       socket.addEventListener("close", () => {
         if (relaySocket === socket) relaySocket = null;
+        relayReady = false;
       });
     }
 
@@ -144,6 +188,39 @@
       pictureLabel.style.display = "none";
       linkBadge.textContent = "中继";
     }
+
+    pictureBox.addEventListener("mousemove", (event) => {
+      const point = pointerFromEvent(event);
+      if (!point) return;
+      sendInputPayload(encodePointer(INPUT_POINTER_MOVE, point.x, point.y));
+    });
+    pictureBox.addEventListener("mousedown", (event) => {
+      const point = pointerFromEvent(event);
+      if (!point) return;
+      pictureBox.focus();
+      sendInputPayload(encodePointer(INPUT_POINTER_DOWN, point.x, point.y, browserButtonToProtocol(event.button)));
+    });
+    pictureBox.addEventListener("mouseup", (event) => {
+      const point = pointerFromEvent(event);
+      if (!point) return;
+      sendInputPayload(encodePointer(INPUT_POINTER_UP, point.x, point.y, browserButtonToProtocol(event.button)));
+    });
+    pictureBox.addEventListener("wheel", (event) => {
+      const point = pointerFromEvent(event);
+      if (!point) return;
+      event.preventDefault();
+      sendInputPayload(encodeWheel(point.x, point.y, Math.trunc(-event.deltaY)));
+    }, { passive: false });
+    pictureBox.tabIndex = 0;
+    pictureBox.addEventListener("keydown", (event) => {
+      if (event.repeat) return;
+      sendInputPayload(encodeKey(INPUT_KEY_DOWN, event.keyCode));
+      event.preventDefault();
+    });
+    pictureBox.addEventListener("keyup", (event) => {
+      sendInputPayload(encodeKey(INPUT_KEY_UP, event.keyCode));
+      event.preventDefault();
+    });
 
     document.getElementById("fullscreen").addEventListener("click", () => {
       document.documentElement.requestFullscreen();
