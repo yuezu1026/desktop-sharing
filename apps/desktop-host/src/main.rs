@@ -47,6 +47,9 @@ mod host_hf;
 mod host_layout;
 
 #[cfg(windows)]
+mod ui_round;
+
+#[cfg(windows)]
 mod ui_chrome;
 
 #[cfg(windows)]

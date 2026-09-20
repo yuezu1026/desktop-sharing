@@ -3,10 +3,10 @@
 
 use windows::Win32::Foundation::{COLORREF, RECT};
 use windows::Win32::Graphics::Gdi::{
-    CreateCompatibleBitmap, CreateCompatibleDC, CreateFontW, CreatePen, CreateSolidBrush, DeleteDC, DeleteObject,
-    DrawTextW, FillRect, GetDC, ReleaseDC, RoundRect, SelectObject, SetBkMode, SetTextColor, CLIP_DEFAULT_PRECIS,
+    CreateCompatibleBitmap, CreateCompatibleDC, CreateFontW, CreateSolidBrush, DeleteDC, DeleteObject, DrawTextW,
+    FillRect, GetDC, ReleaseDC, SelectObject, SetBkMode, SetTextCharacterExtra, SetTextColor, CLIP_DEFAULT_PRECIS,
     DEFAULT_CHARSET, DEFAULT_QUALITY, DT_CENTER, DT_LEFT, DT_SINGLELINE, DT_VCENTER, DT_WORDBREAK, HDC, HGDIOBJ,
-    OUT_DEFAULT_PRECIS, PS_NULL, TRANSPARENT,
+    OUT_DEFAULT_PRECIS, TRANSPARENT,
 };
 use windows::Win32::UI::WindowsAndMessaging::{
     AdjustWindowRectEx, CreateIconIndirect, HICON, ICONINFO, WINDOW_EX_STYLE, WINDOW_STYLE,
@@ -15,6 +15,7 @@ use windows::core::PCWSTR;
 
 use crate::host_hf::{self, HostConfirmView, HostMainView};
 use crate::host_layout::{self, Rect as LayoutRect};
+use crate::ui_round::{fill_round_rect_aa, stroke_round_rect_aa};
 use crate::ui_theme::{
     COLOR_BG, COLOR_BRAND, COLOR_LINE, COLOR_OK, COLOR_ON_SOLID, COLOR_SURFACE, COLOR_SWITCH_OFF, COLOR_TEXT,
     COLOR_TEXT2,
@@ -79,7 +80,7 @@ pub unsafe fn paint_main_shell(device_context: HDC, view: &HostMainView) {
     SetBkMode(device_context, TRANSPARENT);
 
     draw_in(device_context, host_hf::LABEL_DEVICE_CODE, host_layout::LABEL_CODE, DrawStyle::Label);
-    draw_mono_in(device_context, &view.code_text, host_layout::VALUE_CODE, 26);
+    draw_mono_in(device_context, &view.code_text, host_layout::VALUE_CODE, 28);
     draw_in(device_context, host_hf::LABEL_TEMP_PASSWORD, host_layout::LABEL_PASSWORD, DrawStyle::Label);
     draw_mono_in(device_context, &view.password_text, host_layout::VALUE_PASSWORD, 20);
     draw_in(device_context, host_hf::PASSWORD_HINT, host_layout::PASSWORD_HINT, DrawStyle::Muted);
@@ -131,17 +132,12 @@ unsafe fn paint_main_actions(device_context: HDC, show_session_actions: bool) {
 }
 
 unsafe fn paint_outline_button(device_context: HDC, rect: LayoutRect, label: &str) {
-    // HF `.btn`：1px line2 细边，不是粗黑框。
-    fill_round_rect(device_context, rect, COLOR_LINE2, BUTTON_RADIUS);
-    let inset = LayoutRect {
-        left: rect.left + 1,
-        top: rect.top + 1,
-        right: rect.right - 1,
-        bottom: rect.bottom - 1,
-    };
-    fill_round_rect(device_context, inset, COLOR_SURFACE, BUTTON_RADIUS.saturating_sub(1));
+    fill_round_rect_aa(device_context, rect, COLOR_SURFACE, BUTTON_RADIUS);
+    stroke_round_rect_aa(device_context, rect, COLOR_LINE2, BUTTON_RADIUS, 1.0);
     let _ = SetTextColor(device_context, COLORREF(COLOR_TEXT));
-    draw_centered_in(device_context, label, rect);
+    with_font(device_context, "Microsoft YaHei UI", 13, 600, || {
+        draw_text(device_context, label, rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+    });
 }
 
 pub unsafe fn paint_confirm_shell(device_context: HDC, view: &HostConfirmView) {
@@ -213,9 +209,11 @@ pub unsafe fn paint_confirm_shell(device_context: HDC, view: &HostConfirmView) {
 /// 「拒绝」实心主按钮；「允许本次」同尺寸描边。
 pub unsafe fn paint_confirm_buttons(device_context: HDC) {
     let refuse = host_layout::CONFIRM_REFUSE.rect;
-    fill_round_rect(device_context, refuse, COLOR_TEXT, BUTTON_RADIUS);
+    fill_round_rect_aa(device_context, refuse, COLOR_TEXT, BUTTON_RADIUS);
     let _ = SetTextColor(device_context, COLORREF(COLOR_ON_SOLID));
-    draw_centered_in(device_context, host_hf::CONFIRM_REFUSE, refuse);
+    with_font(device_context, "Microsoft YaHei UI", 13, 600, || {
+        draw_text(device_context, host_hf::CONFIRM_REFUSE, refuse, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+    });
 
     paint_outline_button(device_context, host_layout::CONFIRM_ALLOW.rect, host_hf::CONFIRM_ALLOW);
 }
@@ -249,35 +247,12 @@ unsafe fn fill_bg(device_context: HDC, width: i32, height: i32, color: u32) {
 }
 
 unsafe fn fill_panel(device_context: HDC, panel: LayoutRect, fill: u32, border: u32) {
-    fill_round_rect(device_context, panel, border, PANEL_RADIUS);
-    let inset = LayoutRect {
-        left: panel.left + 1,
-        top: panel.top + 1,
-        right: panel.right - 1,
-        bottom: panel.bottom - 1,
-    };
-    fill_round_rect(device_context, inset, fill, PANEL_RADIUS.saturating_sub(1));
+    fill_round_rect_aa(device_context, panel, fill, PANEL_RADIUS);
+    stroke_round_rect_aa(device_context, panel, border, PANEL_RADIUS, 1.0);
 }
 
 unsafe fn fill_round_rect(device_context: HDC, rect: LayoutRect, fill: u32, radius: i32) {
-    let brush = CreateSolidBrush(COLORREF(fill));
-    let pen = CreatePen(PS_NULL, 0, COLORREF(0));
-    let old_brush = SelectObject(device_context, HGDIOBJ::from(brush));
-    let old_pen = SelectObject(device_context, HGDIOBJ::from(pen));
-    let diameter = (radius * 2).max(2);
-    let _ = RoundRect(
-        device_context,
-        rect.left,
-        rect.top,
-        rect.right,
-        rect.bottom,
-        diameter,
-        diameter,
-    );
-    SelectObject(device_context, old_brush);
-    SelectObject(device_context, old_pen);
-    let _ = DeleteObject(HGDIOBJ::from(brush));
-    let _ = DeleteObject(HGDIOBJ::from(pen));
+    fill_round_rect_aa(device_context, rect, fill, radius);
 }
 
 #[derive(Clone, Copy)]
@@ -353,9 +328,13 @@ unsafe fn draw_in(device_context: HDC, text: &str, rect: LayoutRect, style: Draw
 
 unsafe fn draw_mono_in(device_context: HDC, text: &str, rect: LayoutRect, size: i32) {
     let _ = SetTextColor(device_context, COLORREF(COLOR_TEXT));
+    // HF `.id` letter-spacing ≈ 0.08em
+    let extra = (size as f32 * 0.08).round() as i32;
+    let previous = SetTextCharacterExtra(device_context, extra);
     with_font(device_context, "Consolas", size, 600, || {
         draw_text(device_context, text, rect, DT_LEFT | DT_SINGLELINE);
     });
+    let _ = SetTextCharacterExtra(device_context, previous);
 }
 
 unsafe fn draw_centered_in(device_context: HDC, text: &str, rect: LayoutRect) {

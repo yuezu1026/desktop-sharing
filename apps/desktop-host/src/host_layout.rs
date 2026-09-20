@@ -51,64 +51,64 @@ pub const LEFT_PANEL: Rect = Rect {
     left: 20,
     top: 20,
     right: 340,
-    bottom: 560,
+    bottom: 500,
 };
 pub const RIGHT_STATUS: Rect = Rect {
     left: 360,
     top: 20,
     right: 880,
-    bottom: 160,
+    bottom: 148,
 };
 pub const RIGHT_SWITCHES: Rect = Rect {
     left: 360,
-    top: 176,
+    top: 164,
     right: 880,
-    bottom: 330,
+    bottom: 318,
 };
 pub const RIGHT_FRAUD: Rect = Rect {
     left: 360,
-    top: 346,
+    top: 334,
     right: 880,
-    bottom: 470,
+    bottom: 460,
 };
 
-pub const LABEL_CODE: Rect = Rect::from_xywh(40, 36, 280, 22);
-pub const VALUE_CODE: Rect = Rect::from_xywh(40, 64, 170, 36);
-pub const LABEL_PASSWORD: Rect = Rect::from_xywh(40, 126, 280, 22);
-pub const VALUE_PASSWORD: Rect = Rect::from_xywh(40, 154, 170, 30);
-pub const PASSWORD_HINT: Rect = Rect::from_xywh(40, 196, 280, 56);
+pub const LABEL_CODE: Rect = Rect::from_xywh(40, 40, 280, 20);
+pub const VALUE_CODE: Rect = Rect::from_xywh(40, 66, 200, 34);
+pub const LABEL_PASSWORD: Rect = Rect::from_xywh(40, 120, 280, 20);
+pub const VALUE_PASSWORD: Rect = Rect::from_xywh(40, 146, 200, 28);
+pub const PASSWORD_HINT: Rect = Rect::from_xywh(40, 182, 280, 48);
 
-pub const ACCEPT_SWITCH_TRACK: Rect = Rect::from_xywh(40, 268, 48, 26);
-pub const ACCEPT_SWITCH_HIT: Rect = Rect::from_xywh(40, 268, 180, 40);
-pub const ACCEPT_SWITCH_LABEL: Rect = Rect::from_xywh(96, 270, 180, 24);
+pub const ACCEPT_SWITCH_TRACK: Rect = Rect::from_xywh(40, 248, 44, 26);
+pub const ACCEPT_SWITCH_HIT: Rect = Rect::from_xywh(40, 244, 180, 36);
+pub const ACCEPT_SWITCH_LABEL: Rect = Rect::from_xywh(94, 248, 200, 26);
 
-pub const STATUS_TITLE: Rect = Rect::from_xywh(380, 36, 460, 24);
-pub const STATUS_PILL: Rect = Rect::from_xywh(380, 72, 120, 28);
-pub const STATUS_HINT: Rect = Rect::from_xywh(380, 112, 460, 36);
+pub const STATUS_TITLE: Rect = Rect::from_xywh(380, 40, 460, 22);
+pub const STATUS_PILL: Rect = Rect::from_xywh(380, 72, 120, 22);
+pub const STATUS_HINT: Rect = Rect::from_xywh(380, 104, 460, 28);
 
-pub const SWITCHES_TITLE: Rect = Rect::from_xywh(380, 192, 460, 24);
-pub const SWITCH_ROW_1: Rect = Rect::from_xywh(380, 228, 460, 24);
-pub const SWITCH_ROW_2: Rect = Rect::from_xywh(380, 262, 460, 24);
-pub const SWITCH_ROW_3: Rect = Rect::from_xywh(380, 296, 460, 24);
-pub const SWITCH_ROW_PILL_OFFSET_X: i32 = 400;
+pub const SWITCHES_TITLE: Rect = Rect::from_xywh(380, 184, 460, 22);
+pub const SWITCH_ROW_1: Rect = Rect::from_xywh(380, 220, 300, 24);
+pub const SWITCH_ROW_2: Rect = Rect::from_xywh(380, 254, 300, 24);
+pub const SWITCH_ROW_3: Rect = Rect::from_xywh(380, 288, 300, 24);
+pub const SWITCH_ROW_PILL_OFFSET_X: i32 = 420;
 
-pub const FRAUD_TITLE: Rect = Rect::from_xywh(380, 362, 460, 28);
-pub const FRAUD_BODY: Rect = Rect::from_xywh(380, 398, 460, 56);
+pub const FRAUD_TITLE: Rect = Rect::from_xywh(380, 354, 460, 26);
+pub const FRAUD_BODY: Rect = Rect::from_xywh(380, 388, 460, 56);
 
 pub const BTN_COPY: NativeButton = NativeButton {
-    rect: Rect::from_xywh(220, 78, 90, DESKTOP_MIN_PX),
+    rect: Rect::from_xywh(252, 66, 68, 32),
 };
 pub const BTN_ROTATE: NativeButton = NativeButton {
-    rect: Rect::from_xywh(220, 168, 90, DESKTOP_MIN_PX),
+    rect: Rect::from_xywh(252, 146, 68, 32),
 };
 pub const BTN_STOP: NativeButton = NativeButton {
-    rect: Rect::from_xywh(360, 490, 120, DESKTOP_MIN_PX),
+    rect: Rect::from_xywh(360, 480, 120, DESKTOP_MIN_PX),
 };
 pub const BTN_VIEW_ONLY: NativeButton = NativeButton {
-    rect: Rect::from_xywh(500, 490, 180, DESKTOP_MIN_PX),
+    rect: Rect::from_xywh(500, 480, 180, DESKTOP_MIN_PX),
 };
 pub const BTN_RESTORE_INPUT: NativeButton = NativeButton {
-    rect: Rect::from_xywh(700, 490, 120, DESKTOP_MIN_PX),
+    rect: Rect::from_xywh(700, 480, 120, DESKTOP_MIN_PX),
 };
 
 /// 主界面可点动作（与布局矩形一一对应）。
