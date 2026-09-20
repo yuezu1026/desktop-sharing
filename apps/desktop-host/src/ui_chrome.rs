@@ -102,6 +102,33 @@ pub unsafe fn paint_main_shell(device_context: HDC, view: &HostMainView) {
 
     draw_in(device_context, host_hf::FRAUD_TITLE, host_layout::FRAUD_TITLE, DrawStyle::Bold);
     draw_in(device_context, host_hf::FRAUD_BODY, host_layout::FRAUD_BODY, DrawStyle::Muted);
+
+    paint_main_actions(device_context);
+}
+
+unsafe fn paint_main_actions(device_context: HDC) {
+    paint_outline_button(device_context, host_layout::BTN_COPY.rect, host_hf::BTN_COPY);
+    paint_outline_button(device_context, host_layout::BTN_ROTATE.rect, host_hf::BTN_ROTATE);
+    paint_outline_button(device_context, host_layout::BTN_STOP.rect, host_hf::BTN_STOP);
+    paint_outline_button(device_context, host_layout::BTN_VIEW_ONLY.rect, host_hf::BTN_VIEW_ONLY);
+    paint_outline_button(device_context, host_layout::BTN_RESTORE_INPUT.rect, host_hf::BTN_RESTORE_INPUT);
+}
+
+unsafe fn paint_outline_button(device_context: HDC, rect: LayoutRect, label: &str) {
+    let border_brush = CreateSolidBrush(COLORREF(COLOR_TEXT));
+    FillRect(device_context, &to_gdi(rect), border_brush);
+    let _ = DeleteObject(HGDIOBJ::from(border_brush));
+    let inset = RECT {
+        left: rect.left + 2,
+        top: rect.top + 2,
+        right: rect.right - 2,
+        bottom: rect.bottom - 2,
+    };
+    let inset_brush = CreateSolidBrush(COLORREF(COLOR_SURFACE));
+    FillRect(device_context, &inset, inset_brush);
+    let _ = DeleteObject(HGDIOBJ::from(inset_brush));
+    let _ = SetTextColor(device_context, COLORREF(COLOR_TEXT));
+    draw_centered_in(device_context, label, rect);
 }
 
 pub unsafe fn paint_confirm_shell(device_context: HDC, view: &HostConfirmView) {

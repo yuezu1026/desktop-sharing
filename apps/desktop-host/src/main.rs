@@ -77,13 +77,13 @@ mod windows_host {
     use windows::Win32::UI::WindowsAndMessaging::{
         AppendMenuW, CreatePopupMenu, CreateWindowExW, DefWindowProcW, DestroyWindow, DispatchMessageW, GetCursorPos,
         GetMessageW, LoadIconW, PostQuitMessage, RegisterClassW, SetForegroundWindow, SetTimer,
-        ShowWindow, TrackPopupMenu, TranslateMessage, BS_DEFPUSHBUTTON, BS_PUSHBUTTON,
-        CW_USEDEFAULT, HICON, HMENU, IDI_APPLICATION, MF_GRAYED, MF_STRING, MSG, SW_SHOW, TPM_RIGHTALIGN,
-        WINDOW_EX_STYLE, WINDOW_STYLE, WM_CLOSE, WM_COMMAND, WM_CREATE, WM_DESTROY, WM_KEYDOWN, WM_LBUTTONDOWN, WM_PAINT,
-        WM_RBUTTONUP, WM_TIMER, WNDCLASSW, WS_CAPTION, WS_CHILD, WS_EX_TOPMOST, WS_OVERLAPPED, WS_SYSMENU, WS_VISIBLE,
+        ShowWindow, TrackPopupMenu, TranslateMessage, CW_USEDEFAULT, HICON, IDI_APPLICATION, MF_GRAYED, MF_STRING,
+        MSG, SW_SHOW, TPM_RIGHTALIGN, WINDOW_EX_STYLE, WM_CLOSE, WM_COMMAND, WM_CREATE, WM_DESTROY, WM_KEYDOWN,
+        WM_LBUTTONDOWN, WM_PAINT, WM_RBUTTONUP, WM_TIMER, WNDCLASSW, WS_CAPTION, WS_EX_TOPMOST, WS_OVERLAPPED,
+        WS_SYSMENU, WS_VISIBLE,
     };
     use crate::host_hf;
-    use crate::host_layout;
+    use crate::host_layout::{self, MainAction};
     use crate::ui_chrome::{
         create_brand_icon, hit_accept_switch, hit_confirm_allow, hit_confirm_refuse, outer_size_for_client,
         paint_confirm_shell, paint_main_shell, CONFIRM_HEIGHT, CONFIRM_WIDTH, MAIN_HEIGHT, MAIN_WIDTH,
@@ -208,7 +208,6 @@ mod windows_host {
     unsafe extern "system" fn main_proc(window: HWND, message: u32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
         match message {
             WM_CREATE => {
-                create_buttons(window);
                 add_tray(window);
                 let _ = SetTimer(Some(window), POLL_TIMER, 2000, None);
                 if let Some(model) = lock_model().as_mut() {
@@ -241,6 +240,15 @@ mod windows_host {
                 let click_y = ((lparam.0 >> 16) & 0xffff) as i16 as i32;
                 if hit_accept_switch(click_x, click_y) {
                     toggle_accept();
+                    refresh();
+                } else if let Some(action) = host_layout::hit_main_action(click_x, click_y) {
+                    match action {
+                        MainAction::Copy => copy_code(),
+                        MainAction::Rotate => rotate_password(),
+                        MainAction::Stop => stop_now(),
+                        MainAction::ViewOnly => set_session_input(false),
+                        MainAction::RestoreInput => set_session_input(true),
+                    }
                     refresh();
                 }
                 LRESULT(0)
@@ -307,46 +315,6 @@ mod windows_host {
             }
             _ => DefWindowProcW(window, message, wparam, lparam),
         }
-    }
-
-    unsafe fn create_buttons(window: HWND) {
-        create_native_button(window, host_hf::BTN_COPY, host_layout::BTN_COPY.rect, COPY_CODE, false);
-        create_native_button(window, host_hf::BTN_ROTATE, host_layout::BTN_ROTATE.rect, ROTATE_PASSWORD, false);
-        create_native_button(window, host_hf::BTN_STOP, host_layout::BTN_STOP.rect, STOP_CONTROL, false);
-        create_native_button(window, host_hf::BTN_VIEW_ONLY, host_layout::BTN_VIEW_ONLY.rect, REVOKE_INPUT, false);
-        create_native_button(
-            window,
-            host_hf::BTN_RESTORE_INPUT,
-            host_layout::BTN_RESTORE_INPUT.rect,
-            RESTORE_INPUT,
-            false,
-        );
-    }
-
-    unsafe fn create_native_button(
-        parent: HWND,
-        label: &str,
-        rect: host_layout::Rect,
-        command_id: i32,
-        primary: bool,
-    ) {
-        let wide = wide_string(label);
-        let button_style = WINDOW_STYLE(if primary { BS_DEFPUSHBUTTON as u32 } else { BS_PUSHBUTTON as u32 });
-        let style = WS_CHILD | WS_VISIBLE | button_style;
-        let _ = CreateWindowExW(
-            WINDOW_EX_STYLE::default(),
-            w!("BUTTON"),
-            PCWSTR(wide.as_ptr()),
-            style,
-            rect.left,
-            rect.top,
-            rect.width(),
-            rect.height(),
-            Some(parent),
-            Some(HMENU(command_id as isize as *mut core::ffi::c_void)),
-            None,
-            None,
-        );
     }
 
     unsafe fn paint_main(window: HWND) {

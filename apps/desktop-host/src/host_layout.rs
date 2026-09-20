@@ -111,6 +111,35 @@ pub const BTN_RESTORE_INPUT: NativeButton = NativeButton {
     rect: Rect::from_xywh(700, 490, 120, DESKTOP_MIN_PX),
 };
 
+/// 主界面可点动作（与布局矩形一一对应）。
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum MainAction {
+    Copy,
+    Rotate,
+    Stop,
+    ViewOnly,
+    RestoreInput,
+}
+
+pub fn hit_main_action(click_x: i32, click_y: i32) -> Option<MainAction> {
+    if BTN_COPY.rect.contains(click_x, click_y) {
+        return Some(MainAction::Copy);
+    }
+    if BTN_ROTATE.rect.contains(click_x, click_y) {
+        return Some(MainAction::Rotate);
+    }
+    if BTN_STOP.rect.contains(click_x, click_y) {
+        return Some(MainAction::Stop);
+    }
+    if BTN_VIEW_ONLY.rect.contains(click_x, click_y) {
+        return Some(MainAction::ViewOnly);
+    }
+    if BTN_RESTORE_INPUT.rect.contains(click_x, click_y) {
+        return Some(MainAction::RestoreInput);
+    }
+    None
+}
+
 pub const CONFIRM_CARD: Rect = Rect {
     left: 20,
     top: 20,
@@ -162,6 +191,31 @@ mod tests {
                 assert!(!(overlap_x && overlap_y), "按钮矩形重叠: {:?} vs {:?}", left, right);
             }
         }
+    }
+
+    #[test]
+    fn 主界面五钮命中互斥() {
+        assert_eq!(
+            hit_main_action(BTN_COPY.rect.left + 2, BTN_COPY.rect.top + 2),
+            Some(MainAction::Copy)
+        );
+        assert_eq!(
+            hit_main_action(BTN_ROTATE.rect.left + 2, BTN_ROTATE.rect.top + 2),
+            Some(MainAction::Rotate)
+        );
+        assert_eq!(
+            hit_main_action(BTN_STOP.rect.left + 2, BTN_STOP.rect.top + 2),
+            Some(MainAction::Stop)
+        );
+        assert_eq!(
+            hit_main_action(BTN_VIEW_ONLY.rect.left + 2, BTN_VIEW_ONLY.rect.top + 2),
+            Some(MainAction::ViewOnly)
+        );
+        assert_eq!(
+            hit_main_action(BTN_RESTORE_INPUT.rect.left + 2, BTN_RESTORE_INPUT.rect.top + 2),
+            Some(MainAction::RestoreInput)
+        );
+        assert_eq!(hit_main_action(0, 0), None);
     }
 
     #[test]
