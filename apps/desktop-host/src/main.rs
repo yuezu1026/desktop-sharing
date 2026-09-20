@@ -50,6 +50,9 @@ mod host_layout;
 mod ui_round;
 
 #[cfg(windows)]
+mod ui_d2d;
+
+#[cfg(windows)]
 mod ui_chrome;
 
 #[cfg(windows)]

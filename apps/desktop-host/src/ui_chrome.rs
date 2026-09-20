@@ -15,18 +15,18 @@ use windows::core::PCWSTR;
 
 use crate::host_hf::{self, HostConfirmView, HostMainView};
 use crate::host_layout::{self, Rect as LayoutRect};
+use crate::ui_d2d;
 use crate::ui_round::{fill_round_rect_aa, stroke_round_rect_aa};
 use crate::ui_theme::{
-    COLOR_BG, COLOR_BRAND, COLOR_LINE, COLOR_OK, COLOR_ON_SOLID, COLOR_SURFACE, COLOR_SWITCH_OFF, COLOR_TEXT,
-    COLOR_TEXT2,
+    COLOR_BG, COLOR_BRAND, COLOR_LINE, COLOR_LINE2, COLOR_OK, COLOR_ON_SOLID, COLOR_SURFACE, COLOR_SWITCH_OFF,
+    COLOR_TEXT, COLOR_TEXT2,
 };
 
 const COLOR_THUMB: u32 = COLOR_ON_SOLID;
-/// 对齐 tokens `--brand-soft` / `--ok-soft` / `--surface3` / `--line2`（Win32 BGR）。
+/// 对齐 tokens `--brand-soft` / `--ok-soft` / `--surface3`（Win32 BGR）。
 const COLOR_BRAND_SOFT: u32 = 0x00FDEFE7;
 const COLOR_OK_SOFT: u32 = 0x00EDF4E2;
 const COLOR_SURFACE3: u32 = 0x00F8EEE9;
-const COLOR_LINE2: u32 = 0x00E4D3C9;
 const PANEL_RADIUS: i32 = 14;
 const PILL_RADIUS: i32 = 14;
 const BUTTON_RADIUS: i32 = 10;
@@ -72,6 +72,13 @@ pub fn hit_accept_switch(click_x: i32, click_y: i32) -> bool {
 }
 
 pub unsafe fn paint_main_shell(device_context: HDC, view: &HostMainView) {
+    if ui_d2d::paint_main_shell(device_context, view).is_ok() {
+        return;
+    }
+    paint_main_shell_gdi(device_context, view);
+}
+
+unsafe fn paint_main_shell_gdi(device_context: HDC, view: &HostMainView) {
     fill_bg(device_context, host_layout::MAIN_WIDTH, host_layout::MAIN_HEIGHT, COLOR_BG);
     fill_panel(device_context, host_layout::LEFT_PANEL, COLOR_SURFACE, COLOR_LINE);
     fill_panel(device_context, host_layout::RIGHT_STATUS, COLOR_SURFACE, COLOR_LINE);
@@ -141,6 +148,13 @@ unsafe fn paint_outline_button(device_context: HDC, rect: LayoutRect, label: &st
 }
 
 pub unsafe fn paint_confirm_shell(device_context: HDC, view: &HostConfirmView) {
+    if ui_d2d::paint_confirm_shell(device_context, view).is_ok() {
+        return;
+    }
+    paint_confirm_shell_gdi(device_context, view);
+}
+
+unsafe fn paint_confirm_shell_gdi(device_context: HDC, view: &HostConfirmView) {
     fill_bg(device_context, host_layout::CONFIRM_WIDTH, host_layout::CONFIRM_HEIGHT, COLOR_BG);
     fill_panel(device_context, host_layout::CONFIRM_CARD, COLOR_SURFACE, COLOR_LINE);
     SetBkMode(device_context, TRANSPARENT);
