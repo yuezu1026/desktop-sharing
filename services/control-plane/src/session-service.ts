@@ -219,6 +219,32 @@ export class SessionService {
     };
   }
 
+  /** Web 控制端无登录令牌，只凭会话号 + 指纹查状态，不回账号字段。 */
+  async getWebSession(
+    remoteSessionId: string,
+    controllerFingerprintRaw: string,
+  ): Promise<Record<string, unknown> | Failure> {
+    if (!isUuid(remoteSessionId)) return fail(400, "session_invalid", "会话不正确");
+    const controllerFingerprint = controllerFingerprintRaw.trim();
+    if (controllerFingerprint.length < 8 || controllerFingerprint.length > 200) {
+      return fail(400, "fingerprint_invalid", "控制端指纹不正确");
+    }
+    const found = await this.pool.query<{ state: string }>(
+      `SELECT state
+         FROM remote_sessions
+        WHERE remote_session_id = $1
+          AND controller_fingerprint = $2`,
+      [remoteSessionId, controllerFingerprint],
+    );
+    const row = found.rows[0];
+    if (!row) return fail(404, "session_missing", "会话不存在");
+    return {
+      ok: true,
+      remoteSessionId,
+      state: row.state,
+    };
+  }
+
   async takeHostRelayTicket(token: string | null): Promise<Record<string, unknown> | Failure> {
     const session = await this.accounts.authenticate(token);
     if (isAuthFailure(session)) return session;

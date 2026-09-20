@@ -30,19 +30,58 @@
       <div id="linkBadge">等待链路</div>
     </div>
   </main>
-  <script>
-    // 解码不在这页做。授权码换来的是一场会话，不是登录令牌。
+  <script type="module">
+    import { PHASE, badgeText, nextPhase, pictureText, shouldPoll } from "/web/session-ui.mjs";
+
     const errorLine = document.getElementById("error");
     const linkBadge = document.getElementById("linkBadge");
+    const picture = document.getElementById("picture");
     const controllerFingerprint = crypto.randomUUID();
+    let phase = PHASE.idle;
+    let pollTimer = 0;
+    let heldTicket = "";
+    let heldSessionId = "";
+
+    function paint() {
+      linkBadge.textContent = badgeText(phase);
+      picture.textContent = pictureText(phase);
+    }
+
+    function applyEvent(event) {
+      phase = nextPhase(phase, event);
+      paint();
+    }
 
     document.getElementById("fullscreen").addEventListener("click", () => {
       document.documentElement.requestFullscreen();
     });
 
+    async function pollUntilActive() {
+      window.clearInterval(pollTimer);
+      if (!shouldPoll(phase) || !heldSessionId) return;
+      pollTimer = window.setInterval(async () => {
+        const query = new URLSearchParams({ controllerFingerprint });
+        const response = await fetch(`/v1/web-sessions/${heldSessionId}?${query}`);
+        const body = await response.json();
+        if (!response.ok) {
+          applyEvent({ error: body.message || "会话查询失败" });
+          window.clearInterval(pollTimer);
+          return;
+        }
+        applyEvent({ state: body.state, ticket: heldTicket });
+        if (!shouldPoll(phase)) {
+          window.clearInterval(pollTimer);
+        }
+      }, 800);
+    }
+
     document.getElementById("connectForm").addEventListener("submit", async (event) => {
       event.preventDefault();
       errorLine.textContent = "";
+      window.clearInterval(pollTimer);
+      phase = PHASE.idle;
+      paint();
+
       const verified = await fetch("/v1/host-access/verify", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -54,6 +93,7 @@
       const host = await verified.json();
       if (!verified.ok || !host.hostDeviceId) {
         errorLine.textContent = host.message || "识别码或临时密码不正确";
+        applyEvent({ error: "verify" });
         return;
       }
       const redeemed = await fetch("/v1/web-grants/redeem", {
@@ -70,10 +110,16 @@
       document.getElementById("tempPassword").value = "";
       if (!redeemed.ok) {
         errorLine.textContent = session.message || "授权码无效";
+        applyEvent({ error: "redeem" });
         return;
       }
-      linkBadge.textContent = session.state === "awaiting_host_consent" ? "等待确认" : "中继";
+      heldTicket = typeof session.ticket === "string" ? session.ticket : "";
+      heldSessionId = typeof session.remoteSessionId === "string" ? session.remoteSessionId : "";
+      applyEvent({ state: session.state, ticket: heldTicket });
+      await pollUntilActive();
     });
+
+    paint();
   </script>
 </body>
 </html>

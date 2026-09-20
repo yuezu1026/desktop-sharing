@@ -14,6 +14,7 @@ type Json = Record<string, unknown>;
 const buyPagePath = join(dirname(fileURLToPath(import.meta.url)), "..", "buy", "index.html");
 const opsPagePath = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "apps", "ops", "index.html");
 const webControllerPagePath = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "apps", "web-controller", "index.html");
+const webControllerUiPath = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "apps", "web-controller", "session-ui.mjs");
 
 export function createHttpServer(
   pool: Pool,
@@ -98,6 +99,16 @@ async function handle(
         "content-length": String(page.length),
       });
       response.end(page);
+      return;
+    }
+    if (method === "GET" && url.pathname === "/web/session-ui.mjs") {
+      const script = readFileSync(webControllerUiPath);
+      response.writeHead(200, {
+        "content-type": "text/javascript; charset=utf-8",
+        "cache-control": "no-store",
+        "content-length": String(script.length),
+      });
+      response.end(script);
       return;
     }
     if (method === "GET" && url.pathname === "/health") {
@@ -373,6 +384,10 @@ async function dispatch(
       text(body, "hostDeviceId") ?? "",
       text(body, "controllerFingerprint") ?? "",
     );
+  }
+  const webSession = pathname.match(/^\/v1\/web-sessions\/([^/]+)$/);
+  if (method === "GET" && webSession?.[1]) {
+    return sessions.getWebSession(webSession[1], searchParams.get("controllerFingerprint") ?? "");
   }
   if (method === "GET" && pathname === "/v1/remote-sessions/incoming") return sessions.listIncoming(token);
   if (method === "GET" && pathname === "/v1/remote-sessions/host-attach") return sessions.takeHostRelayTicket(token);
