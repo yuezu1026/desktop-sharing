@@ -5,3 +5,14 @@ round-msg.txt
 node_modules/
 dist/
 target/
+
+# React Native / Android£¨apps/mobile£©
+apps/mobile/android/.gradle/
+apps/mobile/android/app/build/
+apps/mobile/android/app/.cxx/
+apps/mobile/android/build/
+apps/mobile/android/local.properties
+apps/mobile/ios/Pods/
+apps/mobile/.expo/
+*.jks
+*.keystore

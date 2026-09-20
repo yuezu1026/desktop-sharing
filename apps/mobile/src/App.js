@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Pressable, SafeAreaView, Text, TextInput, View } from "react-native";
-import { controlPlaneOrigin } from "./config.mjs";
+import { Platform, Pressable, SafeAreaView, Text, TextInput, View } from "react-native";
+import { resolveControlPlaneOrigin } from "./config.mjs";
 import {
   acknowledgeDisclosure,
   getRemoteSession,
@@ -63,7 +63,10 @@ export function App() {
   const [devices, setDevices] = useState({ devices: [], deviceQuota: null });
   const [disclosure, setDisclosure] = useState(null);
   const [fingerprint] = useState(newFingerprint);
-  const origin = controlPlaneOrigin;
+  const origin = resolveControlPlaneOrigin({
+    envOrigin: typeof process !== "undefined" && process.env ? process.env.CONTROL_PLANE_URL : "",
+    platformOS: Platform.OS,
+  });
 
   useEffect(() => {
     if (!token || !origin || session.screen !== "session") return undefined;
@@ -136,6 +139,7 @@ export function App() {
     return (
       <SafeAreaView style={{ flex: 1, padding: 16, gap: 12 }}>
         <Text>登录</Text>
+        <Text style={{ color: "#5c6570" }}>{"控制面 " + (origin || "未配置")}</Text>
         <TextInput value={phone} onChangeText={setPhone} placeholder="手机号" style={{ minHeight: MIN_HIT_PX, borderWidth: 1 }} />
         <TextInput value={password} onChangeText={setPassword} placeholder="密码" secureTextEntry style={{ minHeight: MIN_HIT_PX, borderWidth: 1 }} />
         <HitButton label="登录" solid onPress={submitLogin} />
