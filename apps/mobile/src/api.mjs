@@ -8,11 +8,47 @@ function headers(token) {
   return result;
 }
 
-export async function login(origin, phone, password) {
+export async function login(origin, phone, password, options = {}) {
+  const payload = {};
+  if (phone) payload.phone = phone;
+  if (options.email) payload.email = options.email;
+  if (password) payload.password = password;
+  if (options.challengeId) payload.challengeId = options.challengeId;
+  if (options.challengeCode) payload.challengeCode = options.challengeCode;
   const response = await fetch(origin + "/v1/sessions", {
     method: "POST",
     headers: headers(null),
-    body: JSON.stringify({ phone, password }),
+    body: JSON.stringify(payload),
+  });
+  const body = await readJson(response);
+  return { ok: response.ok, body };
+}
+
+export async function requestChallenge(origin, purpose, phone) {
+  const response = await fetch(origin + "/v1/challenges", {
+    method: "POST",
+    headers: headers(null),
+    body: JSON.stringify({ purpose, phone }),
+  });
+  const body = await readJson(response);
+  return { ok: response.ok, body };
+}
+
+export async function registerAccount(origin, phone, password, challengeId, challengeCode) {
+  const response = await fetch(origin + "/v1/accounts", {
+    method: "POST",
+    headers: headers(null),
+    body: JSON.stringify({ phone, password, challengeId, challengeCode }),
+  });
+  const body = await readJson(response);
+  return { ok: response.ok, body };
+}
+
+export async function forgotPassword(origin, phone, newPassword, challengeId, challengeCode) {
+  const response = await fetch(origin + "/v1/password/forgot", {
+    method: "POST",
+    headers: headers(null),
+    body: JSON.stringify({ phone, newPassword, challengeId, challengeCode }),
   });
   const body = await readJson(response);
   return { ok: response.ok, body };

@@ -1,10 +1,13 @@
 import React from "react";
 import { Image, Text, View } from "react-native";
+import { SESSION_HF } from "../session/session-hf.mjs";
 import { linkToneColor } from "../theme.mjs";
 
 /** 会话画面区：黑边 letterbox + 可选沉浸式链路角标。 */
 export function SessionStage(props) {
   const { palette, chrome, picture, panHandlers, RemoteFrameView } = props;
+  const waitingText =
+    chrome.waiting && chrome.waiting !== "等待画面" ? chrome.waiting : SESSION_HF.picturePlaceholder;
   return (
     <View style={{ height: picture.viewHeight, backgroundColor: "#000", overflow: "hidden" }} {...panHandlers}>
       <View
@@ -41,7 +44,7 @@ export function SessionStage(props) {
           />
         ) : null}
         {!chrome.surfaceVideo && !chrome.frameUri ? (
-          <Text style={{ color: palette.text2 }}>{chrome.waiting}</Text>
+          <Text style={{ color: palette.text2, textAlign: "center", paddingHorizontal: 12 }}>{waitingText}</Text>
         ) : null}
       </View>
       {chrome.immersive ? (

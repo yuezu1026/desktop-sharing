@@ -3,13 +3,18 @@ import { Dimensions, PanResponder, Platform, requireNativeComponent, useColorSch
 import { resolveControlPlaneOrigin, resolveRelayAddress, LAB_CONTROL_PLANE_ORIGIN, LAB_RELAY_ADDRESS } from "./config.mjs";
 import {
   acknowledgeDisclosure,
+  forgotPassword,
   getRemoteSession,
   listHostDevices,
   loadBalance,
   loadDisclosure,
   login,
+  registerAccount,
+  requestChallenge,
   requestRemoteSession,
 } from "./api.mjs";
+import { AUTH_MODES, LOGIN_HF } from "./auth/login-hf.mjs";
+import { filterDeviceRows } from "./devices/devices-hf.mjs";
 import {
   connectSessionRelay,
   disconnectSessionRelay,
@@ -65,6 +70,9 @@ import {
 
 const RemoteFrameView = Platform.OS === "android" ? requireNativeComponent("RemoteFrameView") : null;
 
+/** 真机 UI 巡检种子：不连控制面也能看登录后壳。巡检完必须改回 false。 */
+const UI_PATROL_SEED = false;
+
 function newFingerprint() {
   const alphabet = "abcdef0123456789";
   let value = "";
@@ -81,9 +89,14 @@ export function App() {
   const [token, setToken] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [smsCode, setSmsCode] = useState("");
+  const [challengeId, setChallengeId] = useState("");
+  const [authMode, setAuthMode] = useState(AUTH_MODES.password);
+  const [agreed, setAgreed] = useState(false);
   const [loginError, setLoginError] = useState("");
   const [devices, setDevices] = useState({ devices: [], deviceQuota: null });
   const [disclosure, setDisclosure] = useState(null);
+  const [deviceSearch, setDeviceSearch] = useState("");
   const [fingerprint] = useState(newFingerprint);
   const origin = resolveControlPlaneOrigin({
     envOrigin: typeof process !== "undefined" && process.env ? process.env.CONTROL_PLANE_URL : "",
@@ -100,6 +113,45 @@ export function App() {
     return subscribeSessionRelay((event) => {
       setSession((current) => applyNativeRelayEvent(current, event));
     });
+  }, []);
+
+  useEffect(() => {
+    if (!UI_PATROL_SEED) return undefined;
+    setToken("ui-patrol-seed");
+    setDisclosure({
+      title: "首次连接前请了解",
+      relay: "中继会转发音画与键鼠，用于打通网络。",
+      direct: "直连只上报起止，不经中继转发内容。",
+      required: true,
+    });
+    setSession(createSession());
+    setDevices({
+      deviceQuota: 150,
+      devices: [
+        {
+          hostDeviceId: "host-1",
+          displayName: "我的台式机",
+          platform: "windows",
+          connectionState: "online",
+          lastSeenAt: "2026-09-20T12:00:00Z",
+        },
+        {
+          hostDeviceId: "host-2",
+          displayName: "爸爸的笔记本",
+          platform: "windows",
+          connectionState: "offline",
+          lastSeenAt: "2026-09-17T12:00:00Z",
+        },
+        {
+          hostDeviceId: "host-3",
+          displayName: "旧手机",
+          platform: "android",
+          connectionState: "offline",
+          lastSeenAt: null,
+        },
+      ],
+    });
+    return undefined;
   }, []);
 
   useEffect(() => {
@@ -135,7 +187,7 @@ export function App() {
   }, [token, origin, session.screen, session.remoteSessionId]);
 
   useEffect(() => {
-    if (!token || !origin) return undefined;
+    if (UI_PATROL_SEED || !token || !origin) return undefined;
     listHostDevices(origin, token).then((result) => {
       if (result.ok) setDevices(result.body);
     });
@@ -153,7 +205,16 @@ export function App() {
   sessionRef.current = session;
   const windowSize = Dimensions.get("window");
   // 真机全宽铺画面；高度按比例留出顶栏/按钮，避免 360 假尺寸把桌面压成细条。
-  const picture = layoutPicture(Math.max(280, windowSize.width - 24), Math.round(windowSize.height * 0.48), session);
+  const picture = layoutPicture({
+    containerWidth: Math.max(280, windowSize.width - 24),
+    containerHeight: Math.round(windowSize.height * 0.48),
+    pictureWidth: session.pictureWidth,
+    pictureHeight: session.pictureHeight,
+    keyboardOpen: session.keyboardOpen,
+    keyboardHeight: 0,
+    focusFollow: session.focusFollow,
+    focusRect: null,
+  });
   const panResponder = useMemo(
     () =>
       PanResponder.create({
@@ -163,13 +224,18 @@ export function App() {
           const current = sessionRef.current;
           if (!current.relayAttached || current.viewOnly) return;
           const touch = event.nativeEvent;
-          const mapped = mapTouch(current, picture, touch.locationX, touch.locationY);
-          if (!mapped) return;
           if (current.pointerMode === "trackpad") {
-            setSession((prev) => ({ ...prev, cursorX: mapped.x, cursorY: mapped.y }));
             return;
           }
-          const point = clampPicturePoint(mapped.x, mapped.y, current.pictureWidth, current.pictureHeight);
+          const mapped = mapTouch(
+            current.pointerMode,
+            { x: touch.locationX, y: touch.locationY, deltaX: 0, deltaY: 0 },
+            picture.picture,
+            current.pictureWidth,
+            current.pictureHeight,
+          );
+          if (mapped.kind !== "absolute") return;
+          const point = clampPicturePoint(mapped.pictureX, mapped.pictureY, current.pictureWidth, current.pictureHeight);
           sendSessionRelayFrame(bytesToBase64(packInputFrame(encodePointer(INPUT_POINTER_DOWN, point.x, point.y, 1))));
           setSession((prev) => ({ ...prev, cursorX: point.x, cursorY: point.y }));
         },
@@ -190,9 +256,15 @@ export function App() {
             return;
           }
           const touch = event.nativeEvent;
-          const mapped = mapTouch(current, picture, touch.locationX, touch.locationY);
-          if (!mapped) return;
-          const point = clampPicturePoint(mapped.x, mapped.y, current.pictureWidth, current.pictureHeight);
+          const mapped = mapTouch(
+            current.pointerMode,
+            { x: touch.locationX, y: touch.locationY, deltaX: 0, deltaY: 0 },
+            picture.picture,
+            current.pictureWidth,
+            current.pictureHeight,
+          );
+          if (mapped.kind !== "absolute") return;
+          const point = clampPicturePoint(mapped.pictureX, mapped.pictureY, current.pictureWidth, current.pictureHeight);
           sendSessionRelayFrame(bytesToBase64(packInputFrame(encodePointer(INPUT_POINTER_MOVE, point.x, point.y, 1))));
           setSession((prev) => ({ ...prev, cursorX: point.x, cursorY: point.y }));
         },
@@ -211,9 +283,15 @@ export function App() {
             return;
           }
           const touch = event.nativeEvent;
-          const mapped = mapTouch(current, picture, touch.locationX, touch.locationY);
-          if (!mapped) return;
-          const point = clampPicturePoint(mapped.x, mapped.y, current.pictureWidth, current.pictureHeight);
+          const mapped = mapTouch(
+            current.pointerMode,
+            { x: touch.locationX, y: touch.locationY, deltaX: 0, deltaY: 0 },
+            picture.picture,
+            current.pictureWidth,
+            current.pictureHeight,
+          );
+          if (mapped.kind !== "absolute") return;
+          const point = clampPicturePoint(mapped.pictureX, mapped.pictureY, current.pictureWidth, current.pictureHeight);
           sendSessionRelayFrame(bytesToBase64(packInputFrame(encodePointer(INPUT_POINTER_UP, point.x, point.y, 0))));
         },
       }),
@@ -226,16 +304,91 @@ export function App() {
       setLoginError("服务地址未配置");
       return;
     }
+    if (authMode === AUTH_MODES.register) {
+      if (!agreed) {
+        setLoginError("请先同意用户协议与隐私政策");
+        return;
+      }
+      const result = await registerAccount(origin, phone, password, challengeId, smsCode);
+      if (!result.ok) {
+        setLoginError(result.body.message || "注册失败");
+        return;
+      }
+      setToken(result.body.token);
+      return;
+    }
+    if (authMode === AUTH_MODES.forgot) {
+      const result = await forgotPassword(origin, phone, password, challengeId, smsCode);
+      if (!result.ok) {
+        setLoginError(result.body.message || "重置失败");
+        return;
+      }
+      setAuthMode(AUTH_MODES.password);
+      setLoginError("");
+      setPassword("");
+      setSmsCode("");
+      setChallengeId("");
+      return;
+    }
+    if (authMode === AUTH_MODES.sms) {
+      const result = await login(origin, phone, "", { challengeId, challengeCode: smsCode });
+      if (!result.ok) {
+        setLoginError(
+          result.body.code === "login_failed" ? LOGIN_HF.loginFailed : result.body.message || "登录失败",
+        );
+        return;
+      }
+      setToken(result.body.token);
+      return;
+    }
     const result = await login(origin, phone, password);
     if (!result.ok) {
-      setLoginError(result.body.message || "登录失败");
+      setLoginError(
+        result.body.code === "login_failed" ? LOGIN_HF.loginFailed : result.body.message || "登录失败",
+      );
       return;
     }
     setToken(result.body.token);
   }
 
-  async function acceptDisclosure() {
-    if (origin && token) await acknowledgeDisclosure(origin, token);
+  async function fetchSmsCode() {
+    setLoginError("");
+    if (!origin) {
+      setLoginError("服务地址未配置");
+      return;
+    }
+    const purpose =
+      authMode === AUTH_MODES.register ? "register" : authMode === AUTH_MODES.forgot ? "forgot_password" : "login";
+    const result = await requestChallenge(origin, purpose, phone);
+    if (!result.ok) {
+      setLoginError(result.body.message || "验证码发送失败");
+      return;
+    }
+    setChallengeId(result.body.challengeId || "");
+    if (result.body.devCode) setSmsCode(String(result.body.devCode));
+  }
+
+  function onBioPress() {
+    setLoginError(LOGIN_HF.bioUnavailable);
+  }
+
+  function onAuthModeChange(nextMode) {
+    setAuthMode(nextMode);
+    setLoginError("");
+    setSmsCode("");
+    setChallengeId("");
+  }
+
+  async function acceptDisclosure(opts) {
+    if (origin && token) {
+      try {
+        await acknowledgeDisclosure(origin, token);
+      } catch {
+        // 联调失败也允许关掉告知，避免卡死在本页
+      }
+    }
+    // dontRemind 由服务端 ack 持久化；联调失败时本地仍关掉本页
+    void opts;
     setDisclosure(null);
   }
 
@@ -243,16 +396,20 @@ export function App() {
     const next = connectDevice(session, row);
     if (next === session) return;
     if (origin && token) {
-      const requested = await requestRemoteSession(origin, token, row.hostDeviceId, fingerprint);
-      if (requested.ok) {
-        setSession(applyRemoteSessionState(next, requested.body));
+      try {
+        const requested = await requestRemoteSession(origin, token, row.hostDeviceId, fingerprint);
+        if (requested.ok) {
+          setSession(applyRemoteSessionState(next, requested.body));
+          return;
+        }
+        setSession({
+          ...session,
+          notice: requested.body.message || "未能发起会话",
+        });
         return;
+      } catch {
+        // 联调失败时仍进入会话壳，便于 UI 巡检与离线演示
       }
-      setSession({
-        ...session,
-        notice: requested.body.message || "未能发起会话",
-      });
-      return;
     }
     setSession(next);
   }
@@ -261,27 +418,27 @@ export function App() {
     return (
       <LoginScreen
         palette={palette}
-        origin={origin}
+        mode={authMode}
         phone={phone}
         password={password}
+        smsCode={smsCode}
+        agreed={agreed}
         loginError={loginError}
+        labHint={__DEV__ && origin ? "联调 " + origin : ""}
         onPhoneChange={setPhone}
         onPasswordChange={setPassword}
+        onSmsCodeChange={setSmsCode}
+        onToggleAgree={() => setAgreed((current) => !current)}
         onSubmit={submitLogin}
+        onFetchCode={fetchSmsCode}
+        onModeChange={onAuthModeChange}
+        onBioPress={onBioPress}
       />
     );
   }
 
   if (disclosure) {
-    return (
-      <DisclosureScreen
-        palette={palette}
-        title={disclosure.title}
-        relay={disclosure.relay}
-        direct={disclosure.direct}
-        onAccept={acceptDisclosure}
-      />
-    );
+    return <DisclosureScreen palette={palette} onAccept={acceptDisclosure} />;
   }
 
   if (session.screen === "devices") {
@@ -291,7 +448,9 @@ export function App() {
         palette={palette}
         quotaText={list.quotaText || ""}
         notice={session.notice || ""}
-        rows={list.rows}
+        searchQuery={deviceSearch}
+        onSearchChange={setDeviceSearch}
+        rows={filterDeviceRows(list.rows, deviceSearch)}
         onConnect={onConnect}
       />
     );
