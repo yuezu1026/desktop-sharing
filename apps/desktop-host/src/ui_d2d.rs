@@ -15,8 +15,8 @@ use windows::Win32::Graphics::Direct2D::{
 };
 use windows::Win32::Graphics::DirectWrite::{
     DWriteCreateFactory, DWRITE_FACTORY_TYPE_SHARED, DWRITE_FONT_STRETCH_NORMAL,
-    DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_WEIGHT, DWRITE_FONT_WEIGHT_BOLD,
-    DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_WEIGHT_SEMI_BOLD, DWRITE_MEASURING_MODE_NATURAL,
+    DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_WEIGHT, DWRITE_FONT_WEIGHT_NORMAL,
+    DWRITE_FONT_WEIGHT_SEMI_BOLD, DWRITE_MEASURING_MODE_NATURAL,
     DWRITE_PARAGRAPH_ALIGNMENT_CENTER, DWRITE_PARAGRAPH_ALIGNMENT_NEAR, DWRITE_TEXT_ALIGNMENT_CENTER,
     DWRITE_TEXT_ALIGNMENT_LEADING, DWRITE_WORD_WRAPPING_NO_WRAP, DWRITE_WORD_WRAPPING_WRAP,
     IDWriteFactory, IDWriteTextFormat,
@@ -28,18 +28,14 @@ use windows::core::{Result as WinResult, w};
 use crate::host_hf::{self, HostConfirmView, HostMainView};
 use crate::host_layout::{self, Rect as LayoutRect};
 use crate::ui_theme::{
-    COLOR_BG, COLOR_BRAND, COLOR_LINE, COLOR_LINE2, COLOR_OK, COLOR_ON_SOLID, COLOR_SURFACE,
-    COLOR_SWITCH_OFF, COLOR_TEXT, COLOR_TEXT2,
+    COLOR_BRAND, COLOR_LINE, COLOR_LINE2, COLOR_OK, COLOR_OK_SOFT, COLOR_ON_SOLID, COLOR_SURFACE,
+    COLOR_SURFACE2, COLOR_SURFACE3, COLOR_SWITCH_OFF, COLOR_TEXT, COLOR_TEXT2, COLOR_TEXT3,
 };
-
-/// 对齐 tokens `--brand-soft` / `--ok-soft` / `--surface3`（Win32 BGR）。
-const COLOR_BRAND_SOFT: u32 = 0x00FDEFE7;
-const COLOR_OK_SOFT: u32 = 0x00EDF4E2;
-const COLOR_SURFACE3: u32 = 0x00F8EEE9;
 
 const PANEL_RADIUS: f32 = 14.0;
 const PILL_RADIUS: f32 = 14.0;
 const BUTTON_RADIUS: f32 = 10.0;
+const FRAUD_RADIUS: f32 = 12.0;
 const SHADOW_OFFSET: f32 = 3.0;
 const SHADOW_ALPHA: f32 = 0.10;
 
@@ -222,10 +218,10 @@ impl DcFrame {
             return Ok(());
         }
         let (colorref, face, size, weight, wrap) = match style {
-            TextStyle::Label => (COLOR_TEXT2, Face::YaHei, 16.0, DWRITE_FONT_WEIGHT_NORMAL, false),
-            TextStyle::Body => (COLOR_TEXT, Face::YaHei, 18.0, DWRITE_FONT_WEIGHT_NORMAL, true),
-            TextStyle::Bold => (COLOR_TEXT, Face::YaHei, 18.0, DWRITE_FONT_WEIGHT_BOLD, true),
-            TextStyle::Muted => (COLOR_TEXT2, Face::YaHei, 15.0, DWRITE_FONT_WEIGHT_NORMAL, true),
+            TextStyle::Label => (COLOR_TEXT3, Face::YaHei, 12.0, DWRITE_FONT_WEIGHT_NORMAL, false),
+            TextStyle::Body => (COLOR_TEXT, Face::YaHei, 15.0, DWRITE_FONT_WEIGHT_NORMAL, true),
+            TextStyle::Bold => (COLOR_TEXT, Face::YaHei, 15.0, DWRITE_FONT_WEIGHT_SEMI_BOLD, true),
+            TextStyle::Muted => (COLOR_TEXT2, Face::YaHei, 13.0, DWRITE_FONT_WEIGHT_NORMAL, true),
             TextStyle::Mono { size } => (COLOR_TEXT, Face::Consolas, size, DWRITE_FONT_WEIGHT_SEMI_BOLD, false),
             TextStyle::Button => (COLOR_TEXT, Face::YaHei, 13.0, DWRITE_FONT_WEIGHT_SEMI_BOLD, false),
             TextStyle::ButtonOnSolid => (COLOR_ON_SOLID, Face::YaHei, 13.0, DWRITE_FONT_WEIGHT_SEMI_BOLD, false),
@@ -419,11 +415,14 @@ fn paint_main_actions(frame: &DcFrame, show_session_actions: bool) -> WinResult<
 /// 主界面完整 D2D 重绘。失败由调用方走 GDI+ fallback。
 pub unsafe fn paint_main_shell(device_context: HDC, view: &HostMainView) -> WinResult<()> {
     let frame = DcFrame::begin(device_context, host_layout::MAIN_WIDTH, host_layout::MAIN_HEIGHT)?;
-    frame.clear(COLOR_BG)?;
+    // h2 `.host` 底是 surface2，不是页面 bg。
+    frame.clear(COLOR_SURFACE2)?;
     frame.panel(host_layout::LEFT_PANEL, COLOR_SURFACE, COLOR_LINE)?;
     frame.panel(host_layout::RIGHT_STATUS, COLOR_SURFACE, COLOR_LINE)?;
     frame.panel(host_layout::RIGHT_SWITCHES, COLOR_SURFACE, COLOR_LINE)?;
-    frame.panel(host_layout::RIGHT_FRAUD, COLOR_BRAND_SOFT, COLOR_LINE)?;
+    // h2 `.fraud`：白底 + 2px text 描边。
+    frame.fill_round_rect(host_layout::RIGHT_FRAUD, COLOR_SURFACE, FRAUD_RADIUS)?;
+    frame.stroke_round_rect(host_layout::RIGHT_FRAUD, COLOR_TEXT, FRAUD_RADIUS, 2.0)?;
 
     frame.draw_text(
         host_hf::LABEL_DEVICE_CODE,
@@ -536,7 +535,7 @@ pub unsafe fn paint_confirm_shell(device_context: HDC, view: &HostConfirmView) -
         host_layout::CONFIRM_WIDTH,
         host_layout::CONFIRM_HEIGHT,
     )?;
-    frame.clear(COLOR_BG)?;
+    frame.clear(COLOR_SURFACE2)?;
     frame.panel(host_layout::CONFIRM_CARD, COLOR_SURFACE, COLOR_LINE)?;
 
     frame.draw_text(
@@ -598,7 +597,8 @@ pub unsafe fn paint_confirm_shell(device_context: HDC, view: &HostConfirmView) -
         can_top += host_layout::CONFIRM_CAN_LINE_STEP;
     }
 
-    frame.panel(host_layout::CONFIRM_FRAUD_PANEL, COLOR_BRAND_SOFT, COLOR_LINE)?;
+    frame.fill_round_rect(host_layout::CONFIRM_FRAUD_PANEL, COLOR_SURFACE, FRAUD_RADIUS)?;
+    frame.stroke_round_rect(host_layout::CONFIRM_FRAUD_PANEL, COLOR_TEXT, FRAUD_RADIUS, 2.0)?;
     frame.draw_text(
         host_hf::CONFIRM_FRAUD_TITLE,
         host_layout::CONFIRM_FRAUD_TITLE,

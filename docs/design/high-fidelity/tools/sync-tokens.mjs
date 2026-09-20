@@ -76,15 +76,19 @@ function buildRustTheme() {
 
 pub const COLOR_BRAND: u32 = ${hexToColorRef(light.brand)};
 pub const COLOR_BRAND_HOVER: u32 = ${hexToColorRef(light.brandHover)};
+pub const COLOR_BRAND_SOFT: u32 = ${hexToColorRef(light.brandSoft)};
 pub const COLOR_OK: u32 = ${hexToColorRef(light.ok)};
+pub const COLOR_OK_SOFT: u32 = ${hexToColorRef(light.okSoft)};
 pub const COLOR_WARN: u32 = ${hexToColorRef(light.warn)};
 pub const COLOR_ERR: u32 = ${hexToColorRef(light.err)};
 pub const COLOR_TEXT: u32 = ${hexToColorRef(light.text)};
 pub const COLOR_TEXT2: u32 = ${hexToColorRef(light.text2)};
+pub const COLOR_TEXT3: u32 = ${hexToColorRef(light.text3)};
 pub const COLOR_LINE: u32 = ${hexToColorRef(light.line)};
 pub const COLOR_LINE2: u32 = ${hexToColorRef(light.line2)};
 pub const COLOR_SURFACE: u32 = ${hexToColorRef(light.surface)};
 pub const COLOR_SURFACE2: u32 = ${hexToColorRef(light.surface2)};
+pub const COLOR_SURFACE3: u32 = ${hexToColorRef(light.surface3)};
 pub const COLOR_BG: u32 = ${hexToColorRef(light.bg)};
 pub const COLOR_ON_SOLID: u32 = ${hexToColorRef(light.onSolid)};
 pub const COLOR_SWITCH_OFF: u32 = ${hexToColorRef(light.line2)};

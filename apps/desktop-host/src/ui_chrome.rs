@@ -18,18 +18,15 @@ use crate::host_layout::{self, Rect as LayoutRect};
 use crate::ui_d2d;
 use crate::ui_round::{fill_round_rect_aa, stroke_round_rect_aa};
 use crate::ui_theme::{
-    COLOR_BG, COLOR_BRAND, COLOR_LINE, COLOR_LINE2, COLOR_OK, COLOR_ON_SOLID, COLOR_SURFACE, COLOR_SWITCH_OFF,
-    COLOR_TEXT, COLOR_TEXT2,
+    COLOR_BRAND, COLOR_LINE, COLOR_LINE2, COLOR_OK, COLOR_OK_SOFT, COLOR_ON_SOLID, COLOR_SURFACE,
+    COLOR_SURFACE2, COLOR_SURFACE3, COLOR_SWITCH_OFF, COLOR_TEXT, COLOR_TEXT2, COLOR_TEXT3,
 };
 
 const COLOR_THUMB: u32 = COLOR_ON_SOLID;
-/// 对齐 tokens `--brand-soft` / `--ok-soft` / `--surface3`（Win32 BGR）。
-const COLOR_BRAND_SOFT: u32 = 0x00FDEFE7;
-const COLOR_OK_SOFT: u32 = 0x00EDF4E2;
-const COLOR_SURFACE3: u32 = 0x00F8EEE9;
 const PANEL_RADIUS: i32 = 14;
 const PILL_RADIUS: i32 = 14;
 const BUTTON_RADIUS: i32 = 10;
+const FRAUD_RADIUS: i32 = 12;
 
 pub use host_layout::{CONFIRM_HEIGHT, CONFIRM_WIDTH, MAIN_HEIGHT, MAIN_WIDTH};
 
@@ -79,11 +76,12 @@ pub unsafe fn paint_main_shell(device_context: HDC, view: &HostMainView) {
 }
 
 unsafe fn paint_main_shell_gdi(device_context: HDC, view: &HostMainView) {
-    fill_bg(device_context, host_layout::MAIN_WIDTH, host_layout::MAIN_HEIGHT, COLOR_BG);
+    fill_bg(device_context, host_layout::MAIN_WIDTH, host_layout::MAIN_HEIGHT, COLOR_SURFACE2);
     fill_panel(device_context, host_layout::LEFT_PANEL, COLOR_SURFACE, COLOR_LINE);
     fill_panel(device_context, host_layout::RIGHT_STATUS, COLOR_SURFACE, COLOR_LINE);
     fill_panel(device_context, host_layout::RIGHT_SWITCHES, COLOR_SURFACE, COLOR_LINE);
-    fill_panel(device_context, host_layout::RIGHT_FRAUD, COLOR_BRAND_SOFT, COLOR_LINE);
+    fill_round_rect_aa(device_context, host_layout::RIGHT_FRAUD, COLOR_SURFACE, FRAUD_RADIUS);
+    stroke_round_rect_aa(device_context, host_layout::RIGHT_FRAUD, COLOR_TEXT, FRAUD_RADIUS, 2.0);
     SetBkMode(device_context, TRANSPARENT);
 
     draw_in(device_context, host_hf::LABEL_DEVICE_CODE, host_layout::LABEL_CODE, DrawStyle::Label);
@@ -155,7 +153,7 @@ pub unsafe fn paint_confirm_shell(device_context: HDC, view: &HostConfirmView) {
 }
 
 unsafe fn paint_confirm_shell_gdi(device_context: HDC, view: &HostConfirmView) {
-    fill_bg(device_context, host_layout::CONFIRM_WIDTH, host_layout::CONFIRM_HEIGHT, COLOR_BG);
+    fill_bg(device_context, host_layout::CONFIRM_WIDTH, host_layout::CONFIRM_HEIGHT, COLOR_SURFACE2);
     fill_panel(device_context, host_layout::CONFIRM_CARD, COLOR_SURFACE, COLOR_LINE);
     SetBkMode(device_context, TRANSPARENT);
 
@@ -197,7 +195,8 @@ unsafe fn paint_confirm_shell_gdi(device_context: HDC, view: &HostConfirmView) {
         can_top += host_layout::CONFIRM_CAN_LINE_STEP;
     }
 
-    fill_panel(device_context, host_layout::CONFIRM_FRAUD_PANEL, COLOR_BRAND_SOFT, COLOR_LINE);
+    fill_round_rect_aa(device_context, host_layout::CONFIRM_FRAUD_PANEL, COLOR_SURFACE, FRAUD_RADIUS);
+    stroke_round_rect_aa(device_context, host_layout::CONFIRM_FRAUD_PANEL, COLOR_TEXT, FRAUD_RADIUS, 2.0);
     draw_in(
         device_context,
         host_hf::CONFIRM_FRAUD_TITLE,
@@ -329,10 +328,10 @@ enum DrawStyle {
 
 unsafe fn draw_in(device_context: HDC, text: &str, rect: LayoutRect, style: DrawStyle) {
     let (color, size, weight, format) = match style {
-        DrawStyle::Label => (COLOR_TEXT2, 16, 400, DT_LEFT | DT_SINGLELINE),
-        DrawStyle::Body => (COLOR_TEXT, 18, 400, DT_LEFT | DT_WORDBREAK),
-        DrawStyle::Bold => (COLOR_TEXT, 18, 700, DT_LEFT | DT_WORDBREAK),
-        DrawStyle::Muted => (COLOR_TEXT2, 15, 400, DT_LEFT | DT_WORDBREAK),
+        DrawStyle::Label => (COLOR_TEXT3, 12, 400, DT_LEFT | DT_SINGLELINE),
+        DrawStyle::Body => (COLOR_TEXT, 15, 400, DT_LEFT | DT_WORDBREAK),
+        DrawStyle::Bold => (COLOR_TEXT, 15, 600, DT_LEFT | DT_WORDBREAK),
+        DrawStyle::Muted => (COLOR_TEXT2, 13, 400, DT_LEFT | DT_WORDBREAK),
     };
     let _ = SetTextColor(device_context, COLORREF(color));
     with_font(device_context, "Microsoft YaHei UI", size, weight, || {

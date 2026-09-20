@@ -5,15 +5,19 @@
 
 pub const COLOR_BRAND: u32 = 0x00ED6F2F;
 pub const COLOR_BRAND_HOVER: u32 = 0x00D05B1E;
+pub const COLOR_BRAND_SOFT: u32 = 0x00FDEFE7;
 pub const COLOR_OK: u32 = 0x006F9615;
+pub const COLOR_OK_SOFT: u32 = 0x00EDF4E2;
 pub const COLOR_WARN: u32 = 0x000A7EC7;
 pub const COLOR_ERR: u32 = 0x003C3CD4;
 pub const COLOR_TEXT: u32 = 0x003A2114;
 pub const COLOR_TEXT2: u32 = 0x00836A5A;
+pub const COLOR_TEXT3: u32 = 0x00AE9B8E;
 pub const COLOR_LINE: u32 = 0x00F1E7E1;
 pub const COLOR_LINE2: u32 = 0x00E4D3C9;
 pub const COLOR_SURFACE: u32 = 0x00FFFFFF;
 pub const COLOR_SURFACE2: u32 = 0x00FCF6F3;
+pub const COLOR_SURFACE3: u32 = 0x00F8EEE9;
 pub const COLOR_BG: u32 = 0x00F8F2EE;
 pub const COLOR_ON_SOLID: u32 = 0x00FFFFFF;
 pub const COLOR_SWITCH_OFF: u32 = 0x00E4D3C9;
