@@ -18,6 +18,8 @@ import {
 const PASSWORD_FAILURE_LIMIT = 5;
 const PASSWORD_LOCK_REASON = "密码错误 5 次";
 const CHALLENGE_TTL_MS = 5 * 60 * 1000;
+/** 需求写的是建议值：未使用 5 分钟失效。尚未另立参数，不写进成本表。 */
+const WEB_GRANT_UNUSED_MS = 5 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const IDLE_DOWNGRADE_DAYS = 90;
 const IDLE_WARNING_LEAD_DAYS = 7;
@@ -821,6 +823,53 @@ export class AccountService {
       return fail(401, "host_access_invalid", "识别码或临时密码不正确");
     }
     return { ok: true, hostDeviceId: row.host_device_id };
+  }
+
+  async issueWebGrant(
+    token: string | null,
+    input: {
+      password: string;
+      challengeId: string;
+      challengeCode: string;
+      confirmed: boolean;
+      recoveryCode: string | null;
+    },
+  ): Promise<Success<{ code: string; expiresAt: string; purpose: "controller" }> | Failure> {
+    if (!input.confirmed) return fail(400, "grant_confirm_required", "生成授权码需要再次确认");
+    if (input.recoveryCode && input.recoveryCode.trim()) {
+      return fail(400, "recovery_not_accepted", "恢复码不能单独生成授权码");
+    }
+    const session = await this.requireSession(token);
+    if (isAuthFailure(session)) return session;
+    return this.withTransaction(async (client) => {
+      const found = await client.query<{ password_hash: string }>(
+        "SELECT password_hash FROM accounts WHERE account_id = $1",
+        [session.accountId],
+      );
+      const matched = await verifyPassword(input.password, found.rows[0]?.password_hash ?? "");
+      if (!matched) return fail(400, "old_password_mismatch", "原密码不正确");
+      const consumed = await this.consumeChallenge(client, {
+        challengeId: input.challengeId,
+        code: input.challengeCode,
+        purpose: "high_risk",
+        phone: session.phone,
+        email: null,
+        accountId: session.accountId,
+      });
+      if (!consumed) return fail(400, "challenge_invalid", "需要发到本人手机号的短信验证码，恢复码不能代替");
+      const code = createRecoveryCode();
+      const now = this.now();
+      const webGrantId = randomUUID();
+      const expiresAt = new Date(now.getTime() + WEB_GRANT_UNUSED_MS);
+      await client.query(
+        `INSERT INTO web_grant_codes
+          (web_grant_id, account_id, code_hash, purpose, expires_at, created_at)
+         VALUES ($1, $2, $3, 'controller', $4, $5)`,
+        [webGrantId, session.accountId, hashSecret(code), expiresAt, now],
+      );
+      await this.audit(client, session.accountId, "web_grant.issue", { webGrantId });
+      return { ok: true as const, code, expiresAt: expiresAt.toISOString(), purpose: "controller" as const };
+    });
   }
 
   async listNotices(token: string | null): Promise<Success<{ notices: Array<Record<string, unknown>> }> | Failure> {

@@ -13,6 +13,7 @@ type Json = Record<string, unknown>;
 
 const buyPagePath = join(dirname(fileURLToPath(import.meta.url)), "..", "buy", "index.html");
 const opsPagePath = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "apps", "ops", "index.html");
+const webControllerPagePath = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "apps", "web-controller", "index.html");
 
 export function createHttpServer(
   pool: Pool,
@@ -87,6 +88,16 @@ async function handle(
         return;
       }
       send(response, 200, opsResult);
+      return;
+    }
+    if (method === "GET" && (url.pathname === "/web" || url.pathname === "/web/")) {
+      const page = readFileSync(webControllerPagePath);
+      response.writeHead(200, {
+        "content-type": "text/html; charset=utf-8",
+        "cache-control": "no-store",
+        "content-length": String(page.length),
+      });
+      response.end(page);
       return;
     }
     if (method === "GET" && url.pathname === "/health") {
@@ -346,6 +357,22 @@ async function dispatch(
     }
     const acceptsIdentity = "idNumber" in body || "name" in body || "photo" in body;
     return sessions.recordRealName(realNameSecretHeader, realNameProvider[1], acceptsIdentity);
+  }
+  if (method === "POST" && pathname === "/v1/web-grants") {
+    return service.issueWebGrant(token, {
+      password: text(body, "password") ?? "",
+      challengeId: text(body, "challengeId") ?? "",
+      challengeCode: text(body, "challengeCode") ?? "",
+      confirmed: body.confirmed === true,
+      recoveryCode: text(body, "recoveryCode"),
+    });
+  }
+  if (method === "POST" && pathname === "/v1/web-grants/redeem") {
+    return sessions.redeemWebGrant(
+      text(body, "code") ?? "",
+      text(body, "hostDeviceId") ?? "",
+      text(body, "controllerFingerprint") ?? "",
+    );
   }
   if (method === "GET" && pathname === "/v1/remote-sessions/incoming") return sessions.listIncoming(token);
   if (method === "POST" && pathname === "/v1/remote-sessions") {

@@ -317,4 +317,15 @@ CREATE TABLE IF NOT EXISTS compensation_approvals (
   created_at timestamptz NOT NULL,
   CONSTRAINT compensation_approvals_status_check CHECK (status IN ('pending', 'opened'))
 );
+
+CREATE TABLE IF NOT EXISTS web_grant_codes (
+  web_grant_id uuid PRIMARY KEY,
+  account_id uuid NOT NULL REFERENCES accounts (account_id),
+  code_hash text NOT NULL UNIQUE,
+  purpose text NOT NULL,
+  expires_at timestamptz NOT NULL,
+  used_at timestamptz,
+  created_at timestamptz NOT NULL,
+  CONSTRAINT web_grant_purpose_check CHECK (purpose = 'controller')
+);
 `;

@@ -64,66 +64,133 @@ export class SessionService {
       return fail(409, "disclosure_required", "连接前需要先确认隐私说明", connectionDisclosure());
     }
 
-    return this.withTransaction(async (client) => {
-      await client.query("SELECT account_id FROM accounts WHERE account_id = $1 FOR UPDATE", [session.accountId]);
-      const host = await this.loadHost(client, hostDeviceId);
-      if (!host) return fail(404, "device_missing", "设备不存在");
-      if (!host.acceptingConnections) return fail(409, "host_not_accepting", "这台电脑现在不允许被连接");
-      if (host.authorizationState !== "authorized") {
-        return fail(409, "host_needs_confirmation", "被控端需要先在本机确认");
-      }
-      const concurrency = await this.concurrencyFailure(client, session.accountId, host.hostDeviceId);
-      if (concurrency) return concurrency;
+    return this.withTransaction((client) =>
+      this.openControllerSession(client, session, hostDeviceId, controllerFingerprint),
+    );
+  }
 
-      const crossAccount = host.accountId !== session.accountId;
-      const prior = await client.query(
-        `SELECT remote_session_id FROM remote_sessions
-          WHERE host_device_id = $1 AND controller_fingerprint = $2
-            AND state IN ('active', 'relay_stopped')
-          LIMIT 1`,
-        [host.hostDeviceId, controllerFingerprint],
+  async redeemWebGrant(
+    code: string,
+    hostDeviceId: string,
+    controllerFingerprintRaw: string,
+  ): Promise<Record<string, unknown> | Failure> {
+    const controllerFingerprint = controllerFingerprintRaw.trim();
+    const secret = code.trim();
+    if (secret.length < 8) return fail(401, "grant_invalid", "授权码无效");
+    if (!isUuid(hostDeviceId)) return fail(400, "host_device_invalid", "被控设备不正确");
+    if (controllerFingerprint.length < 8 || controllerFingerprint.length > 200) {
+      return fail(400, "fingerprint_invalid", "控制端指纹不正确");
+    }
+    return this.withTransaction(async (client) => {
+      const found = await client.query<{
+        web_grant_id: string;
+        account_id: string;
+        purpose: string;
+        expires_at: Date;
+        used_at: Date | null;
+      }>(
+        `SELECT web_grant_id, account_id, purpose, expires_at, used_at
+           FROM web_grant_codes
+          WHERE code_hash = $1
+          FOR UPDATE`,
+        [hashSecret(secret)],
       );
-      const needsHostConsent = crossAccount || !prior.rowCount;
-      const remoteSessionId = randomUUID();
+      const grant = found.rows[0];
       const now = this.now();
-      const state = needsHostConsent ? "awaiting_host_consent" : "active";
-      await client.query(
-        `INSERT INTO remote_sessions
-          (remote_session_id, account_id, host_device_id, host_account_id, controller_fingerprint,
-           host_fingerprint, state, cross_account, bitrate_kbps, created_at, controller_phone_mask, established_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
-        [
-          remoteSessionId,
-          session.accountId,
-          host.hostDeviceId,
-          host.accountId,
-          controllerFingerprint,
-          host.fingerprint,
-          state,
-          crossAccount,
-          this.config.freeBitrateKbps,
-          now,
-          maskPhone(session.phone),
-          state === "active" ? now : null,
-        ],
-      );
-      await this.audit(client, session.accountId, "remote_session.request", { remoteSessionId, crossAccount, needsHostConsent });
-      if (needsHostConsent) {
-        return {
-          ok: true as const,
-          remoteSessionId,
-          state,
-          crossAccount,
-          relayAllowed: false,
-          ticket: null,
-          ticketExpiresAt: null,
-          bitrateKbps: this.config.freeBitrateKbps,
-          maxFps: this.config.freeMaxFps,
-          remainingBytes: await this.remainingBytes(client, session.accountId, now),
-        };
+      if (!grant || grant.used_at || grant.expires_at <= now || grant.purpose !== "controller") {
+        return fail(401, "grant_invalid", "授权码无效");
       }
-      return this.openRelay(client, session, remoteSessionId, controllerFingerprint, now, crossAccount);
+      const owner = await client.query<{ phone: string; connection_disclosure_at: Date | null }>(
+        "SELECT phone, connection_disclosure_at FROM accounts WHERE account_id = $1",
+        [grant.account_id],
+      );
+      const account = owner.rows[0];
+      if (!account) return fail(401, "grant_invalid", "授权码无效");
+      if (!account.connection_disclosure_at) {
+        return fail(409, "disclosure_required", "连接前需要先确认隐私说明", connectionDisclosure());
+      }
+      const actor: SessionContext = {
+        loginSessionId: "",
+        accountId: grant.account_id,
+        phone: account.phone,
+        email: null,
+        status: "active",
+      };
+      const opened = await this.openControllerSession(client, actor, hostDeviceId, controllerFingerprint);
+      if (isFailure(opened)) return opened;
+      await client.query("UPDATE web_grant_codes SET used_at = $2 WHERE web_grant_id = $1", [grant.web_grant_id, now]);
+      await this.audit(client, grant.account_id, "web_grant.redeem", {
+        webGrantId: grant.web_grant_id,
+        remoteSessionId: opened.remoteSessionId,
+      });
+      return opened;
     });
+  }
+
+  private async openControllerSession(
+    client: PoolClient,
+    session: SessionContext,
+    hostDeviceId: string,
+    controllerFingerprint: string,
+  ): Promise<Record<string, unknown> | Failure> {
+    await client.query("SELECT account_id FROM accounts WHERE account_id = $1 FOR UPDATE", [session.accountId]);
+    const host = await this.loadHost(client, hostDeviceId);
+    if (!host) return fail(404, "device_missing", "设备不存在");
+    if (!host.acceptingConnections) return fail(409, "host_not_accepting", "这台电脑现在不允许被连接");
+    if (host.authorizationState !== "authorized") {
+      return fail(409, "host_needs_confirmation", "被控端需要先在本机确认");
+    }
+    const concurrency = await this.concurrencyFailure(client, session.accountId, host.hostDeviceId);
+    if (concurrency) return concurrency;
+
+    const crossAccount = host.accountId !== session.accountId;
+    const prior = await client.query(
+      `SELECT remote_session_id FROM remote_sessions
+        WHERE host_device_id = $1 AND controller_fingerprint = $2
+          AND state IN ('active', 'relay_stopped')
+        LIMIT 1`,
+      [host.hostDeviceId, controllerFingerprint],
+    );
+    const needsHostConsent = crossAccount || !prior.rowCount;
+    const remoteSessionId = randomUUID();
+    const now = this.now();
+    const state = needsHostConsent ? "awaiting_host_consent" : "active";
+    await client.query(
+      `INSERT INTO remote_sessions
+        (remote_session_id, account_id, host_device_id, host_account_id, controller_fingerprint,
+         host_fingerprint, state, cross_account, bitrate_kbps, created_at, controller_phone_mask, established_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+      [
+        remoteSessionId,
+        session.accountId,
+        host.hostDeviceId,
+        host.accountId,
+        controllerFingerprint,
+        host.fingerprint,
+        state,
+        crossAccount,
+        this.config.freeBitrateKbps,
+        now,
+        maskPhone(session.phone),
+        state === "active" ? now : null,
+      ],
+    );
+    await this.audit(client, session.accountId, "remote_session.request", { remoteSessionId, crossAccount, needsHostConsent });
+    if (needsHostConsent) {
+      return {
+        ok: true as const,
+        remoteSessionId,
+        state,
+        crossAccount,
+        relayAllowed: false,
+        ticket: null,
+        ticketExpiresAt: null,
+        bitrateKbps: this.config.freeBitrateKbps,
+        maxFps: this.config.freeMaxFps,
+        remainingBytes: await this.remainingBytes(client, session.accountId, now),
+      };
+    }
+    return this.openRelay(client, session, remoteSessionId, controllerFingerprint, now, crossAccount);
   }
 
   async consent(token: string | null, remoteSessionId: string, confirmedOnHost: boolean): Promise<Record<string, unknown> | Failure> {

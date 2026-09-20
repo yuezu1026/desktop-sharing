@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>网页控制</title>
+  <style>
+    body { margin: 0; font-family: "Segoe UI", "Microsoft YaHei", sans-serif; background: #111; color: #f2f2f2; }
+    main { max-width: 960px; margin: 0 auto; padding: 24px; }
+    label, button, input { min-height: 44px; }
+    #stage { position: relative; width: 100%; background: #000; }
+    #stage::before { content: ""; display: block; padding-top: 56.25%; }
+    #picture { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+    #linkBadge { position: absolute; top: 8px; right: 8px; background: #222; padding: 4px 8px; }
+    #error { color: #ffb4a8; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>网页控制</h1>
+    <p>只控制别人的电脑。这页不登录，也不能当被控端。全屏仍会留下浏览器自己的一层，按 Esc 会退出，页面不拦截。</p>
+    <form id="connectForm">
+      <p><label>授权码 <input id="grantCode" autocomplete="off"></label></p>
+      <p><label>识别码 <input id="deviceCode" inputmode="numeric" autocomplete="off"></label></p>
+      <p><label>临时密码 <input id="tempPassword" type="password" autocomplete="off"></label></p>
+      <p><button type="submit">连接</button> <button type="button" id="fullscreen">全屏</button></p>
+      <p id="error"></p>
+    </form>
+    <div id="stage">
+      <div id="picture">等待画面</div>
+      <div id="linkBadge">等待链路</div>
+    </div>
+  </main>
+  <script>
+    // 解码不在这页做。授权码换来的是一场会话，不是登录令牌。
+    const errorLine = document.getElementById("error");
+    const linkBadge = document.getElementById("linkBadge");
+    const controllerFingerprint = crypto.randomUUID();
+
+    document.getElementById("fullscreen").addEventListener("click", () => {
+      document.documentElement.requestFullscreen();
+    });
+
+    document.getElementById("connectForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      errorLine.textContent = "";
+      const verified = await fetch("/v1/host-access/verify", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          deviceCode: document.getElementById("deviceCode").value,
+          tempPassword: document.getElementById("tempPassword").value,
+        }),
+      });
+      const host = await verified.json();
+      if (!verified.ok || !host.hostDeviceId) {
+        errorLine.textContent = host.message || "识别码或临时密码不正确";
+        return;
+      }
+      const redeemed = await fetch("/v1/web-grants/redeem", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          code: document.getElementById("grantCode").value,
+          hostDeviceId: host.hostDeviceId,
+          controllerFingerprint,
+        }),
+      });
+      const session = await redeemed.json();
+      document.getElementById("grantCode").value = "";
+      document.getElementById("tempPassword").value = "";
+      if (!redeemed.ok) {
+        errorLine.textContent = session.message || "授权码无效";
+        return;
+      }
+      linkBadge.textContent = session.state === "awaiting_host_consent" ? "等待确认" : "中继";
+    });
+  </script>
+</body>
+</html>
