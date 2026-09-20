@@ -12,7 +12,7 @@ assert.equal(nextPhase(PHASE.idle, { error: "x" }), PHASE.failed);
 
 assert.equal(badgeText(PHASE.awaitingConsent), "等待确认");
 assert.equal(badgeText(PHASE.relayPlaceholder), "中继");
-assert.equal(pictureText(PHASE.relayPlaceholder), "已接通中继（占位画面）");
+assert.equal(pictureText(PHASE.relayPlaceholder), "已接通中继，等待画面");
 assert.equal(shouldPoll(PHASE.awaitingConsent), true);
 assert.equal(shouldPoll(PHASE.relayPlaceholder), false);
 

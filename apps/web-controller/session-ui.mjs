@@ -1,4 +1,4 @@
-/** Web 控制端会话展示状态。不登录；解码与真 TLS 进中继另刀。 */
+/** Web 控制端会话展示状态。不登录；有票后由页面经控制面 WebSocket 进中继收帧。 */
 
 export const PHASE = {
   idle: "idle",
@@ -54,7 +54,7 @@ export function pictureText(phase) {
     case PHASE.ticketReady:
       return "中继票已就绪";
     case PHASE.relayPlaceholder:
-      return "已接通中继（占位画面）";
+      return "已接通中继，等待画面";
     case PHASE.failed:
       return "连接失败";
     default:

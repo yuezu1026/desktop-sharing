@@ -8,6 +8,7 @@ import { AccountService, type Failure } from "./account-service.js";
 import { OrderService, type ChargeFailureInput, type InvoiceInput } from "./order-service.js";
 import { OpsService, routeOps } from "./ops-service.js";
 import { SessionService } from "./session-service.js";
+import { attachWebRelayBridge } from "./web-relay-bridge.js";
 
 type Json = Record<string, unknown>;
 
@@ -15,6 +16,7 @@ const buyPagePath = join(dirname(fileURLToPath(import.meta.url)), "..", "buy", "
 const opsPagePath = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "apps", "ops", "index.html");
 const webControllerPagePath = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "apps", "web-controller", "index.html");
 const webControllerUiPath = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "apps", "web-controller", "session-ui.mjs");
+const webControllerFramePath = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "apps", "web-controller", "frame.mjs");
 
 export function createHttpServer(
   pool: Pool,
@@ -24,9 +26,11 @@ export function createHttpServer(
   orders: OrderService,
   ops: OpsService,
 ) {
-  return createServer((request, response) => {
+  const server = createServer((request, response) => {
     void handle(request, response, pool, config, service, sessions, orders, ops);
   });
+  attachWebRelayBridge(server);
+  return server;
 }
 
 async function handle(
@@ -103,6 +107,16 @@ async function handle(
     }
     if (method === "GET" && url.pathname === "/web/session-ui.mjs") {
       const script = readFileSync(webControllerUiPath);
+      response.writeHead(200, {
+        "content-type": "text/javascript; charset=utf-8",
+        "cache-control": "no-store",
+        "content-length": String(script.length),
+      });
+      response.end(script);
+      return;
+    }
+    if (method === "GET" && url.pathname === "/web/frame.mjs") {
+      const script = readFileSync(webControllerFramePath);
       response.writeHead(200, {
         "content-type": "text/javascript; charset=utf-8",
         "cache-control": "no-store",

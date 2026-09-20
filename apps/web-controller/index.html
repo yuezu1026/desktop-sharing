@@ -9,7 +9,12 @@
     label, button, input { min-height: 44px; }
     #stage { position: relative; width: 100%; background: #000; }
     #stage::before { content: ""; display: block; padding-top: 56.25%; }
-    #picture { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+    #picture {
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+    }
+    #frameCanvas { max-width: 100%; max-height: 100%; display: none; }
+    #pictureLabel { padding: 8px; }
     #linkBadge { position: absolute; top: 8px; right: 8px; background: #222; padding: 4px 8px; }
     #error { color: #ffb4a8; }
   </style>
@@ -26,30 +31,108 @@
       <p id="error"></p>
     </form>
     <div id="stage">
-      <div id="picture">等待画面</div>
+      <div id="picture">
+        <canvas id="frameCanvas" width="640" height="360"></canvas>
+        <span id="pictureLabel">等待画面</span>
+      </div>
       <div id="linkBadge">等待链路</div>
     </div>
   </main>
   <script type="module">
     import { PHASE, badgeText, nextPhase, pictureText, shouldPoll } from "/web/session-ui.mjs";
+    import {
+      FRAME_KIND_VIDEO,
+      VIDEO_CODEC_JPEG,
+      frameKind,
+      framePayload,
+      unpackVideo,
+    } from "/web/frame.mjs";
 
     const errorLine = document.getElementById("error");
     const linkBadge = document.getElementById("linkBadge");
-    const picture = document.getElementById("picture");
+    const pictureLabel = document.getElementById("pictureLabel");
+    const frameCanvas = document.getElementById("frameCanvas");
+    const frameContext = frameCanvas.getContext("2d");
     const controllerFingerprint = crypto.randomUUID();
     let phase = PHASE.idle;
     let pollTimer = 0;
     let heldTicket = "";
     let heldSessionId = "";
+    let relaySocket = null;
 
     function paint() {
       linkBadge.textContent = badgeText(phase);
-      picture.textContent = pictureText(phase);
+      if (frameCanvas.style.display !== "block") {
+        pictureLabel.textContent = pictureText(phase);
+      }
     }
 
     function applyEvent(event) {
       phase = nextPhase(phase, event);
       paint();
+      if (phase === PHASE.relayPlaceholder || phase === PHASE.ticketReady) {
+        openRelayBridge();
+      }
+    }
+
+    function closeRelayBridge() {
+      if (relaySocket) {
+        relaySocket.close();
+        relaySocket = null;
+      }
+    }
+
+    function openRelayBridge() {
+      if (!heldTicket || relaySocket) return;
+      const protocol = location.protocol === "https:" ? "wss:" : "ws:";
+      const socket = new WebSocket(`${protocol}//${location.host}/v1/web-relay`);
+      relaySocket = socket;
+      socket.binaryType = "arraybuffer";
+      socket.addEventListener("open", () => {
+        socket.send(JSON.stringify({ ticket: heldTicket, fingerprint: controllerFingerprint }));
+      });
+      socket.addEventListener("message", async (message) => {
+        if (typeof message.data === "string") {
+          try {
+            const body = JSON.parse(message.data);
+            if (body.ok === false) {
+              errorLine.textContent = body.message || "中继未接通";
+              applyEvent({ error: "relay" });
+              closeRelayBridge();
+            } else if (body.ok === true) {
+              linkBadge.textContent = "中继";
+            }
+          } catch {
+            /* ignore */
+          }
+          return;
+        }
+        const bytes = new Uint8Array(message.data);
+        if (frameKind(bytes) !== FRAME_KIND_VIDEO) return;
+        const video = unpackVideo(framePayload(bytes));
+        if (!video) return;
+        if (video.codec === VIDEO_CODEC_JPEG) {
+          await drawJpeg(video.body, video.width, video.height);
+        } else {
+          pictureLabel.textContent = "已收到 H264（WebCodecs 下一刀）";
+          pictureLabel.style.display = "block";
+        }
+      });
+      socket.addEventListener("close", () => {
+        if (relaySocket === socket) relaySocket = null;
+      });
+    }
+
+    async function drawJpeg(body, width, height) {
+      const blob = new Blob([body], { type: "image/jpeg" });
+      const bitmap = await createImageBitmap(blob);
+      frameCanvas.width = width;
+      frameCanvas.height = height;
+      frameContext.drawImage(bitmap, 0, 0, width, height);
+      bitmap.close();
+      frameCanvas.style.display = "block";
+      pictureLabel.style.display = "none";
+      linkBadge.textContent = "中继";
     }
 
     document.getElementById("fullscreen").addEventListener("click", () => {
@@ -58,7 +141,12 @@
 
     async function pollUntilActive() {
       window.clearInterval(pollTimer);
-      if (!shouldPoll(phase) || !heldSessionId) return;
+      if (!shouldPoll(phase) || !heldSessionId) {
+        if (phase === PHASE.relayPlaceholder || phase === PHASE.ticketReady) {
+          openRelayBridge();
+        }
+        return;
+      }
       pollTimer = window.setInterval(async () => {
         const query = new URLSearchParams({ controllerFingerprint });
         const response = await fetch(`/v1/web-sessions/${heldSessionId}?${query}`);
@@ -79,6 +167,9 @@
       event.preventDefault();
       errorLine.textContent = "";
       window.clearInterval(pollTimer);
+      closeRelayBridge();
+      frameCanvas.style.display = "none";
+      pictureLabel.style.display = "block";
       phase = PHASE.idle;
       paint();
 
