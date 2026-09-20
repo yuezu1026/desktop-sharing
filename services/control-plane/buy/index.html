@@ -103,6 +103,7 @@
         <h2 id="resultTitle"></h2>
         <div id="resultLines"></div>
         <p class="muted" id="resultHint"></p>
+        <div class="row" id="resultSim"></div>
         <p><button type="button" id="backToBuy">返回购买</button></p>
       </section>
     </div>
@@ -118,6 +119,7 @@
       findOrder,
       presentResult,
       shouldPollOrder,
+      simulateActions,
     } from "/buy/purchase-ui.mjs";
 
     const sessionKey = "webBuyToken";
@@ -140,6 +142,7 @@
     const resultTitle = document.getElementById("resultTitle");
     const resultLines = document.getElementById("resultLines");
     const resultHint = document.getElementById("resultHint");
+    const resultSim = document.getElementById("resultSim");
     const wantsInvoice = document.getElementById("wantsInvoice");
     const invoiceFields = document.getElementById("invoiceFields");
 
@@ -147,6 +150,8 @@
     let selectedPlan = "yearly";
     let selectedChannel = "";
     let pollTimer = 0;
+    let payDevSimulate = false;
+    let watchedOrder = null;
 
     function storedToken() {
       return sessionStorage.getItem(sessionKey);
@@ -185,6 +190,7 @@
     }
 
     function paintResult(order) {
+      watchedOrder = order;
       const view = presentResult(order);
       resultTitle.textContent = view.title;
       resultLines.innerHTML = "";
@@ -194,8 +200,42 @@
         resultLines.appendChild(paragraph);
       }
       resultHint.textContent = view.actionHint;
+      resultSim.innerHTML = "";
+      for (const action of simulateActions(order.state, payDevSimulate)) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = action.label;
+        button.addEventListener("click", () => {
+          void runSimulate(action.state);
+        });
+        resultSim.appendChild(button);
+      }
       buyPanel.hidden = true;
       resultPanel.hidden = false;
+    }
+
+    async function runSimulate(nextState) {
+      const token = storedToken();
+      const orderId = sessionStorage.getItem(watchedOrderKey);
+      if (!token || !orderId) return;
+      const response = await fetch("/v1/orders/" + orderId + "/dev-simulate", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: "Bearer " + token,
+        },
+        body: JSON.stringify({ state: nextState }),
+      });
+      const body = await response.json();
+      if (!response.ok || body.ok !== true) {
+        resultHint.textContent = body.message || "模拟失败";
+        return;
+      }
+      paintResult(body);
+      if (!shouldPollOrder(body.state) && pollTimer) {
+        clearInterval(pollTimer);
+        pollTimer = 0;
+      }
     }
 
     async function refreshWatchedOrder() {
@@ -224,9 +264,14 @@
     }
 
     async function loadCatalog() {
-      const response = await fetch("/v1/catalog");
-      const body = await response.json();
-      if (!response.ok || body.ok !== true) {
+      const [catalogResponse, configResponse] = await Promise.all([
+        fetch("/v1/catalog"),
+        fetch("/v1/config/public"),
+      ]);
+      const configBody = await configResponse.json();
+      payDevSimulate = configResponse.ok && configBody.payDevSimulate === true;
+      const body = await catalogResponse.json();
+      if (!catalogResponse.ok || body.ok !== true) {
         priceAmount.textContent = "价格暂时取不到，不能下单";
         payButton.disabled = true;
         return;

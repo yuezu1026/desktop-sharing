@@ -213,6 +213,7 @@ async function handle(
         displayMinuteFloorKbps: config.displayMinuteFloorKbps,
         channelLimit: config.channelLimit,
         sessionsPerChannel: config.sessionsPerChannel,
+        payDevSimulate: config.payDevSimulate,
       });
       return;
     }
@@ -443,6 +444,10 @@ async function dispatch(
   const orderProvider = pathname.match(/^\/v1\/orders\/([^/]+)\/provider$/);
   if (method === "POST" && orderProvider?.[1]) {
     return orders.applyProviderResult(orderSecretHeader, orderProvider[1], text(body, "state") ?? "");
+  }
+  const orderSimulate = pathname.match(/^\/v1\/orders\/([^/]+)\/dev-simulate$/);
+  if (method === "POST" && orderSimulate?.[1]) {
+    return orders.simulateOwnerProgress(token, orderSimulate[1], text(body, "state") ?? "");
   }
   if (method === "GET" && pathname === "/v1/connection-disclosure") return sessions.connectionDisclosure(token);
   if (method === "POST" && pathname === "/v1/connection-disclosure") return sessions.acknowledgeDisclosure(token);

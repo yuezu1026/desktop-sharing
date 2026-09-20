@@ -152,3 +152,36 @@ export function findOrder(orders, orderId) {
 export function shouldPollOrder(state) {
   return state === "unfinished" || state === "confirming";
 }
+
+/**
+ * 渠道回调允许的状态迁移。确认中不能回到未完成，也不能再付同一单。
+ * @param {string} fromState
+ * @param {string} toState
+ */
+export function canApplyProviderState(fromState, toState) {
+  if (toState !== "confirming" && toState !== "opened" && toState !== "closed") return false;
+  if (fromState === toState) return true;
+  if (fromState === "unfinished") return true;
+  if (fromState === "confirming") return toState === "opened" || toState === "closed";
+  return false;
+}
+
+/**
+ * 开发态模拟渠道时，结果页可点的推进按钮。
+ * @param {string | null | undefined} state
+ * @param {boolean} payDevSimulate
+ */
+export function simulateActions(state, payDevSimulate) {
+  if (!payDevSimulate) return [];
+  const actions = [];
+  if (canApplyProviderState(state ?? "", "confirming") && state !== "confirming") {
+    actions.push({ state: "confirming", label: "模拟：进入确认中" });
+  }
+  if (canApplyProviderState(state ?? "", "opened") && state !== "opened") {
+    actions.push({ state: "opened", label: "模拟：标记已开通" });
+  }
+  if (canApplyProviderState(state ?? "", "closed") && state !== "closed") {
+    actions.push({ state: "closed", label: "模拟：关闭订单" });
+  }
+  return actions;
+}

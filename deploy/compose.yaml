@@ -34,6 +34,7 @@ services:
       MONTHLY_PRICE_CENTS: "2400"
       YEARLY_PER_MONTH_LABEL: "13.2"
       ORDER_CALLBACK_SECRET: local-order
+      PAY_DEV_SIMULATE: "1"
       REAL_NAME_CALLBACK_SECRET: local-realname
       CONNECTION_STATS_SECRET: local-stats
       OPS_BOOTSTRAP_EMAIL: ops@local.test

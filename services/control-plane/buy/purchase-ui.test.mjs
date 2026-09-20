@@ -7,6 +7,8 @@ import {
   presentResult,
   resultTitle,
   shouldPollOrder,
+  canApplyProviderState,
+  simulateActions,
 } from "./purchase-ui.mjs";
 
 assert.equal(formatYuan(15800), "¥158.00");
@@ -60,5 +62,17 @@ assert.deepEqual(
   findOrder([{ orderId: "x", state: "opened" }, { orderId: "y", state: "confirming" }], "y"),
   { orderId: "y", state: "confirming" },
 );
+
+assert.equal(canApplyProviderState("unfinished", "confirming"), true);
+assert.equal(canApplyProviderState("unfinished", "opened"), true);
+assert.equal(canApplyProviderState("confirming", "opened"), true);
+assert.equal(canApplyProviderState("confirming", "unfinished"), false);
+assert.equal(canApplyProviderState("opened", "closed"), false);
+assert.deepEqual(
+  simulateActions("unfinished", true).map((row) => row.state),
+  ["confirming", "opened", "closed"],
+);
+assert.deepEqual(simulateActions("confirming", true).map((row) => row.state), ["opened", "closed"]);
+assert.deepEqual(simulateActions("unfinished", false), []);
 
 console.log("buy purchase-ui ok");

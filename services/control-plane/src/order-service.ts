@@ -147,6 +147,28 @@ export class OrderService {
   async applyProviderResult(secret: string | null, orderId: string, providerStateRaw: string): Promise<Record<string, unknown> | Failure> {
     if (!this.config.orderCallbackSecret) return fail(503, "order_callback_unconfigured", "支付回调尚未配置");
     if (secret !== this.config.orderCallbackSecret) return fail(401, "order_callback_invalid", "支付回调校验失败");
+    return this.transitionOrder(orderId, providerStateRaw, null);
+  }
+
+  /**
+   * 仅开发态：下单账号自己推进渠道状态，不暴露回调密钥给浏览器。
+   */
+  async simulateOwnerProgress(
+    token: string | null,
+    orderId: string,
+    providerStateRaw: string,
+  ): Promise<Record<string, unknown> | Failure> {
+    if (!this.config.payDevSimulate) return fail(404, "not_found", "路径不存在");
+    const session = await this.accounts.authenticate(token);
+    if (isAuthFailure(session)) return session;
+    return this.transitionOrder(orderId, providerStateRaw, session.accountId);
+  }
+
+  private async transitionOrder(
+    orderId: string,
+    providerStateRaw: string,
+    ownerAccountId: string | null,
+  ): Promise<Record<string, unknown> | Failure> {
     const providerState = providerStateRaw.trim();
     if (providerState !== "confirming" && providerState !== "opened" && providerState !== "closed") {
       return fail(400, "order_state_invalid", "支付结果不正确");
@@ -160,12 +182,16 @@ export class OrderService {
     );
     const row = found.rows[0];
     if (!row) return fail(404, "order_missing", "订单不存在");
+    if (ownerAccountId && row.account_id !== ownerAccountId) {
+      return fail(404, "order_missing", "订单不存在");
+    }
     const snapshot = snapshotFromRow(row);
     if (row.state === providerState) {
       return this.present(row.order_id, row.plan, row.amount_cents, row.price_version, row.state, row.created_at, snapshot, row.pay_channel);
     }
-    const allowed = row.state === "unfinished" || (row.state === "confirming" && (providerState === "opened" || providerState === "closed"));
-    if (!allowed) return fail(409, "order_not_retryable", "确认中不是支付失败，不能再付一次");
+    if (!canApplyProviderState(row.state, providerState)) {
+      return fail(409, "order_not_retryable", "确认中不是支付失败，不能再付一次");
+    }
     const changedAt = this.now();
     await this.pool.query("UPDATE orders SET state = $2 WHERE order_id = $1", [orderId, providerState]);
     if (providerState === "opened" && row.plan === "monthly") {
@@ -545,6 +571,15 @@ function normalizePayChannel(raw: string | null): string | null | Failure {
     return fail(400, "pay_channel_invalid", "官网支付只能是微信或支付宝");
   }
   return channel;
+}
+
+/** 与购买页 `canApplyProviderState` 同一规则。 */
+function canApplyProviderState(fromState: string, toState: string): boolean {
+  if (toState !== "confirming" && toState !== "opened" && toState !== "closed") return false;
+  if (fromState === toState) return true;
+  if (fromState === "unfinished") return true;
+  if (fromState === "confirming") return toState === "opened" || toState === "closed";
+  return false;
 }
 
 function emptyInvoice(): InvoiceSnapshot {

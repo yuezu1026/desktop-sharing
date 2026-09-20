@@ -24,6 +24,8 @@ export type AppConfig = {
   monthlyPriceCents: number;
   yearlyPerMonthLabel: string;
   orderCallbackSecret: string | null;
+  /** 仅本地：登录用户可模拟渠道回调推进订单。上线必须为 false。 */
+  payDevSimulate: boolean;
   realNameCallbackSecret: string | null;
   connectionStatsSecret: string | null;
   opsBootstrapEmail: string | null;
@@ -72,6 +74,7 @@ export function loadConfig(env: NodeJS.ProcessEnv): AppConfig {
     monthlyPriceCents: readPositiveInt(env.MONTHLY_PRICE_CENTS, DEFAULT_MONTHLY_PRICE_CENTS),
     yearlyPerMonthLabel: env.YEARLY_PER_MONTH_LABEL?.trim() || DEFAULT_YEARLY_PER_MONTH_LABEL,
     orderCallbackSecret: env.ORDER_CALLBACK_SECRET?.trim() || null,
+    payDevSimulate: env.PAY_DEV_SIMULATE === "1",
     realNameCallbackSecret: env.REAL_NAME_CALLBACK_SECRET?.trim() || null,
     connectionStatsSecret: env.CONNECTION_STATS_SECRET?.trim() || null,
     opsBootstrapEmail: env.OPS_BOOTSTRAP_EMAIL?.trim() || null,
