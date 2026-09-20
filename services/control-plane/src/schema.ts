@@ -222,4 +222,19 @@ CREATE TABLE IF NOT EXISTS renewal_reminders (
   CONSTRAINT renewal_reminders_status_check CHECK (status IN ('queued', 'recorded')),
   UNIQUE (subscription_id, charge_at, channel)
 );
+
+CREATE TABLE IF NOT EXISTS host_trusted_controllers (
+  host_device_id uuid NOT NULL REFERENCES host_devices (host_device_id),
+  controller_account_id uuid NOT NULL REFERENCES accounts (account_id),
+  fraud_acknowledged_at timestamptz NOT NULL,
+  created_at timestamptz NOT NULL,
+  PRIMARY KEY (host_device_id, controller_account_id)
+);
+
+CREATE TABLE IF NOT EXISTS controller_family_devices (
+  controller_account_id uuid NOT NULL REFERENCES accounts (account_id),
+  host_device_id uuid NOT NULL REFERENCES host_devices (host_device_id),
+  created_at timestamptz NOT NULL,
+  PRIMARY KEY (controller_account_id, host_device_id)
+);
 `;

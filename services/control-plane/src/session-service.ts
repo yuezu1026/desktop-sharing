@@ -203,10 +203,14 @@ export class SessionService {
   }
 
   /** 没触发就不提示。跨账号不在这里要求实名，闸门在被控端确认。 */
-  async realName(token: string | null, controllerFingerprint: string | null): Promise<Record<string, unknown> | Failure> {
+  async realName(
+    token: string | null,
+    controllerFingerprint: string | null,
+    hostDeviceId: string | null,
+  ): Promise<Record<string, unknown> | Failure> {
     const session = await this.accounts.authenticate(token);
     if (isAuthFailure(session)) return session;
-    const prompt = await this.realNamePrompt(this.pool, session.accountId, controllerFingerprint, this.now());
+    const prompt = await this.realNamePrompt(this.pool, session.accountId, controllerFingerprint, this.now(), hostDeviceId);
     return { ok: true, realName: prompt };
   }
 
@@ -224,6 +228,111 @@ export class SessionService {
     );
     if (!updated.rowCount) return fail(404, "account_missing", "账号不存在");
     return { ok: true, verified: true };
+  }
+
+  /** 被控端这边的名单。来源只能是已经在这台电脑上确认过的账号，不另造一套绑定。 */
+  async listTrustedControllers(token: string | null, hostDeviceId: string): Promise<Record<string, unknown> | Failure> {
+    const owned = await this.ownedHost(token, hostDeviceId);
+    if ("code" in owned) return owned;
+    const rows = await this.pool.query<{ controller_account_id: string; phone: string }>(
+      `SELECT t.controller_account_id, a.phone
+         FROM host_trusted_controllers t
+         JOIN accounts a ON a.account_id = t.controller_account_id
+        WHERE t.host_device_id = $1
+        ORDER BY t.created_at`,
+      [hostDeviceId],
+    );
+    return {
+      ok: true,
+      skipsConsent: false,
+      fraudLines: fraudNotice(),
+      controllers: rows.rows.map((row) => ({
+        controllerAccountId: row.controller_account_id,
+        phoneMask: maskPhone(row.phone),
+      })),
+    };
+  }
+
+  async trustController(
+    token: string | null,
+    hostDeviceId: string,
+    controllerAccountId: string,
+    fraudAcknowledged: boolean,
+  ): Promise<Record<string, unknown> | Failure> {
+    if (!isUuid(controllerAccountId)) return fail(400, "account_invalid", "账号不正确");
+    const owned = await this.ownedHost(token, hostDeviceId);
+    if ("code" in owned) return owned;
+    const existing = await this.pool.query(
+      `SELECT 1 FROM host_trusted_controllers
+        WHERE host_device_id = $1 AND controller_account_id = $2`,
+      [hostDeviceId, controllerAccountId],
+    );
+    if (!existing.rowCount) {
+      if (!fraudAcknowledged) {
+        return fail(400, "fraud_ack_required", "新增受信任的控制端必须再确认一次反诈", { fraudLines: fraudNotice() });
+      }
+      const prior = await this.pool.query(
+        `SELECT 1 FROM remote_sessions
+          WHERE host_device_id = $1 AND account_id = $2 AND host_account_id = $3
+            AND state IN ('active', 'relay_stopped', 'closed')
+          LIMIT 1`,
+        [hostDeviceId, controllerAccountId, owned.accountId],
+      );
+      if (!prior.rowCount) return fail(409, "trust_needs_consent", "只能信任已经在这台电脑上确认过的账号");
+      const now = this.now();
+      await this.pool.query(
+        `INSERT INTO host_trusted_controllers
+          (host_device_id, controller_account_id, fraud_acknowledged_at, created_at)
+         VALUES ($1, $2, $3, $3)`,
+        [hostDeviceId, controllerAccountId, now],
+      );
+    }
+    return this.listTrustedControllers(token, hostDeviceId);
+  }
+
+  async untrustController(token: string | null, hostDeviceId: string, controllerAccountId: string): Promise<Record<string, unknown> | Failure> {
+    if (!isUuid(controllerAccountId)) return fail(400, "account_invalid", "账号不正确");
+    const owned = await this.ownedHost(token, hostDeviceId);
+    if ("code" in owned) return owned;
+    await this.pool.query(
+      "DELETE FROM host_trusted_controllers WHERE host_device_id = $1 AND controller_account_id = $2",
+      [hostDeviceId, controllerAccountId],
+    );
+    return this.listTrustedControllers(token, hostDeviceId);
+  }
+
+  /** 控制端把某台电脑标成家人设备。单边标记不会豁免。 */
+  async setFamilyDevice(token: string | null, hostDeviceId: string, family: boolean): Promise<Record<string, unknown> | Failure> {
+    if (!isUuid(hostDeviceId)) return fail(400, "host_device_invalid", "被控设备不正确");
+    const session = await this.accounts.authenticate(token);
+    if (isAuthFailure(session)) return session;
+    const device = await this.pool.query(
+      "SELECT 1 FROM host_devices WHERE host_device_id = $1 AND removed_at IS NULL",
+      [hostDeviceId],
+    );
+    if (!device.rowCount) return fail(404, "device_missing", "设备不存在");
+    if (family) {
+      const prior = await this.pool.query(
+        `SELECT 1 FROM remote_sessions
+          WHERE host_device_id = $1 AND account_id = $2
+            AND state IN ('active', 'relay_stopped', 'closed')
+          LIMIT 1`,
+        [hostDeviceId, session.accountId],
+      );
+      if (!prior.rowCount) return fail(409, "family_needs_session", "只能标记已经连过的电脑");
+      await this.pool.query(
+        `INSERT INTO controller_family_devices (controller_account_id, host_device_id, created_at)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (controller_account_id, host_device_id) DO NOTHING`,
+        [session.accountId, hostDeviceId, this.now()],
+      );
+    } else {
+      await this.pool.query(
+        "DELETE FROM controller_family_devices WHERE controller_account_id = $1 AND host_device_id = $2",
+        [session.accountId, hostDeviceId],
+      );
+    }
+    return { ok: true, family };
   }
 
   /** 拒绝只结束这一次请求。扣款失败不在会话断开时推送。 */
@@ -327,8 +436,9 @@ export class SessionService {
       state: string;
       input_revoked: boolean;
       controller_fingerprint: string;
+      host_device_id: string;
     }>(
-      `SELECT bitrate_kbps, state, input_revoked, controller_fingerprint
+      `SELECT bitrate_kbps, state, input_revoked, controller_fingerprint, host_device_id
          FROM remote_sessions
         WHERE account_id = $1 AND state IN ('active', 'relay_stopped')
         ORDER BY created_at DESC
@@ -374,7 +484,13 @@ export class SessionService {
         WHERE account_id = $1`,
       [session.accountId, now],
     );
-    const realName = await this.realNamePrompt(this.pool, session.accountId, current?.controller_fingerprint ?? null, now);
+    const realName = await this.realNamePrompt(
+      this.pool,
+      session.accountId,
+      current?.controller_fingerprint ?? null,
+      now,
+      current?.host_device_id ?? null,
+    );
     return {
       ok: true,
       remainingBytes,
@@ -504,7 +620,7 @@ export class SessionService {
       const totalBytes = await this.grantTotal(client, ticket.accountId, now);
       const usedRatio = totalBytes <= 0 ? 1 : (totalBytes - remainingBytes) / totalBytes;
       const prompt = remainingBytes > 0
-        ? await this.realNamePrompt(client, ticket.accountId, ticket.controllerFingerprint, now)
+        ? await this.realNamePrompt(client, ticket.accountId, ticket.controllerFingerprint, now, ticket.hostDeviceId)
         : null;
       let bitrateKbps = ticket.bitrateKbps;
       let directive: Directive = "continue";
@@ -576,8 +692,18 @@ export class SessionService {
     await this.ensureFreeGrant(client, session.accountId, controllerFingerprint, now);
     const remainingBytes = await this.remainingBytes(client, session.accountId, now);
     const relayAllowed = remainingBytes > 0;
+    const located = await client.query<{ host_device_id: string }>(
+      "SELECT host_device_id FROM remote_sessions WHERE remote_session_id = $1",
+      [remoteSessionId],
+    );
     const prompt = relayAllowed
-      ? await this.realNamePrompt(client, session.accountId, controllerFingerprint, now)
+      ? await this.realNamePrompt(
+          client,
+          session.accountId,
+          controllerFingerprint,
+          now,
+          located.rows[0]?.host_device_id ?? null,
+        )
       : null;
     const relayOpen = relayAllowed && !prompt;
     let ticket: string | null = null;
@@ -712,11 +838,12 @@ export class SessionService {
       account_id: string;
       controller_fingerprint: string;
       host_fingerprint: string;
+      host_device_id: string;
       state: string;
       bitrate_kbps: number;
     }>(
       `SELECT t.relay_ticket_id, t.remote_session_id, t.expires_at, t.admitted_at, t.revoked_at,
-              s.account_id, s.controller_fingerprint, s.host_fingerprint, s.state, s.bitrate_kbps
+              s.account_id, s.controller_fingerprint, s.host_fingerprint, s.host_device_id, s.state, s.bitrate_kbps
          FROM relay_tickets t
          JOIN remote_sessions s ON s.remote_session_id = t.remote_session_id
         WHERE t.secret_hash = $1`,
@@ -733,6 +860,7 @@ export class SessionService {
       accountId: row.account_id,
       controllerFingerprint: row.controller_fingerprint,
       hostFingerprint: row.host_fingerprint,
+      hostDeviceId: row.host_device_id,
       state: row.state,
       bitrateKbps: row.bitrate_kbps,
     };
@@ -796,12 +924,14 @@ export class SessionService {
     accountId: string,
     controllerFingerprint: string | null,
     now: Date,
+    hostDeviceId: string | null,
   ): Promise<RealNamePrompt | null> {
     const verified = await runner.query<{ real_name_verified_at: Date | null }>(
       "SELECT real_name_verified_at FROM accounts WHERE account_id = $1",
       [accountId],
     );
     if (verified.rows[0]?.real_name_verified_at) return null;
+    if (hostDeviceId && (await this.isTrustedPair(runner, accountId, hostDeviceId))) return null;
     const fingerprint = controllerFingerprint?.trim() ?? "";
     let frequent = false;
     if (fingerprint.length >= 8) {
@@ -832,6 +962,33 @@ export class SessionService {
         { code: "direct", title: "直连" },
       ],
     };
+  }
+
+  private async ownedHost(token: string | null, hostDeviceId: string): Promise<{ accountId: string } | Failure> {
+    if (!isUuid(hostDeviceId)) return fail(400, "host_device_invalid", "被控设备不正确");
+    const session = await this.accounts.authenticate(token);
+    if (isAuthFailure(session)) return session;
+    const found = await this.pool.query(
+      `SELECT 1 FROM host_devices
+        WHERE host_device_id = $1 AND account_id = $2 AND removed_at IS NULL`,
+      [hostDeviceId, session.accountId],
+    );
+    if (!found.rowCount) return fail(404, "device_missing", "设备不存在");
+    return { accountId: session.accountId };
+  }
+
+  private async isTrustedPair(runner: Pool | PoolClient, controllerAccountId: string, hostDeviceId: string): Promise<boolean> {
+    const found = await runner.query(
+      `SELECT 1
+         FROM host_trusted_controllers trusted
+         JOIN controller_family_devices family
+           ON family.host_device_id = trusted.host_device_id
+          AND family.controller_account_id = trusted.controller_account_id
+        WHERE trusted.host_device_id = $1
+          AND trusted.controller_account_id = $2`,
+      [hostDeviceId, controllerAccountId],
+    );
+    return Boolean(found.rowCount);
   }
 
   private sharedSecretAllowed(presented: string | null, expected: string | null, missingCode: string, missingMessage: string): Failure | null {
@@ -880,6 +1037,7 @@ type LoadedTicket = {
   accountId: string;
   controllerFingerprint: string;
   hostFingerprint: string;
+  hostDeviceId: string;
   state: string;
   bitrateKbps: number;
 };
@@ -891,6 +1049,14 @@ type RealNamePrompt = {
   postpone: true;
   stillWorks: Array<{ code: string; title: string }>;
 };
+
+function fraudNotice(): string[] {
+  return [
+    "你正在允许对方控制本设备",
+    "对方能看到并操作你屏幕上的一切",
+    "不要向陌生人开启；任何自称「客服 / 公检法」要求你打开屏幕的，都是诈骗",
+  ];
+}
 
 function connectionDisclosure(): Record<string, string> {
   return {

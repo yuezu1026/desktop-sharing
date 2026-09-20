@@ -186,6 +186,29 @@ async function dispatch(
   if (deviceAction?.[1] && method === "PATCH" && !deviceAction[2]) {
     return service.renameHostDevice(token, deviceAction[1], text(body, "displayName") ?? "");
   }
+  if (deviceAction?.[1] && deviceAction[2] === "trusted-controllers" && method === "GET") {
+    return sessions.listTrustedControllers(token, deviceAction[1]);
+  }
+  if (deviceAction?.[1] && deviceAction[2] === "trusted-controllers" && method === "POST") {
+    if (body.alwaysAllow === true) {
+      return { ok: false, status: 400, code: "trust_cannot_skip_confirm", message: "不能改成以后不再询问" };
+    }
+    return sessions.trustController(
+      token,
+      deviceAction[1],
+      text(body, "controllerAccountId") ?? "",
+      body.fraudAcknowledged === true,
+    );
+  }
+  if (deviceAction?.[1] && deviceAction[2] === "trusted-controllers" && method === "DELETE") {
+    return sessions.untrustController(token, deviceAction[1], searchParams.get("controllerAccountId") ?? "");
+  }
+  if (deviceAction?.[1] && deviceAction[2] === "family" && method === "POST") {
+    if (typeof body.family !== "boolean") {
+      return { ok: false, status: 400, code: "family_invalid", message: "需要明确是否标成家人设备" };
+    }
+    return sessions.setFamilyDevice(token, deviceAction[1], body.family);
+  }
   if (deviceAction?.[1] && deviceAction[2] === "stop" && method === "POST") {
     return sessions.stopControlled(token, deviceAction[1]);
   }
@@ -250,7 +273,7 @@ async function dispatch(
   if (method === "GET" && pathname === "/v1/connection-disclosure") return sessions.connectionDisclosure(token);
   if (method === "POST" && pathname === "/v1/connection-disclosure") return sessions.acknowledgeDisclosure(token);
   if (method === "GET" && pathname === "/v1/real-name") {
-    return sessions.realName(token, searchParams.get("controllerFingerprint"));
+    return sessions.realName(token, searchParams.get("controllerFingerprint"), searchParams.get("hostDeviceId"));
   }
   const realNameProvider = pathname.match(/^\/v1\/real-name\/([^/]+)\/provider$/);
   if (method === "POST" && realNameProvider?.[1]) {
