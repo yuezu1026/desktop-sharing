@@ -4,10 +4,15 @@ use openh264::encoder::{BitRate, Encoder, EncoderConfig, FrameRate, IntraFramePe
 use openh264::formats::{BgrSliceU8, YUVBuffer};
 use openh264::OpenH264API;
 
+use crate::keyframe_schedule::KeyframeSchedule;
+
+const KEYFRAME_PERIOD: u32 = 45;
+
 pub struct SoftH264Encoder {
     encoder: Encoder,
     width: u32,
     height: u32,
+    keyframes: KeyframeSchedule,
 }
 
 impl SoftH264Encoder {
@@ -18,12 +23,13 @@ impl SoftH264Encoder {
         let config = EncoderConfig::new()
             .bitrate(BitRate::from_bps(900_000))
             .max_frame_rate(FrameRate::from_hz(20.0))
-            .intra_frame_period(IntraFramePeriod::from_num_frames(45));
+            .intra_frame_period(IntraFramePeriod::from_num_frames(KEYFRAME_PERIOD));
         let encoder = Encoder::with_api_config(OpenH264API::from_source(), config).ok()?;
         Some(Self {
             encoder,
             width,
             height,
+            keyframes: KeyframeSchedule::new(KEYFRAME_PERIOD),
         })
     }
 
@@ -35,6 +41,10 @@ impl SoftH264Encoder {
         if bgr.len() < expected {
             return None;
         }
+        if self.keyframes.should_force() {
+            self.encoder.force_intra_frame();
+        }
+        self.keyframes.advance();
         let slice = BgrSliceU8::new(&bgr[..expected], (width as usize, height as usize));
         let yuv = YUVBuffer::from_rgb_source(slice);
         let bitstream = self.encoder.encode(&yuv).ok()?;

@@ -8,27 +8,30 @@ use std::time::{Duration, Instant};
 
 use windows::core::Interface;
 use windows::Win32::Media::MediaFoundation::{
-    eAVEncH264VProfile_Base, CMSH264EncoderMFT, IMFActivate, IMFMediaEventGenerator, IMFSample,
-    IMFTransform, MEError, METransformHaveOutput, METransformNeedInput, MFCreateMediaType,
-    MFCreateMemoryBuffer, MFCreateSample, MFMediaType_Video, MFStartup, MFTEnumEx, MFVideoFormat_H264,
-    MFVideoFormat_NV12, MFVideoInterlace_Progressive, MFSTARTUP_FULL, MFT_CATEGORY_VIDEO_ENCODER,
-    MFT_ENUM_FLAG_HARDWARE, MFT_ENUM_FLAG_SORTANDFILTER, MFT_MESSAGE_NOTIFY_BEGIN_STREAMING,
-    MFT_MESSAGE_NOTIFY_START_OF_STREAM, MFT_OUTPUT_DATA_BUFFER, MFT_OUTPUT_STREAM_PROVIDES_SAMPLES,
-    MFT_REGISTER_TYPE_INFO, MF_EVENT_FLAG_NO_WAIT, MF_E_NO_EVENTS_AVAILABLE,
-    MF_E_TRANSFORM_NEED_MORE_INPUT, MF_MT_AVG_BITRATE, MF_MT_FRAME_RATE, MF_MT_FRAME_SIZE,
-    MF_MT_INTERLACE_MODE, MF_MT_MAJOR_TYPE, MF_MT_MPEG2_PROFILE, MF_MT_SUBTYPE, MF_TRANSFORM_ASYNC,
-    MF_TRANSFORM_ASYNC_UNLOCK, MF_VERSION,
+    eAVEncH264VProfile_Base, CMSH264EncoderMFT, CODECAPI_AVEncVideoForceKeyFrame, ICodecAPI, IMFActivate,
+    IMFMediaEventGenerator, IMFSample, IMFTransform, MEError, METransformHaveOutput, METransformNeedInput,
+    MFCreateMediaType, MFCreateMemoryBuffer, MFCreateSample, MFMediaType_Video, MFStartup, MFTEnumEx,
+    MFVideoFormat_H264, MFVideoFormat_NV12, MFVideoInterlace_Progressive, MFSTARTUP_FULL,
+    MFT_CATEGORY_VIDEO_ENCODER, MFT_ENUM_FLAG_HARDWARE, MFT_ENUM_FLAG_SORTANDFILTER,
+    MFT_MESSAGE_NOTIFY_BEGIN_STREAMING, MFT_MESSAGE_NOTIFY_START_OF_STREAM, MFT_OUTPUT_DATA_BUFFER,
+    MFT_OUTPUT_STREAM_PROVIDES_SAMPLES, MFT_REGISTER_TYPE_INFO, MF_EVENT_FLAG_NO_WAIT,
+    MF_E_NO_EVENTS_AVAILABLE, MF_E_TRANSFORM_NEED_MORE_INPUT, MF_MT_AVG_BITRATE, MF_MT_FRAME_RATE,
+    MF_MT_FRAME_SIZE, MF_MT_INTERLACE_MODE, MF_MT_MAJOR_TYPE, MF_MT_MPEG2_PROFILE, MF_MT_SUBTYPE,
+    MF_TRANSFORM_ASYNC, MF_TRANSFORM_ASYNC_UNLOCK, MF_VERSION,
 };
 use windows::Win32::System::Com::{
     CoCreateInstance, CoInitializeEx, CoTaskMemFree, CLSCTX_INPROC_SERVER, COINIT_MULTITHREADED,
 };
+use windows::Win32::System::Variant::{VARIANT, VARIANT_0_0, VARIANT_0_0_0, VT_UI4};
 
 use crate::color_nv12::bgr_to_nv12;
+use crate::keyframe_schedule::KeyframeSchedule;
 use crate::mf_async_credits::AsyncInputCredits;
 
 static MF_READY: AtomicBool = AtomicBool::new(false);
 const NEED_INPUT_WAIT: Duration = Duration::from_millis(400);
 const OUTPUT_GRACE: Duration = Duration::from_millis(40);
+const KEYFRAME_PERIOD: u32 = 45;
 
 fn ensure_mf() -> bool {
     if MF_READY.load(Ordering::Relaxed) {
@@ -51,7 +54,9 @@ fn pack_u32_pair(high: u32, low: u32) -> u64 {
 pub struct MfH264Encoder {
     transform: IMFTransform,
     event_gen: Option<IMFMediaEventGenerator>,
+    codec_api: Option<ICodecAPI>,
     credits: AsyncInputCredits,
+    keyframes: KeyframeSchedule,
     width: u32,
     height: u32,
     frame_index: u64,
@@ -79,6 +84,10 @@ impl MfH264Encoder {
         if width != self.width || height != self.height {
             *self = Self::open(width, height)?;
         }
+        if self.keyframes.should_force() {
+            self.request_keyframe();
+        }
+        self.keyframes.advance();
         let nv12 = bgr_to_nv12(bgr, width, height)?;
         let sample = build_nv12_sample(&nv12, width, height, self.frame_index)?;
         self.frame_index = self.frame_index.saturating_add(1);
@@ -86,6 +95,26 @@ impl MfH264Encoder {
             self.encode_async(sample)
         } else {
             self.encode_sync(sample)
+        }
+    }
+
+    fn request_keyframe(&self) {
+        let Some(api) = self.codec_api.as_ref() else {
+            return;
+        };
+        let mut value = VARIANT::default();
+        value.Anonymous.Anonymous = ManuallyDrop::new(VARIANT_0_0 {
+            vt: VT_UI4,
+            wReserved1: 0,
+            wReserved2: 0,
+            wReserved3: 0,
+            Anonymous: VARIANT_0_0_0 { ulVal: 1 },
+        });
+        unsafe {
+            let _ = api.SetValue(
+                &CODECAPI_AVEncVideoForceKeyFrame,
+                &value as *const VARIANT,
+            );
         }
     }
 
@@ -296,10 +325,13 @@ fn finish_encoder(
     if is_async && event_gen.is_none() {
         return None;
     }
+    let codec_api = transform.cast::<ICodecAPI>().ok();
     Some(MfH264Encoder {
         transform,
         event_gen,
+        codec_api,
         credits: AsyncInputCredits::new(),
+        keyframes: KeyframeSchedule::new(KEYFRAME_PERIOD),
         width,
         height,
         frame_index: 0,

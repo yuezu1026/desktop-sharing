@@ -32,6 +32,7 @@ mod h264_soft;
 
 #[cfg(windows)]
 mod inject;
+mod keyframe_schedule;
 
 #[cfg(windows)]
 mod mf_async_credits;
