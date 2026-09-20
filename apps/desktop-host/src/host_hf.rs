@@ -48,7 +48,14 @@ pub const TRAY_ACCEPTING: &str = "可被连接";
 pub const TRAY_NOT_ACCEPTING: &str = "不允许被连接";
 pub const TRAY_COPY_CODE: &str = "复制本机识别码";
 pub const TRAY_OPEN: &str = "打开主界面";
+/// W2-09：托盘「一键断开」与「退出」必须是两个菜单项。
+pub const TRAY_DISCONNECT: &str = "一键断开";
 pub const TRAY_EXIT: &str = "退出";
+
+/// 仅会话进行中可点托盘断开；空闲态灰掉，不得与退出合并。
+pub fn tray_disconnect_enabled(status_line: &str) -> bool {
+    session_actions_visible(status_line)
+}
 
 /// 界面文案不得包含的催费词。
 pub const FORBIDDEN_BILLING: &[&str] = &["余额", "充值", "会员", "开通", "¥", "元/月"];
@@ -222,6 +229,16 @@ mod tests {
         assert!(session_actions_visible("仅查看中"));
         let connected = build_main_view("1", "p", true, "已被连接", true);
         assert!(connected.show_session_actions);
+    }
+
+    #[test]
+    fn 托盘断开与退出是两项() {
+        assert_ne!(TRAY_DISCONNECT, TRAY_EXIT);
+        assert!(!TRAY_DISCONNECT.contains("退出"));
+        assert!(!TRAY_EXIT.contains("断开"));
+        assert!(!tray_disconnect_enabled("未被连接"));
+        assert!(tray_disconnect_enabled("已被连接"));
+        assert!(tray_disconnect_enabled("仅查看中"));
     }
 
     #[test]

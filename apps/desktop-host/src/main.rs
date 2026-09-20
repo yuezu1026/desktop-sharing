@@ -392,22 +392,35 @@ mod windows_host {
 
     unsafe fn show_tray_menu(window: HWND) {
         let Ok(menu) = CreatePopupMenu() else { return };
-        let accepting = lock_model().as_ref().map(|model| model.accepting).unwrap_or(false);
+        let (accepting, status_line) = lock_model()
+            .as_ref()
+            .map(|model| (model.accepting, model.status_line.clone()))
+            .unwrap_or((false, String::new()));
         let echo = wide_string(if accepting {
             host_hf::TRAY_ACCEPTING
         } else {
             host_hf::TRAY_NOT_ACCEPTING
         });
-        let stop = wide_string(host_hf::BTN_STOP);
+        let stop = wide_string(host_hf::TRAY_DISCONNECT);
         let revoke = wide_string(host_hf::BTN_VIEW_ONLY);
         let restore = wide_string(host_hf::BTN_RESTORE_INPUT);
         let copy = wide_string(host_hf::TRAY_COPY_CODE);
         let open = wide_string(host_hf::TRAY_OPEN);
         let exit_label = wide_string(host_hf::TRAY_EXIT);
+        let disconnect_flags = if host_hf::tray_disconnect_enabled(&status_line) {
+            MF_STRING
+        } else {
+            MF_GRAYED | MF_STRING
+        };
+        let session_flags = if host_hf::session_actions_visible(&status_line) {
+            MF_STRING
+        } else {
+            MF_GRAYED | MF_STRING
+        };
         let _ = AppendMenuW(menu, MF_GRAYED | MF_STRING, 0, PCWSTR(echo.as_ptr()));
-        let _ = AppendMenuW(menu, MF_STRING, STOP_CONTROL as usize, PCWSTR(stop.as_ptr()));
-        let _ = AppendMenuW(menu, MF_STRING, REVOKE_INPUT as usize, PCWSTR(revoke.as_ptr()));
-        let _ = AppendMenuW(menu, MF_STRING, RESTORE_INPUT as usize, PCWSTR(restore.as_ptr()));
+        let _ = AppendMenuW(menu, disconnect_flags, STOP_CONTROL as usize, PCWSTR(stop.as_ptr()));
+        let _ = AppendMenuW(menu, session_flags, REVOKE_INPUT as usize, PCWSTR(revoke.as_ptr()));
+        let _ = AppendMenuW(menu, session_flags, RESTORE_INPUT as usize, PCWSTR(restore.as_ptr()));
         let _ = AppendMenuW(menu, MF_STRING, COPY_CODE as usize, PCWSTR(copy.as_ptr()));
         let _ = AppendMenuW(menu, MF_STRING, TRAY_OPEN as usize, PCWSTR(open.as_ptr()));
         let _ = AppendMenuW(menu, MF_STRING, TRAY_EXIT as usize, PCWSTR(exit_label.as_ptr()));

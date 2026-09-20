@@ -75,11 +75,11 @@ pub const RIGHT_FRAUD: Rect = Rect {
 };
 
 pub const LABEL_CODE: Rect = Rect::from_xywh(40, 40, 220, 18);
-pub const VALUE_CODE: Rect = Rect::from_xywh(40, 64, 220, 34);
-pub const LABEL_PASSWORD: Rect = Rect::from_xywh(40, 118, 220, 18);
-pub const VALUE_PASSWORD: Rect = Rect::from_xywh(40, 142, 200, 32);
+pub const VALUE_CODE: Rect = Rect::from_xywh(40, 66, 220, 34);
+pub const LABEL_PASSWORD: Rect = Rect::from_xywh(40, 128, 220, 18);
+pub const VALUE_PASSWORD: Rect = Rect::from_xywh(40, 154, 200, 32);
 /// 与密码行留出呼吸距；宽度吃满左栏内边，避免「荐）。」孤行。
-pub const PASSWORD_HINT: Rect = Rect::from_xywh(40, 186, 304, 52);
+pub const PASSWORD_HINT: Rect = Rect::from_xywh(40, 200, 304, 52);
 
 /// 开关贴左栏底部，消除大块空白。
 pub const ACCEPT_SWITCH_TRACK: Rect = Rect::from_xywh(40, 372, 44, 26);
@@ -102,10 +102,10 @@ pub const FRAUD_BODY: Rect = Rect::from_xywh(396, 338, 460, 60);
 
 /// h2 `.btn` min-height=36。
 pub const BTN_COPY: NativeButton = NativeButton {
-    rect: Rect::from_xywh(276, 64, 68, 36),
+    rect: Rect::from_xywh(276, 66, 68, 36),
 };
 pub const BTN_ROTATE: NativeButton = NativeButton {
-    rect: Rect::from_xywh(276, 142, 68, 36),
+    rect: Rect::from_xywh(276, 154, 68, 36),
 };
 pub const BTN_STOP: NativeButton = NativeButton {
     rect: Rect::from_xywh(376, 428, 120, DESKTOP_MIN_PX),
@@ -260,5 +260,7 @@ mod tests {
         assert!(gap >= 10, "密码与说明间距应 ≥ 10，实际 {gap}");
         assert!(PASSWORD_HINT.width() >= 300, "说明应尽量吃满左栏宽度");
         assert!(PASSWORD_HINT.right <= LEFT_PANEL.right - 12);
+        let block_gap = LABEL_PASSWORD.top - VALUE_CODE.bottom;
+        assert!(block_gap >= 24, "识别码与临时密码两块间距应 ≥ 24，实际 {block_gap}");
     }
 }
