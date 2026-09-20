@@ -1,34 +1,14 @@
-//! OpenH264 软解。输入 Annex-B，输出与 JPEG 路径相同的 BGR 位图。
+//! H264 解码入口：优先 Media Foundation，失败回退 OpenH264。
 
-use std::sync::Mutex;
-
-use openh264::decoder::{Decoder, DecoderConfig};
-use openh264::formats::YUVSource;
-use openh264::OpenH264API;
-
-static DECODER: Mutex<Option<Decoder>> = Mutex::new(None);
+use crate::h264_soft_decode;
+use crate::mf_h264_decode;
 
 /// 解出一帧 BGR；未出图返回 None（例如还缺 IDR）。
 pub fn decode_annex_b_to_bgr(annex_b: &[u8]) -> Option<(u32, u32, Vec<u8>)> {
-    if !session_core::looks_like_annex_b(annex_b) {
-        return None;
+    if let Some(frame) = mf_h264_decode::try_decode_annex_b_to_bgr(annex_b) {
+        return Some(frame);
     }
-    let mut guard = DECODER.lock().ok()?;
-    if guard.is_none() {
-        *guard = Decoder::with_api_config(OpenH264API::from_source(), DecoderConfig::new()).ok();
-    }
-    let decoder = guard.as_mut()?;
-    let yuv = decoder.decode(annex_b).ok()??;
-    let (width, height) = yuv.dimensions();
-    let mut rgb = vec![0u8; width * height * 3];
-    yuv.write_rgb8(&mut rgb);
-    let mut bgr = Vec::with_capacity(rgb.len());
-    for pixel in rgb.chunks_exact(3) {
-        bgr.push(pixel[2]);
-        bgr.push(pixel[1]);
-        bgr.push(pixel[0]);
-    }
-    Some((width as u32, height as u32, bgr))
+    h264_soft_decode::decode_annex_b_to_bgr(annex_b)
 }
 
 #[cfg(test)]
@@ -36,9 +16,10 @@ mod tests {
     use super::*;
     use openh264::encoder::{BitRate, Encoder, EncoderConfig, IntraFramePeriod};
     use openh264::formats::{RgbSliceU8, YUVBuffer};
+    use openh264::OpenH264API;
 
     #[test]
-    fn roundtrip_small_rgb_frame() {
+    fn prefer_path_roundtrip_small_frame() {
         let width = 64usize;
         let height = 48usize;
         let mut rgb = vec![0u8; width * height * 3];

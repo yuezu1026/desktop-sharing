@@ -17,7 +17,16 @@ fn main() {
 }
 
 #[cfg(windows)]
+mod color_nv12;
+
+#[cfg(windows)]
 mod h264_decode;
+
+#[cfg(windows)]
+mod h264_soft_decode;
+
+#[cfg(windows)]
+mod mf_h264_decode;
 
 #[cfg(windows)]
 mod windows_controller {
