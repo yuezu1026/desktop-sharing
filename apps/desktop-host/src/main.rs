@@ -44,6 +44,9 @@ mod mf_async_credits;
 mod mf_h264;
 
 #[cfg(windows)]
+mod relay_media;
+
+#[cfg(windows)]
 mod windows_host {
     use std::sync::Mutex;
 
@@ -743,6 +746,7 @@ mod windows_host {
         let mut frame_width = 640;
         let mut frame_height = 360;
         let mut next_bitrate_poll = std::time::Instant::now();
+        let mut send_relay_video = true;
         crate::inject::set_input_allowed(true);
         'relay: loop {
             if let Ok(link) = direct_receiver.try_recv() {
@@ -759,16 +763,19 @@ mod windows_host {
                 return;
             }
             if next_bitrate_poll <= std::time::Instant::now() {
-                refresh_encode_bitrate(&origin, &token, &remote_session_id, &mut grabber);
+                send_relay_video =
+                    refresh_session_media(&origin, &token, &remote_session_id, &mut grabber);
                 next_bitrate_poll = std::time::Instant::now() + std::time::Duration::from_secs(2);
             }
-            if let Some(frame) = grabber.grab_jpeg_frame() {
-                if let Ok((width, height, _, _)) = session_core::unpack_video(&frame.payload) {
-                    frame_width = width as i32;
-                    frame_height = height as i32;
-                }
-                if session.send_frame(&frame).is_err() {
-                    break;
+            if send_relay_video {
+                if let Some(frame) = grabber.grab_jpeg_frame() {
+                    if let Ok((width, height, _, _)) = session_core::unpack_video(&frame.payload) {
+                        frame_width = width as i32;
+                        frame_height = height as i32;
+                    }
+                    if session.send_frame(&frame).is_err() {
+                        break;
+                    }
                 }
             }
             let mut saw_input = false;
@@ -807,7 +814,7 @@ mod windows_host {
         let mut next_bitrate_poll = std::time::Instant::now();
         loop {
             if next_bitrate_poll <= std::time::Instant::now() {
-                refresh_encode_bitrate(&origin, &token, &remote_session_id, &mut grabber);
+                let _ = refresh_session_media(&origin, &token, &remote_session_id, &mut grabber);
                 next_bitrate_poll = std::time::Instant::now() + std::time::Duration::from_secs(2);
             }
             if let Some(frame) = grabber.grab_jpeg_frame() {
@@ -845,25 +852,36 @@ mod windows_host {
         finish_host_relay();
     }
 
-    fn refresh_encode_bitrate(
+    fn refresh_session_media(
         origin: &str,
         token: &str,
         remote_session_id: &str,
         grabber: &mut crate::capture::ScreenGrabber,
-    ) {
+    ) -> bool {
         if origin.is_empty() || token.is_empty() || remote_session_id.is_empty() {
-            return;
+            return true;
         }
         let Ok(body) = get_json(origin, &format!("/v1/remote-sessions/{remote_session_id}"), token) else {
-            return;
+            return true;
         };
-        let Ok(parsed) = serde_json::from_str::<SessionBitrateBody>(&body) else {
-            return;
+        let Ok(parsed) = serde_json::from_str::<SessionMediaBody>(&body) else {
+            return true;
         };
         grabber.set_bitrate_kbps(parsed.bitrate_kbps);
+        let keep_sending = match parsed.state.as_deref() {
+            Some(state) => crate::relay_media::should_send_relay_video(state),
+            None => true,
+        };
         if let Some(model) = lock_model().as_mut() {
             model.encode_bitrate_kbps = parsed.bitrate_kbps;
+            if !keep_sending {
+                model.status_line = "中继已停，可改直连".to_string();
+            }
         }
+        if !keep_sending {
+            refresh();
+        }
+        keep_sending
     }
 
     fn finish_host_relay() {
@@ -1075,7 +1093,8 @@ mod windows_host {
     }
 
     #[derive(Deserialize)]
-    struct SessionBitrateBody {
+    struct SessionMediaBody {
+        state: Option<String>,
         #[serde(rename = "bitrateKbps")]
         bitrate_kbps: Option<u32>,
     }
