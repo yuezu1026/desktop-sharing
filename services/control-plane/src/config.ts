@@ -26,6 +26,8 @@ export type AppConfig = {
   orderCallbackSecret: string | null;
   realNameCallbackSecret: string | null;
   connectionStatsSecret: string | null;
+  opsBootstrapEmail: string | null;
+  opsBootstrapPassword: string | null;
 };
 
 const DEFAULT_DEVICE_QUOTA = 150;
@@ -72,6 +74,8 @@ export function loadConfig(env: NodeJS.ProcessEnv): AppConfig {
     orderCallbackSecret: env.ORDER_CALLBACK_SECRET?.trim() || null,
     realNameCallbackSecret: env.REAL_NAME_CALLBACK_SECRET?.trim() || null,
     connectionStatsSecret: env.CONNECTION_STATS_SECRET?.trim() || null,
+    opsBootstrapEmail: env.OPS_BOOTSTRAP_EMAIL?.trim() || null,
+    opsBootstrapPassword: env.OPS_BOOTSTRAP_PASSWORD || null,
   };
 }
 

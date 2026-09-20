@@ -2,6 +2,7 @@ import { Pool } from "pg";
 import { AccountService } from "./account-service.js";
 import { loadConfig } from "./config.js";
 import { OrderService } from "./order-service.js";
+import { OpsService } from "./ops-service.js";
 import { createHttpServer } from "./server.js";
 import { SessionService } from "./session-service.js";
 
@@ -14,7 +15,9 @@ async function main(): Promise<void> {
   const service = new AccountService(pool, config, () => new Date());
   const sessions = new SessionService(pool, config, service, () => new Date());
   const orders = new OrderService(pool, config, service, () => new Date());
+  const ops = new OpsService(pool, config, () => new Date());
   await service.applySchema();
+  await ops.ensureBootstrap();
   const timer = setInterval(() => {
     void service.runMaintenance();
     void orders.remindDueRenewals();
@@ -22,7 +25,7 @@ async function main(): Promise<void> {
   }, MAINTENANCE_INTERVAL_MS);
   timer.unref();
 
-  const server = createHttpServer(pool, config, service, sessions, orders);
+  const server = createHttpServer(pool, config, service, sessions, orders, ops);
   server.listen(config.port, "0.0.0.0");
 }
 

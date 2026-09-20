@@ -90,7 +90,7 @@ CREATE TABLE IF NOT EXISTS relay_grants (
   expires_at timestamptz NOT NULL,
   period_start timestamptz NOT NULL,
   created_at timestamptz NOT NULL,
-  CONSTRAINT relay_grants_kind_check CHECK (kind IN ('promo', 'plugin', 'subscription', 'free')),
+  CONSTRAINT relay_grants_kind_check CHECK (kind IN ('promo', 'plugin', 'subscription', 'free', 'compensation')),
   CONSTRAINT relay_grants_bytes_check CHECK (bytes_total >= 0),
   UNIQUE (account_id, kind, period_start)
 );
@@ -247,5 +247,74 @@ CREATE TABLE IF NOT EXISTS controller_family_devices (
   host_device_id uuid NOT NULL REFERENCES host_devices (host_device_id),
   created_at timestamptz NOT NULL,
   PRIMARY KEY (controller_account_id, host_device_id)
+);
+
+ALTER TABLE relay_grants DROP CONSTRAINT IF EXISTS relay_grants_kind_check;
+ALTER TABLE relay_grants ADD CONSTRAINT relay_grants_kind_check
+  CHECK (kind IN ('promo', 'plugin', 'subscription', 'free', 'compensation'));
+
+CREATE TABLE IF NOT EXISTS staff_accounts (
+  staff_id uuid PRIMARY KEY,
+  email text NOT NULL UNIQUE,
+  password_hash text NOT NULL,
+  role text NOT NULL,
+  status text NOT NULL,
+  totp_secret text,
+  totp_confirmed_at timestamptz,
+  password_failure_count integer NOT NULL DEFAULT 0,
+  created_at timestamptz NOT NULL,
+  disabled_at timestamptz,
+  CONSTRAINT staff_accounts_role_check CHECK (role IN ('support', 'risk', 'finance', 'admin')),
+  CONSTRAINT staff_accounts_status_check CHECK (status IN ('active', 'disabled', 'locked'))
+);
+
+CREATE TABLE IF NOT EXISTS staff_sessions (
+  staff_session_id uuid PRIMARY KEY,
+  staff_id uuid NOT NULL REFERENCES staff_accounts (staff_id),
+  token_hash text NOT NULL UNIQUE,
+  purpose text NOT NULL,
+  created_at timestamptz NOT NULL,
+  expires_at timestamptz NOT NULL,
+  revoked_at timestamptz,
+  CONSTRAINT staff_sessions_purpose_check CHECK (purpose IN ('setup', 'access'))
+);
+
+CREATE TABLE IF NOT EXISTS staff_recovery_codes (
+  code_id uuid PRIMARY KEY,
+  staff_id uuid NOT NULL REFERENCES staff_accounts (staff_id),
+  code_hash text NOT NULL,
+  used_at timestamptz,
+  created_at timestamptz NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS staff_audit (
+  staff_audit_id uuid PRIMARY KEY,
+  staff_id uuid NOT NULL REFERENCES staff_accounts (staff_id),
+  action text NOT NULL,
+  target_account_id uuid,
+  before_value jsonb,
+  after_value jsonb,
+  reason text,
+  created_at timestamptz NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS staff_notices (
+  staff_notice_id uuid PRIMARY KEY,
+  staff_id uuid NOT NULL REFERENCES staff_accounts (staff_id),
+  kind text NOT NULL,
+  body text NOT NULL,
+  created_at timestamptz NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS compensation_approvals (
+  approval_id uuid PRIMARY KEY,
+  account_id uuid NOT NULL REFERENCES accounts (account_id),
+  bytes_total bigint NOT NULL,
+  reason text NOT NULL,
+  requested_by uuid NOT NULL REFERENCES staff_accounts (staff_id),
+  approved_by uuid REFERENCES staff_accounts (staff_id),
+  status text NOT NULL,
+  created_at timestamptz NOT NULL,
+  CONSTRAINT compensation_approvals_status_check CHECK (status IN ('pending', 'opened'))
 );
 `;

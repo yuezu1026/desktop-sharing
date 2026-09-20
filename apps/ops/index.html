@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>运营台</title>
+  <style>
+    body { font-family: "Segoe UI", "Microsoft YaHei", sans-serif; margin: 24px; color: #1a1a1a; }
+    label, button, input { min-height: 36px; }
+    button { margin-right: 8px; }
+    section { margin-top: 16px; }
+  </style>
+</head>
+<body>
+  <h1>运营台</h1>
+  <p>内部账号是邮箱和动态码。不能自助注册，也不能用第三方账号进入。</p>
+  <form id="loginForm">
+    <label>邮箱 <input id="email" autocomplete="username"></label>
+    <label>密码 <input id="password" type="password" autocomplete="current-password"></label>
+    <label>动态码 <input id="totpCode" inputmode="numeric"></label>
+    <p><button type="submit">进入运营台</button></p>
+    <p id="loginError"></p>
+  </form>
+  <section id="desk" hidden>
+    <label>用户手机号 <input id="phone"></label>
+    <p><button type="button" id="lookup">查用户</button></p>
+    <pre id="result"></pre>
+    <p>
+      <button type="button" id="meter">查计量</button>
+      <button type="button" id="orders">查订单</button>
+    </p>
+    <label>补偿原因 <input id="reason"></label>
+    <label>补偿字节 <input id="bytes" inputmode="numeric"></label>
+    <p><button type="button" id="compensate">调时长补偿</button></p>
+    <p>
+      <button type="button" id="ban">封禁</button>
+      <button type="button" id="unban">解封</button>
+    </p>
+    <p><button type="button" id="refund">退款跳到渠道后台</button></p>
+  </section>
+  <script>
+    // 退款不在这页收款。计量只读账本，不另造一份汇总。
+    const loginError = document.getElementById("loginError");
+    const result = document.getElementById("result");
+    let staffToken = "";
+    let accountId = "";
+    let orderId = "";
+
+    async function callApi(path, options) {
+      const headers = { "content-type": "application/json" };
+      if (staffToken) headers.authorization = "Bearer " + staffToken;
+      const response = await fetch(path, { ...options, headers });
+      const body = await response.json();
+      result.textContent = JSON.stringify(body, null, 2);
+      return { ok: response.ok, body };
+    }
+
+    document.getElementById("loginForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      loginError.textContent = "";
+      const response = await callApi("/v1/ops/sessions", {
+        method: "POST",
+        body: JSON.stringify({
+          email: document.getElementById("email").value,
+          password: document.getElementById("password").value,
+          totpCode: document.getElementById("totpCode").value,
+        }),
+      });
+      if (response.body.setupRequired) {
+        loginError.textContent = "首次进入要先保存动态码密钥，确认后再登录。密钥只出现这一次。";
+        return;
+      }
+      if (!response.ok || !response.body.token) {
+        loginError.textContent = response.body.message || "登录失败";
+        return;
+      }
+      staffToken = response.body.token;
+      document.getElementById("password").value = "";
+      document.getElementById("desk").hidden = false;
+    });
+
+    document.getElementById("lookup").addEventListener("click", async () => {
+      const phone = document.getElementById("phone").value;
+      const response = await callApi("/v1/ops/users?phone=" + encodeURIComponent(phone));
+      accountId = response.body.accountId || "";
+    });
+    document.getElementById("meter").addEventListener("click", () => {
+      if (accountId) callApi("/v1/ops/users/" + accountId + "/meter");
+    });
+    document.getElementById("orders").addEventListener("click", async () => {
+      if (!accountId) return;
+      const response = await callApi("/v1/ops/users/" + accountId + "/orders");
+      const first = response.body.orders && response.body.orders[0];
+      orderId = first ? first.orderId : "";
+    });
+    document.getElementById("compensate").addEventListener("click", () => {
+      if (!accountId) return;
+      callApi("/v1/ops/compensations", {
+        method: "POST",
+        body: JSON.stringify({
+          accountId,
+          bytes: Number(document.getElementById("bytes").value),
+          reason: document.getElementById("reason").value,
+        }),
+      });
+    });
+    document.getElementById("ban").addEventListener("click", () => {
+      if (!accountId) return;
+      callApi("/v1/ops/users/" + accountId + "/ban", {
+        method: "POST",
+        body: JSON.stringify({ banned: true, reason: document.getElementById("reason").value }),
+      });
+    });
+    document.getElementById("unban").addEventListener("click", () => {
+      if (!accountId) return;
+      callApi("/v1/ops/users/" + accountId + "/ban", {
+        method: "POST",
+        body: JSON.stringify({ banned: false, reason: document.getElementById("reason").value }),
+      });
+    });
+    document.getElementById("refund").addEventListener("click", async () => {
+      if (!orderId) return;
+      const response = await callApi("/v1/ops/orders/" + orderId + "/refund-jump");
+      if (response.body.url) window.open(response.body.url, "_blank", "noopener");
+    });
+  </script>
+</body>
+</html>

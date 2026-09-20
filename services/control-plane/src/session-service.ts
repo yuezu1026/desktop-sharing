@@ -1140,7 +1140,7 @@ type RealNamePrompt = {
   stillWorks: Array<{ code: string; title: string }>;
 };
 
-function fraudNotice(): string[] {
+export function fraudNotice(): string[] {
   return [
     "你正在允许对方控制本设备",
     "对方能看到并操作你屏幕上的一切",

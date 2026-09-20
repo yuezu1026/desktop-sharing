@@ -36,6 +36,8 @@ services:
       ORDER_CALLBACK_SECRET: local-order
       REAL_NAME_CALLBACK_SECRET: local-realname
       CONNECTION_STATS_SECRET: local-stats
+      OPS_BOOTSTRAP_EMAIL: ops@local.test
+      OPS_BOOTSTRAP_PASSWORD: localstaff
     ports:
       - "8080:8080"
     depends_on:

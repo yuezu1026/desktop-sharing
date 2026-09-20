@@ -6,15 +6,24 @@ import type { Pool } from "pg";
 import type { AppConfig } from "./config.js";
 import { AccountService, type Failure } from "./account-service.js";
 import { OrderService, type ChargeFailureInput, type InvoiceInput } from "./order-service.js";
+import { OpsService, routeOps } from "./ops-service.js";
 import { SessionService } from "./session-service.js";
 
 type Json = Record<string, unknown>;
 
 const buyPagePath = join(dirname(fileURLToPath(import.meta.url)), "..", "buy", "index.html");
+const opsPagePath = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "apps", "ops", "index.html");
 
-export function createHttpServer(pool: Pool, config: AppConfig, service: AccountService, sessions: SessionService, orders: OrderService) {
+export function createHttpServer(
+  pool: Pool,
+  config: AppConfig,
+  service: AccountService,
+  sessions: SessionService,
+  orders: OrderService,
+  ops: OpsService,
+) {
   return createServer((request, response) => {
-    void handle(request, response, pool, config, service, sessions, orders);
+    void handle(request, response, pool, config, service, sessions, orders, ops);
   });
 }
 
@@ -26,6 +35,7 @@ async function handle(
   service: AccountService,
   sessions: SessionService,
   orders: OrderService,
+  ops: OpsService,
 ): Promise<void> {
   const url = new URL(request.url ?? "/", "http://127.0.0.1");
   const method = request.method ?? "GET";
@@ -52,6 +62,31 @@ async function handle(
         return;
       }
       send(response, 200, await sessions.connectionStats());
+      return;
+    }
+    if (method === "GET" && (url.pathname === "/ops" || url.pathname === "/ops/")) {
+      const page = readFileSync(opsPagePath);
+      response.writeHead(200, {
+        "content-type": "text/html; charset=utf-8",
+        "cache-control": "no-store",
+        "content-length": String(page.length),
+      });
+      response.end(page);
+      return;
+    }
+    if (url.pathname.startsWith("/v1/ops")) {
+      const opsBody = method === "GET" ? {} : await readJson(request);
+      const opsResult = await routeOps(ops, method, url.pathname, opsBody, bearer(request), url.searchParams.get("phone"));
+      if (!opsResult) {
+        send(response, 404, { ok: false, code: "not_found", message: "路径不存在" });
+        return;
+      }
+      if (opsResult.ok === false) {
+        const failure = opsResult as Failure;
+        send(response, failure.status, { ok: false, code: failure.code, message: failure.message, ...(failure.extra ?? {}) });
+        return;
+      }
+      send(response, 200, opsResult);
       return;
     }
     if (method === "GET" && url.pathname === "/health") {
