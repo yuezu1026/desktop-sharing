@@ -71,6 +71,7 @@ mod windows_host {
         token: Option<String>,
         origin: String,
         host_device_id: Option<String>,
+        relay_ticket: Option<String>,
     }
 
     // 窗口句柄只在界面线程使用。HWND 本身不是 Send，模型不会跨线程。
@@ -93,6 +94,7 @@ mod windows_host {
             token,
             origin,
             host_device_id: None,
+            relay_ticket: None,
         });
         unsafe { message_loop() }
     }
@@ -175,6 +177,7 @@ mod windows_host {
             }
             WM_TIMER => {
                 poll_incoming();
+                poll_host_attach();
                 refresh();
                 LRESULT(0)
             }
@@ -479,7 +482,16 @@ mod windows_host {
         };
         let (origin, token, session_id, confirm) = snapshot;
         if let (Some(token), Some(session_id)) = (token, session_id) {
-            let _ = post_json(&origin, &format!("/v1/remote-sessions/{session_id}/consent"), &token, r#"{"confirmedOnHost":true}"#);
+            if let Ok(body) = post_json(
+                &origin,
+                &format!("/v1/remote-sessions/{session_id}/consent"),
+                &token,
+                r#"{"confirmedOnHost":true}"#,
+            ) {
+                if let Ok(parsed) = serde_json::from_str::<RelayTicketBody>(&body) {
+                    remember_relay_ticket(parsed.ticket);
+                }
+            }
         }
         rotate_password();
         if !confirm.is_invalid() {
@@ -536,6 +548,36 @@ mod windows_host {
             model.main_window
         };
         unsafe { open_confirm(parent) };
+    }
+
+    fn poll_host_attach() {
+        let (origin, token) = {
+            let guard = lock_model();
+            let Some(model) = guard.as_ref() else { return };
+            if model.token.is_none() || model.relay_ticket.is_some() {
+                return;
+            }
+            (model.origin.clone(), model.token.clone().unwrap_or_default())
+        };
+        let Ok(body) = get_json(&origin, "/v1/remote-sessions/host-attach", &token) else { return };
+        let Ok(parsed) = serde_json::from_str::<HostAttachBody>(&body) else { return };
+        remember_relay_ticket(parsed.ticket);
+    }
+
+    fn remember_relay_ticket(ticket: Option<String>) {
+        let Some(ticket) = ticket.filter(|value| !value.is_empty()) else { return };
+        if session_core::ticket_looks_usable(&ticket).is_err() {
+            return;
+        }
+        let fingerprint = machine_fingerprint();
+        if session_core::encode_relay_hello(&ticket, session_core::RelayRole::Host, &fingerprint).is_err() {
+            return;
+        }
+        if let Some(model) = lock_model().as_mut() {
+            model.relay_ticket = Some(ticket);
+            model.status_line = "中继票已就绪".to_string();
+        }
+        refresh();
     }
 
     unsafe fn open_confirm(parent: HWND) {
@@ -637,6 +679,16 @@ mod windows_host {
         controller_phone_mask: Option<String>,
         #[serde(rename = "firstConnection")]
         first_connection: bool,
+    }
+
+    #[derive(Deserialize)]
+    struct RelayTicketBody {
+        ticket: Option<String>,
+    }
+
+    #[derive(Deserialize)]
+    struct HostAttachBody {
+        ticket: Option<String>,
     }
 
     fn display_code(code: &str) -> String {

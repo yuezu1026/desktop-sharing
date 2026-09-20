@@ -177,20 +177,83 @@ export class SessionService {
     );
     await this.audit(client, session.accountId, "remote_session.request", { remoteSessionId, crossAccount, needsHostConsent });
     if (needsHostConsent) {
+      const relay = await this.issueRelayFields(client, session, remoteSessionId, controllerFingerprint, now);
       return {
         ok: true as const,
         remoteSessionId,
         state,
         crossAccount,
-        relayAllowed: false,
-        ticket: null,
-        ticketExpiresAt: null,
-        bitrateKbps: this.config.freeBitrateKbps,
-        maxFps: this.config.freeMaxFps,
-        remainingBytes: await this.remainingBytes(client, session.accountId, now),
+        ...relay,
       };
     }
-    return this.openRelay(client, session, remoteSessionId, controllerFingerprint, now, crossAccount);
+    return this.openRelay(client, session, remoteSessionId, controllerFingerprint, now, crossAccount, false);
+  }
+
+  async getRemoteSession(token: string | null, remoteSessionId: string): Promise<Record<string, unknown> | Failure> {
+    if (!isUuid(remoteSessionId)) return fail(400, "session_invalid", "会话不正确");
+    const session = await this.accounts.authenticate(token);
+    if (isAuthFailure(session)) return session;
+    const found = await this.pool.query<{
+      state: string;
+      cross_account: boolean;
+      bitrate_kbps: number;
+    }>(
+      `SELECT state, cross_account, bitrate_kbps
+         FROM remote_sessions
+        WHERE remote_session_id = $1 AND account_id = $2`,
+      [remoteSessionId, session.accountId],
+    );
+    const row = found.rows[0];
+    if (!row) return fail(404, "session_missing", "会话不存在");
+    return {
+      ok: true,
+      remoteSessionId,
+      state: row.state,
+      crossAccount: row.cross_account,
+      bitrateKbps: row.bitrate_kbps,
+      maxFps: this.config.freeMaxFps,
+    };
+  }
+
+  async takeHostRelayTicket(token: string | null): Promise<Record<string, unknown> | Failure> {
+    const session = await this.accounts.authenticate(token);
+    if (isAuthFailure(session)) return session;
+    return this.withTransaction(async (client) => {
+      const found = await client.query<{
+        remote_session_id: string;
+        relay_ticket_id: string;
+        secret_once: string;
+        expires_at: Date;
+        controller_fingerprint: string;
+        host_fingerprint: string;
+      }>(
+        `SELECT s.remote_session_id, t.relay_ticket_id, t.secret_once, t.expires_at,
+                s.controller_fingerprint, s.host_fingerprint
+           FROM remote_sessions s
+           JOIN relay_tickets t ON t.remote_session_id = s.remote_session_id
+          WHERE s.host_account_id = $1
+            AND s.state = 'active'
+            AND t.secret_once IS NOT NULL
+            AND t.revoked_at IS NULL
+            AND t.admitted_at IS NULL
+            AND t.expires_at > $2
+          ORDER BY s.established_at NULLS LAST, s.created_at
+          LIMIT 1
+          FOR UPDATE OF t`,
+        [session.accountId, this.now()],
+      );
+      const row = found.rows[0];
+      if (!row) return { ok: true as const, ticket: null };
+      await client.query("UPDATE relay_tickets SET secret_once = NULL WHERE relay_ticket_id = $1", [row.relay_ticket_id]);
+      return {
+        ok: true as const,
+        remoteSessionId: row.remote_session_id,
+        ticket: row.secret_once,
+        ticketExpiresAt: row.expires_at.toISOString(),
+        controllerFingerprint: row.controller_fingerprint,
+        hostFingerprint: row.host_fingerprint,
+      };
+    });
   }
 
   async consent(token: string | null, remoteSessionId: string, confirmedOnHost: boolean): Promise<Record<string, unknown> | Failure> {
@@ -218,7 +281,7 @@ export class SessionService {
         [remoteSessionId, now],
       );
       await this.audit(client, session.accountId, "remote_session.consent", { remoteSessionId });
-      return this.openRelay(client, { ...session, accountId: row.account_id }, remoteSessionId, row.controller_fingerprint, now, true);
+      return this.openRelay(client, { ...session, accountId: row.account_id }, remoteSessionId, row.controller_fingerprint, now, true, true);
     });
   }
 
@@ -845,7 +908,36 @@ export class SessionService {
     controllerFingerprint: string,
     now: Date,
     crossAccount: boolean,
+    clearPlainForHost: boolean,
   ): Promise<Record<string, unknown>> {
+    const relay = await this.issueRelayFields(client, session, remoteSessionId, controllerFingerprint, now, clearPlainForHost);
+    return {
+      ok: true,
+      remoteSessionId,
+      state: "active",
+      crossAccount,
+      ...relay,
+    };
+  }
+
+  /** 签发中继字段。等确认的会话也可以先发 ticket，验票仍要求 state=active。 */
+  private async issueRelayFields(
+    client: PoolClient,
+    session: SessionContext,
+    remoteSessionId: string,
+    controllerFingerprint: string,
+    now: Date,
+    clearPlainForHost = false,
+  ): Promise<{
+    relayAllowed: boolean;
+    ticket: string | null;
+    ticketExpiresAt: string | null;
+    bitrateKbps: number;
+    maxFps: number;
+    remainingBytes: number;
+    notice: string | null;
+    realName: { message: string } | null;
+  }> {
     await this.ensureFreeGrant(client, session.accountId, controllerFingerprint, now);
     const remainingBytes = await this.remainingBytes(client, session.accountId, now);
     const relayAllowed = remainingBytes > 0;
@@ -866,15 +958,45 @@ export class SessionService {
     let ticket: string | null = null;
     let ticketExpiresAt: string | null = null;
     if (relayOpen) {
-      const issued = await this.insertTicket(client, remoteSessionId, now);
-      ticket = issued.ticket;
-      ticketExpiresAt = issued.expiresAt.toISOString();
+      if (clearPlainForHost) {
+        const taken = await this.takePlainTicket(client, remoteSessionId, true);
+        if (taken) {
+          ticket = taken.ticket;
+          ticketExpiresAt = taken.expiresAt.toISOString();
+        } else {
+          const issued = await this.insertTicket(client, remoteSessionId, now);
+          ticket = issued.ticket;
+          ticketExpiresAt = issued.expiresAt.toISOString();
+          await client.query(
+            "UPDATE relay_tickets SET secret_once = NULL WHERE secret_hash = $1",
+            [hashSecret(issued.ticket)],
+          );
+        }
+      } else {
+        const existing = await client.query<{ secret_once: string | null; expires_at: Date }>(
+          `SELECT secret_once, expires_at
+             FROM relay_tickets
+            WHERE remote_session_id = $1
+              AND revoked_at IS NULL
+              AND admitted_at IS NULL
+            ORDER BY created_at DESC
+            LIMIT 1`,
+          [remoteSessionId],
+        );
+        const row = existing.rows[0];
+        if (row?.secret_once) {
+          ticket = row.secret_once;
+          ticketExpiresAt = row.expires_at.toISOString();
+        } else if (!row) {
+          const issued = await this.insertTicket(client, remoteSessionId, now);
+          ticket = issued.ticket;
+          ticketExpiresAt = issued.expiresAt.toISOString();
+        } else {
+          ticketExpiresAt = row.expires_at.toISOString();
+        }
+      }
     }
     return {
-      ok: true,
-      remoteSessionId,
-      state: "active",
-      crossAccount,
       relayAllowed: relayOpen,
       ticket,
       ticketExpiresAt,
@@ -884,6 +1006,32 @@ export class SessionService {
       notice: prompt?.message ?? (relayOpen ? null : "免费中继时长已用完，可以改走直连"),
       realName: prompt,
     };
+  }
+
+  /** 被控端领取明文 ticket。领取后清空，避免再读。 */
+  private async takePlainTicket(
+    client: PoolClient,
+    remoteSessionId: string,
+    clearOnce: boolean,
+  ): Promise<{ ticket: string; expiresAt: Date } | null> {
+    const found = await client.query<{ relay_ticket_id: string; secret_once: string | null; expires_at: Date }>(
+      `SELECT relay_ticket_id, secret_once, expires_at
+         FROM relay_tickets
+        WHERE remote_session_id = $1
+          AND revoked_at IS NULL
+          AND admitted_at IS NULL
+          AND secret_once IS NOT NULL
+        ORDER BY created_at DESC
+        LIMIT 1
+        FOR UPDATE`,
+      [remoteSessionId],
+    );
+    const row = found.rows[0];
+    if (!row?.secret_once) return null;
+    if (clearOnce) {
+      await client.query("UPDATE relay_tickets SET secret_once = NULL WHERE relay_ticket_id = $1", [row.relay_ticket_id]);
+    }
+    return { ticket: row.secret_once, expiresAt: row.expires_at };
   }
 
   private async ensureFreeGrant(client: PoolClient, accountId: string, controllerFingerprint: string, now: Date): Promise<void> {
@@ -967,9 +1115,9 @@ export class SessionService {
     const ticket = createToken();
     const expiresAt = new Date(now.getTime() + this.config.ticketTtlSeconds * 1000);
     await client.query(
-      `INSERT INTO relay_tickets (relay_ticket_id, remote_session_id, secret_hash, expires_at, created_at)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [randomUUID(), remoteSessionId, hashSecret(ticket), expiresAt, now],
+      `INSERT INTO relay_tickets (relay_ticket_id, remote_session_id, secret_hash, secret_once, expires_at, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [randomUUID(), remoteSessionId, hashSecret(ticket), ticket, expiresAt, now],
     );
     return { ticket, expiresAt };
   }

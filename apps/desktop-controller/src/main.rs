@@ -149,6 +149,7 @@ mod windows_controller {
                 if std::env::var("CONTROLLER_TOKEN").ok().filter(|value| !value.is_empty()).is_some() {
                     let _ = windows::Win32::UI::WindowsAndMessaging::SetTimer(Some(window), METER_TIMER, 5000, None);
                     poll_meter();
+                    start_remote_if_configured();
                 }
                 LRESULT(0)
             }
@@ -565,6 +566,59 @@ mod windows_controller {
                 model.ways_open = false;
             }
         }
+    }
+
+    fn start_remote_if_configured() {
+        let Some(token) = std::env::var("CONTROLLER_TOKEN").ok().filter(|value| !value.is_empty()) else { return };
+        let Some(host_device_id) = std::env::var("CONTROLLER_HOST_DEVICE_ID").ok().filter(|value| !value.is_empty()) else {
+            return;
+        };
+        let origin = std::env::var("CONTROL_PLANE_URL").unwrap_or_else(|_| "http://127.0.0.1:8080".to_string());
+        let fingerprint = std::env::var("CONTROLLER_FINGERPRINT").unwrap_or_else(|_| {
+            format!("win-controller-{}", std::process::id())
+        });
+        let payload = serde_json::json!({
+            "hostDeviceId": host_device_id,
+            "controllerFingerprint": fingerprint,
+        })
+        .to_string();
+        let Ok(body) = post_json(&origin, "/v1/remote-sessions", &token, &payload) else { return };
+        let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&body) else { return };
+        let Some(ticket) = parsed.get("ticket").and_then(|value| value.as_str()) else { return };
+        if session_core::ticket_looks_usable(ticket).is_err() {
+            return;
+        }
+        if session_core::encode_relay_hello(ticket, session_core::RelayRole::Controller, &fingerprint).is_err() {
+            return;
+        }
+        if let Some(model) = lock_model().as_mut() {
+            model.link_direct = false;
+            model.notice = if parsed.get("state").and_then(|value| value.as_str()) == Some("awaiting_host_consent") {
+                "等待被控端确认".to_string()
+            } else {
+                "中继票已就绪".to_string()
+            };
+        }
+    }
+
+    fn post_json(origin: &str, path: &str, token: &str, payload: &str) -> Result<String, String> {
+        use std::io::{Read, Write};
+        use std::net::TcpStream;
+        use std::time::Duration;
+        let rest = origin.strip_prefix("http://").ok_or("控制面地址不正确")?;
+        let (host, port_text) = rest.split_once(':').ok_or("控制面地址不正确")?;
+        let port: u16 = port_text.parse().map_err(|_| "控制面地址不正确")?;
+        let mut stream = TcpStream::connect(format!("{host}:{port}")).map_err(|_| "控制面不可达")?;
+        stream.set_read_timeout(Some(Duration::from_secs(3))).ok();
+        let request = format!(
+            "POST {path} HTTP/1.1\r\nhost: {host}\r\nauthorization: Bearer {token}\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{payload}",
+            payload.len()
+        );
+        stream.write_all(request.as_bytes()).map_err(|_| "控制面不可达")?;
+        let mut buffer = Vec::new();
+        stream.read_to_end(&mut buffer).map_err(|_| "控制面不可达")?;
+        let text = String::from_utf8_lossy(&buffer);
+        Ok(text.split("\r\n\r\n").nth(1).unwrap_or("").to_string())
     }
 
     fn get_json(origin: &str, path: &str, token: &str) -> Result<String, String> {

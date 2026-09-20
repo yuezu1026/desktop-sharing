@@ -124,6 +124,8 @@ CREATE TABLE IF NOT EXISTS relay_tickets (
   created_at timestamptz NOT NULL
 );
 
+ALTER TABLE relay_tickets ADD COLUMN IF NOT EXISTS secret_once text;
+
 CREATE TABLE IF NOT EXISTS relay_ledger (
   relay_ledger_id uuid PRIMARY KEY,
   account_id uuid NOT NULL REFERENCES accounts (account_id),

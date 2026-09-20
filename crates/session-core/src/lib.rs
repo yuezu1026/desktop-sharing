@@ -5,9 +5,11 @@
 mod crypto;
 mod frame;
 mod input;
+mod relay_hello;
 mod ticket;
 
 pub use crypto::{DirectCipher, EndpointRole, HandshakeError, HandshakeOffer, SessionKeys};
 pub use frame::{decode_frame, encode_frame, Frame, FrameError, FrameKind, PROTOCOL_VERSION};
 pub use input::{decode_input, encode_input, InputError, InputEvent};
+pub use relay_hello::{encode_relay_hello, HelloError, RelayRole};
 pub use ticket::{ticket_looks_usable, TicketError, MIN_TICKET_CHARS};

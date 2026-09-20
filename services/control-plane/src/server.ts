@@ -375,9 +375,12 @@ async function dispatch(
     );
   }
   if (method === "GET" && pathname === "/v1/remote-sessions/incoming") return sessions.listIncoming(token);
+  if (method === "GET" && pathname === "/v1/remote-sessions/host-attach") return sessions.takeHostRelayTicket(token);
   if (method === "POST" && pathname === "/v1/remote-sessions") {
     return sessions.requestSession(token, text(body, "hostDeviceId") ?? "", text(body, "controllerFingerprint") ?? "");
   }
+  const remoteLookup = pathname.match(/^\/v1\/remote-sessions\/([^/]+)$/);
+  if (method === "GET" && remoteLookup?.[1]) return sessions.getRemoteSession(token, remoteLookup[1]);
   const remoteAction = pathname.match(/^\/v1\/remote-sessions\/([^/]+)\/(consent|direct|reject|input)$/);
   if (method === "POST" && remoteAction?.[1] && remoteAction[2] === "consent") {
     return sessions.consent(token, remoteAction[1], body.confirmedOnHost === true);
