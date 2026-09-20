@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { Image, Platform, Pressable, SafeAreaView, Text, TextInput, View } from "react-native";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Image, PanResponder, Platform, Pressable, SafeAreaView, Text, TextInput, View } from "react-native";
 import { resolveControlPlaneOrigin, resolveRelayAddress } from "./config.mjs";
 import {
   acknowledgeDisclosure,
@@ -13,6 +13,7 @@ import {
 import {
   connectSessionRelay,
   disconnectSessionRelay,
+  sendSessionRelayFrame,
   subscribeSessionRelay,
 } from "./native/session-relay.mjs";
 import {
@@ -30,6 +31,7 @@ import {
   layoutPicture,
   leaveImmersive,
   magnifierSample,
+  mapTouch,
   openMeter,
   openWays,
   rotate,
@@ -41,6 +43,16 @@ import {
   toggleFocusFollow,
   toggleMagnifier,
 } from "./session/handheld.mjs";
+import {
+  INPUT_POINTER_DOWN,
+  INPUT_POINTER_MOVE,
+  INPUT_POINTER_UP,
+  bytesToBase64,
+  clampPicturePoint,
+  encodePointer,
+  moveCursorByDelta,
+  packInputFrame,
+} from "./session/input.mjs";
 
 const hit = { minHeight: MIN_HIT_PX, minWidth: MIN_HIT_PX, justifyContent: "center", paddingHorizontal: 12 };
 
@@ -224,7 +236,96 @@ export function App() {
     focusFollow: session.focusFollow,
     focusRect: null,
   });
-  const loupe = session.magnifier ? magnifierSample(session.pictureWidth, session.pictureHeight, 8, 4) : null;
+  const loupe = session.magnifier ? magnifierSample(session.pictureWidth, session.pictureHeight, session.cursorX || 8, session.cursorY || 4) : null;
+  const sessionRef = useRef(session);
+  sessionRef.current = session;
+  const pictureRef = useRef(picture);
+  pictureRef.current = picture;
+  const trackpadOriginRef = useRef({ x: 0, y: 0 });
+
+  function emitPointer(kind, pictureX, pictureY, button = 0) {
+    const point = clampPicturePoint(pictureX, pictureY, sessionRef.current.pictureWidth, sessionRef.current.pictureHeight);
+    const frame = packInputFrame(encodePointer(kind, point.x, point.y, button));
+    sendSessionRelayFrame(bytesToBase64(frame));
+    setSession((current) => ({ ...current, cursorX: point.x, cursorY: point.y }));
+  }
+
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => {
+          const current = sessionRef.current;
+          return current.relayAttached === true && !current.viewOnly;
+        },
+        onMoveShouldSetPanResponder: () => {
+          const current = sessionRef.current;
+          return current.relayAttached === true && !current.viewOnly;
+        },
+        onPanResponderGrant: (event, gesture) => {
+          const current = sessionRef.current;
+          if (!current.relayAttached || current.viewOnly) return;
+          const layout = pictureRef.current;
+          if (current.pointerMode === "trackpad") {
+            trackpadOriginRef.current = { x: gesture.dx, y: gesture.dy };
+            emitPointer(INPUT_POINTER_DOWN, current.cursorX || 0, current.cursorY || 0, 0);
+            return;
+          }
+          const mapped = mapTouch(
+            "direct",
+            { x: event.nativeEvent.locationX, y: event.nativeEvent.locationY },
+            layout.picture,
+            current.pictureWidth,
+            current.pictureHeight,
+          );
+          if (mapped.kind !== "absolute") return;
+          emitPointer(INPUT_POINTER_DOWN, mapped.pictureX, mapped.pictureY, 0);
+        },
+        onPanResponderMove: (event, gesture) => {
+          const current = sessionRef.current;
+          if (!current.relayAttached || current.viewOnly) return;
+          const layout = pictureRef.current;
+          if (current.pointerMode === "trackpad") {
+            const deltaX = gesture.dx - trackpadOriginRef.current.x;
+            const deltaY = gesture.dy - trackpadOriginRef.current.y;
+            trackpadOriginRef.current = { x: gesture.dx, y: gesture.dy };
+            const next = moveCursorByDelta(current, deltaX, deltaY);
+            emitPointer(INPUT_POINTER_MOVE, next.cursorX, next.cursorY, 0);
+            return;
+          }
+          const mapped = mapTouch(
+            "direct",
+            { x: event.nativeEvent.locationX, y: event.nativeEvent.locationY },
+            layout.picture,
+            current.pictureWidth,
+            current.pictureHeight,
+          );
+          if (mapped.kind !== "absolute") return;
+          emitPointer(INPUT_POINTER_MOVE, mapped.pictureX, mapped.pictureY, 0);
+        },
+        onPanResponderRelease: (event) => {
+          const current = sessionRef.current;
+          if (!current.relayAttached || current.viewOnly) return;
+          const layout = pictureRef.current;
+          if (current.pointerMode === "trackpad") {
+            emitPointer(INPUT_POINTER_UP, current.cursorX || 0, current.cursorY || 0, 0);
+            return;
+          }
+          const mapped = mapTouch(
+            "direct",
+            { x: event.nativeEvent.locationX, y: event.nativeEvent.locationY },
+            layout.picture,
+            current.pictureWidth,
+            current.pictureHeight,
+          );
+          if (mapped.kind !== "absolute") {
+            emitPointer(INPUT_POINTER_UP, current.cursorX || 0, current.cursorY || 0, 0);
+            return;
+          }
+          emitPointer(INPUT_POINTER_UP, mapped.pictureX, mapped.pictureY, 0);
+        },
+      }),
+    [],
+  );
 
   return (
     <SafeAreaView style={{ flex: 1, padding: 12, gap: 8 }}>
@@ -232,7 +333,10 @@ export function App() {
       {chrome.quotaNumber !== null ? <Text>{"免费中继时长剩余约 " + chrome.quotaNumber + " 分钟"}</Text> : null}
       {chrome.subscriptionBadge ? <Text>{chrome.subscriptionBadge}</Text> : null}
       {chrome.realNameMessage ? <Text>{chrome.realNameMessage}</Text> : null}
-      <View style={{ height: picture.viewHeight, backgroundColor: "#000", overflow: "hidden" }}>
+      <View
+        style={{ height: picture.viewHeight, backgroundColor: "#000", overflow: "hidden" }}
+        {...panResponder.panHandlers}
+      >
         <View
           style={{
             position: "absolute",
@@ -250,6 +354,7 @@ export function App() {
               source={{ uri: chrome.frameUri }}
               style={{ width: picture.picture.width, height: picture.picture.height }}
               resizeMode="contain"
+              pointerEvents="none"
             />
           ) : (
             <Text style={{ color: "#ddd" }}>{chrome.waiting}</Text>

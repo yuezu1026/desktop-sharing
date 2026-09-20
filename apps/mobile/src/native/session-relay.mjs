@@ -25,6 +25,16 @@ export function disconnectSessionRelay() {
 }
 
 /**
+ * @param {string} base64Frame 完整 RDS1 输入帧
+ */
+export function sendSessionRelayFrame(base64Frame) {
+  if (!hasSessionRelayNative()) return false;
+  if (typeof base64Frame !== "string" || base64Frame.length < 16) return false;
+  nativeModule.sendBinaryFrame(base64Frame);
+  return true;
+}
+
+/**
  * @param {(event: { type?: string, message?: string, width?: number, height?: number, jpegBase64?: string }) => void} handler
  * @returns {() => void}
  */

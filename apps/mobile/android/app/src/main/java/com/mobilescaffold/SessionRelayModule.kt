@@ -30,8 +30,10 @@ class SessionRelayModule(private val reactContext: ReactApplicationContext) :
   ReactContextBaseJavaModule(reactContext) {
 
   private val running = AtomicBoolean(false)
+  private val writeLock = Any()
   @Volatile private var worker: Thread? = null
   @Volatile private var socket: SSLSocket? = null
+  @Volatile private var output: DataOutputStream? = null
   private var h264Decoder: H264ToJpegDecoder? = null
 
   override fun getName(): String = "SessionRelay"
@@ -63,6 +65,26 @@ class SessionRelayModule(private val reactContext: ReactApplicationContext) :
     stopInternal()
   }
 
+  /** JS 编好的完整 RDS1 帧（base64），写入当前中继连接。 */
+  @ReactMethod
+  fun sendBinaryFrame(base64: String) {
+    val bytes = try {
+      Base64.decode(base64, Base64.DEFAULT)
+    } catch (_: Exception) {
+      return
+    }
+    if (bytes.size < 12) return
+    if (bytes[0] != 'R'.code.toByte() || bytes[5].toInt() and 0xff != 2) return
+    synchronized(writeLock) {
+      try {
+        val stream = output ?: return
+        stream.write(bytes)
+        stream.flush()
+      } catch (_: Exception) {
+      }
+    }
+  }
+
   @ReactMethod
   fun addListener(eventName: String) {
     // RN 事件订阅占位
@@ -83,11 +105,18 @@ class SessionRelayModule(private val reactContext: ReactApplicationContext) :
   }
 
   private fun closeSocket() {
-    try {
-      socket?.close()
-    } catch (_: Exception) {
+    synchronized(writeLock) {
+      try {
+        output?.close()
+      } catch (_: Exception) {
+      }
+      output = null
+      try {
+        socket?.close()
+      } catch (_: Exception) {
+      }
+      socket = null
     }
-    socket = null
   }
 
   private fun runSession(address: String, ticket: String, fingerprint: String) {
@@ -100,15 +129,19 @@ class SessionRelayModule(private val reactContext: ReactApplicationContext) :
     ssl.soTimeout = 3000
     ssl.connect(InetSocketAddress(hostPort.first, hostPort.second), 8000)
     ssl.startHandshake()
-    val output = DataOutputStream(ssl.outputStream)
+    val stream = DataOutputStream(ssl.outputStream)
+    synchronized(writeLock) {
+      output = stream
+    }
     val helloBody = buildHelloJson(ticket, fingerprint).toByteArray(StandardCharsets.UTF_8)
-    output.writeInt(helloBody.size)
-    output.write(helloBody)
-    output.flush()
-    // 入会即请求关键帧，方便中途起解
-    val keyframe = encodeControlKeyframe()
-    output.write(keyframe)
-    output.flush()
+    synchronized(writeLock) {
+      stream.writeInt(helloBody.size)
+      stream.write(helloBody)
+      stream.flush()
+      // 入会即请求关键帧，方便中途起解
+      stream.write(encodeControlKeyframe())
+      stream.flush()
+    }
     emit("connected", null)
 
     h264Decoder = H264ToJpegDecoder()

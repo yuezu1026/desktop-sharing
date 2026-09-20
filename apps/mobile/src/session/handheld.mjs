@@ -65,6 +65,8 @@ export function createSession() {
     ticket: "",
     relayAttached: false,
     frameUri: "",
+    cursorX: 0,
+    cursorY: 0,
   };
 }
 
@@ -167,12 +169,16 @@ export function applyNativeRelayEvent(session, event) {
   if (type === "frame" && typeof event.jpegBase64 === "string" && event.jpegBase64.length > 0) {
     const width = Number.isFinite(event.width) && event.width > 0 ? event.width : session.pictureWidth;
     const height = Number.isFinite(event.height) && event.height > 0 ? event.height : session.pictureHeight;
+    const cursorX = session.cursorX > 0 ? session.cursorX : Math.floor(width / 2);
+    const cursorY = session.cursorY > 0 ? session.cursorY : Math.floor(height / 2);
     return {
       ...session,
       relayAttached: true,
       notice: "已收到画面",
       pictureWidth: width,
       pictureHeight: height,
+      cursorX,
+      cursorY,
       frameUri: `data:image/jpeg;base64,${event.jpegBase64}`,
     };
   }
