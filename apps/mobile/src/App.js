@@ -44,14 +44,19 @@ import {
   toggleMagnifier,
 } from "./session/handheld.mjs";
 import {
+  INPUT_KEY_DOWN,
+  INPUT_KEY_UP,
   INPUT_POINTER_DOWN,
   INPUT_POINTER_MOVE,
   INPUT_POINTER_UP,
   bytesToBase64,
   clampPicturePoint,
+  encodeKey,
   encodePointer,
   moveCursorByDelta,
   packInputFrame,
+  virtualKeyFromChar,
+  virtualKeyFromKeyName,
 } from "./session/input.mjs";
 
 const hit = { minHeight: MIN_HIT_PX, minWidth: MIN_HIT_PX, justifyContent: "center", paddingHorizontal: 12 };
@@ -373,6 +378,29 @@ export function App() {
         <HitButton label="焦点跟随" solid={chrome.focusFollow} onPress={() => setSession(toggleFocusFollow(session))} />
         <HitButton label="放大镜" solid={chrome.magnifier} onPress={() => setSession(toggleMagnifier(session))} />
         <HitButton label="键盘" onPress={() => setSession(setKeyboardOpen(session, !session.keyboardOpen))} />
+        {session.keyboardOpen ? (
+          <TextInput
+            autoFocus
+            value=""
+            onChangeText={(text) => {
+              if (!session.relayAttached || session.viewOnly) return;
+              const last = text.slice(-1);
+              const keyCode = virtualKeyFromChar(last);
+              if (keyCode == null) return;
+              sendSessionRelayFrame(bytesToBase64(packInputFrame(encodeKey(INPUT_KEY_DOWN, keyCode))));
+              sendSessionRelayFrame(bytesToBase64(packInputFrame(encodeKey(INPUT_KEY_UP, keyCode))));
+            }}
+            onKeyPress={(event) => {
+              if (!session.relayAttached || session.viewOnly) return;
+              const keyCode = virtualKeyFromKeyName(event.nativeEvent.key);
+              if (keyCode == null) return;
+              sendSessionRelayFrame(bytesToBase64(packInputFrame(encodeKey(INPUT_KEY_DOWN, keyCode))));
+              sendSessionRelayFrame(bytesToBase64(packInputFrame(encodeKey(INPUT_KEY_UP, keyCode))));
+            }}
+            placeholder="输入会发到对方电脑"
+            style={{ minHeight: MIN_HIT_PX, minWidth: 180, borderWidth: 1, paddingHorizontal: 8 }}
+          />
+        ) : null}
         <HitButton label="免费中继时长" onPress={() => setSession(openMeter(session))} />
         {chrome.viewOnly?.requestControl ? (
           <HitButton

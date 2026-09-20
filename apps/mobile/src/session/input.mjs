@@ -4,6 +4,8 @@ export const INPUT_POINTER_MOVE = 1;
 export const INPUT_POINTER_DOWN = 2;
 export const INPUT_POINTER_UP = 3;
 export const INPUT_WHEEL = 4;
+export const INPUT_KEY_DOWN = 5;
+export const INPUT_KEY_UP = 6;
 export const FRAME_KIND_INPUT = 2;
 
 /**
@@ -33,6 +35,68 @@ export function encodeWheel(x, y, delta) {
   out[10] = (clipped >> 8) & 0xff;
   out[11] = clipped & 0xff;
   return out;
+}
+
+/**
+ * @param {number} kind
+ * @param {number} keyCode
+ */
+export function encodeKey(kind, keyCode) {
+  const out = new Uint8Array(5);
+  out[0] = kind;
+  const value = keyCode >>> 0;
+  out[1] = (value >>> 24) & 0xff;
+  out[2] = (value >>> 16) & 0xff;
+  out[3] = (value >>> 8) & 0xff;
+  out[4] = value & 0xff;
+  return out;
+}
+
+/**
+ * 单字符 → Windows 虚拟键码（被控端 SendInput）。
+ * @param {string} text
+ * @returns {number | null}
+ */
+export function virtualKeyFromChar(text) {
+  if (typeof text !== "string" || text.length !== 1) return null;
+  const code = text.charCodeAt(0);
+  if (code >= 0x30 && code <= 0x39) return code;
+  if (code >= 0x41 && code <= 0x5a) return code;
+  if (code >= 0x61 && code <= 0x7a) return code - 0x20;
+  if (text === " ") return 0x20;
+  if (text === "\n" || text === "\r") return 0x0d;
+  if (text === "\t") return 0x09;
+  if (text === "\b") return 0x08;
+  return null;
+}
+
+/**
+ * @param {string} key
+ * @returns {number | null}
+ */
+export function virtualKeyFromKeyName(key) {
+  switch (key) {
+    case "Backspace":
+      return 0x08;
+    case "Tab":
+      return 0x09;
+    case "Enter":
+      return 0x0d;
+    case "Escape":
+      return 0x1b;
+    case "ArrowLeft":
+      return 0x25;
+    case "ArrowUp":
+      return 0x26;
+    case "ArrowRight":
+      return 0x27;
+    case "ArrowDown":
+      return 0x28;
+    case "Delete":
+      return 0x2e;
+    default:
+      return null;
+  }
 }
 
 /**

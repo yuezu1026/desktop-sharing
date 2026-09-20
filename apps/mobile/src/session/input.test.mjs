@@ -1,12 +1,16 @@
 import assert from "node:assert/strict";
 import {
+  INPUT_KEY_DOWN,
   INPUT_POINTER_DOWN,
   INPUT_POINTER_MOVE,
   bytesToBase64,
   clampPicturePoint,
+  encodeKey,
   encodePointer,
   moveCursorByDelta,
   packInputFrame,
+  virtualKeyFromChar,
+  virtualKeyFromKeyName,
 } from "./input.mjs";
 
 const move = encodePointer(INPUT_POINTER_MOVE, 100, 200);
@@ -28,5 +32,11 @@ assert.equal(moved.cursorX, 15);
 assert.equal(moved.cursorY, 7);
 const clamped = clampPicturePoint(-3, 999, 100, 50);
 assert.deepEqual(clamped, { x: 0, y: 49 });
+
+assert.equal(virtualKeyFromChar("a"), 0x41);
+assert.equal(virtualKeyFromChar("7"), 0x37);
+assert.equal(virtualKeyFromKeyName("Enter"), 0x0d);
+const key = encodeKey(INPUT_KEY_DOWN, 0x41);
+assert.deepEqual([...key], [5, 0, 0, 0, 0x41]);
 
 console.log("mobile input ok");
