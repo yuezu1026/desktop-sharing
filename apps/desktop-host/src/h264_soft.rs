@@ -57,6 +57,10 @@ impl SoftH264Encoder {
         }
         Some(bytes)
     }
+
+    pub fn request_keyframe_soon(&mut self) {
+        self.keyframes.request_now();
+    }
 }
 
 #[cfg(test)]

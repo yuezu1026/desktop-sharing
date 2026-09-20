@@ -944,6 +944,11 @@ mod windows_controller {
             model.link_direct = false;
             model.notice = "中继已接通".to_string();
         }
+        let _ = session.send_frame(&session_core::Frame {
+            kind: session_core::FrameKind::Control,
+            flags: 0,
+            payload: session_core::encode_control(session_core::ControlMessage::RequestKeyframe),
+        });
         let (input_sender, input_receiver) = mpsc::channel::<session_core::InputEvent>();
         if let Ok(mut guard) = INPUT_TX.lock() {
             *guard = Some(input_sender);
@@ -1017,6 +1022,11 @@ mod windows_controller {
             model.link_direct = true;
             model.notice = "已升直连".to_string();
         }
+        let _ = link.send_frame(&session_core::Frame {
+            kind: session_core::FrameKind::Control,
+            flags: 0,
+            payload: session_core::encode_control(session_core::ControlMessage::RequestKeyframe),
+        });
         loop {
             let mut send_failed = false;
             while let Ok(event) = input_receiver.try_recv() {

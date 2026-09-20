@@ -2,6 +2,7 @@
 //! 中继路上靠 TLS 做传输加密，帧明文可被中继看见；直连路上密钥只在两端。
 //! 本阶段不做音频通道，也不做国密套件。
 
+mod control;
 mod crypto;
 mod frame;
 mod h264;
@@ -10,6 +11,7 @@ mod relay_hello;
 mod ticket;
 mod video;
 
+pub use control::{decode_control, encode_control, ControlError, ControlMessage, CONTROL_REQUEST_KEYFRAME};
 pub use crypto::{DirectCipher, EndpointRole, HandshakeError, HandshakeOffer, SessionKeys};
 pub use frame::{decode_frame, encode_frame, Frame, FrameError, FrameKind, PROTOCOL_VERSION};
 pub use h264::{

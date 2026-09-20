@@ -49,6 +49,14 @@ impl ScreenGrabber {
         self.last_hash = 0;
     }
 
+    /// 控制端请求关键帧：下一拍 H264 强制 IDR；JPEG 路径清哈希以便立刻再送一帧。
+    pub fn request_keyframe(&mut self) {
+        if let Some(encoder) = self.h264.as_mut() {
+            encoder.request_keyframe();
+        }
+        self.last_hash = 0;
+    }
+
     pub fn bitrate_kbps(&self) -> u32 {
         self.bitrate_kbps
     }

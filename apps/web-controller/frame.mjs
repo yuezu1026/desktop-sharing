@@ -6,6 +6,15 @@ export const VIDEO_CODEC_JPEG = 1;
 export const VIDEO_CODEC_H264 = 2;
 export const FRAME_KIND_VIDEO = 1;
 export const FRAME_KIND_INPUT = 2;
+export const FRAME_KIND_CONTROL = 3;
+export const CONTROL_REQUEST_KEYFRAME = 1;
+
+/**
+ * @param {number} controlKind
+ */
+export function packControl(controlKind) {
+  return packFrame(FRAME_KIND_CONTROL, new Uint8Array([controlKind]));
+}
 
 const MAGIC = [0x52, 0x44, 0x53, 0x31]; // RDS1
 const MAX_PAYLOAD = 4 * 1024 * 1024;

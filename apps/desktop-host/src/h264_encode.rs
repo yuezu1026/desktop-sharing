@@ -49,6 +49,14 @@ impl H264Encoder {
             Backend::Software(encoder) => encoder.encode_bgr(width, height, bgr),
         }
     }
+
+    /// 控制端请求关键帧时调用；下一拍编码强制 IDR。
+    pub fn request_keyframe(&mut self) {
+        match &mut self.backend {
+            Backend::MediaFoundation(encoder) => encoder.request_keyframe_soon(),
+            Backend::Software(encoder) => encoder.request_keyframe_soon(),
+        }
+    }
 }
 
 #[cfg(test)]

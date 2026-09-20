@@ -43,10 +43,12 @@
     import {
       FRAME_KIND_INPUT,
       FRAME_KIND_VIDEO,
+      CONTROL_REQUEST_KEYFRAME,
       VIDEO_CODEC_JPEG,
       VIDEO_CODEC_H264,
       frameKind,
       framePayload,
+      packControl,
       packFrame,
       unpackVideo,
     } from "/web/frame.mjs";
@@ -146,6 +148,8 @@
             } else if (body.ok === true) {
               relayReady = true;
               linkBadge.textContent = "中继";
+              const keyframe = packControl(CONTROL_REQUEST_KEYFRAME);
+              if (keyframe) socket.send(keyframe);
             }
           } catch {
             /* ignore */

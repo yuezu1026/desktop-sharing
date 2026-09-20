@@ -1,22 +1,29 @@
-//! 关键帧调度。首帧必出，之后按周期请求，方便控制端中途入会起解。
+//! 关键帧调度。首帧必出，之后按周期请求；也可被「请求关键帧」立即拉高。
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct KeyframeSchedule {
     period: u32,
     frame_index: u64,
+    pending_force: bool,
 }
 
 impl KeyframeSchedule {
-    /// `period == 0` 时只强制首帧。
+    /// `period == 0` 时只强制首帧（除非另有 pending）。
     pub fn new(period: u32) -> Self {
         Self {
             period,
             frame_index: 0,
+            pending_force: false,
         }
     }
 
+    /// 下一拍必须出关键帧（控制端中途入会）。
+    pub fn request_now(&mut self) {
+        self.pending_force = true;
+    }
+
     pub fn should_force(&self) -> bool {
-        if self.frame_index == 0 {
+        if self.pending_force || self.frame_index == 0 {
             return true;
         }
         if self.period == 0 {
@@ -26,6 +33,7 @@ impl KeyframeSchedule {
     }
 
     pub fn advance(&mut self) {
+        self.pending_force = false;
         self.frame_index = self.frame_index.saturating_add(1);
     }
 }
@@ -58,6 +66,17 @@ mod tests {
         assert!(schedule.should_force());
         schedule.advance();
         assert!(!schedule.should_force());
+        schedule.advance();
+        assert!(!schedule.should_force());
+    }
+
+    #[test]
+    fn request_now_forces_next_even_mid_period() {
+        let mut schedule = KeyframeSchedule::new(45);
+        schedule.advance();
+        assert!(!schedule.should_force());
+        schedule.request_now();
+        assert!(schedule.should_force());
         schedule.advance();
         assert!(!schedule.should_force());
     }

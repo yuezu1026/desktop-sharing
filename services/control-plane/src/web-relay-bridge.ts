@@ -81,7 +81,7 @@ async function bridgeClient(websocket: WebSocket, _request: IncomingMessage): Pr
       const bytes = Buffer.isBuffer(data) ? data : Buffer.from(data as ArrayBuffer);
       if (bytes.length < FRAME_HEADER_BYTES) return;
       if (bytes.subarray(0, 4).toString("ascii") !== "RDS1") return;
-      if (bytes[5] !== 2) return; // 只转发输入帧，防止浏览器误注视频
+      if (bytes[5] !== 2 && bytes[5] !== 3) return; // 只转发输入与控制帧
       relay.write(bytes);
     });
   } catch {

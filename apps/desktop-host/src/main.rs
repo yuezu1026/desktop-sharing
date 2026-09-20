@@ -787,6 +787,13 @@ mod windows_host {
                             crate::inject::apply_input(&event, frame_width, frame_height);
                         }
                     }
+                    Ok(Some(frame)) if frame.kind == session_core::FrameKind::Control => {
+                        if session_core::decode_control(&frame.payload)
+                            == Ok(session_core::ControlMessage::RequestKeyframe)
+                        {
+                            grabber.request_keyframe();
+                        }
+                    }
                     Ok(Some(_)) => {}
                     Ok(None) => break,
                     Err(_) => break 'relay,
@@ -833,6 +840,13 @@ mod windows_host {
                         saw_input = true;
                         if let Ok(event) = session_core::decode_input(&frame.payload) {
                             crate::inject::apply_input(&event, frame_width, frame_height);
+                        }
+                    }
+                    Ok(Some(frame)) if frame.kind == session_core::FrameKind::Control => {
+                        if session_core::decode_control(&frame.payload)
+                            == Ok(session_core::ControlMessage::RequestKeyframe)
+                        {
+                            grabber.request_keyframe();
                         }
                     }
                     Ok(Some(_)) => {}

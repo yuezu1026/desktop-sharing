@@ -120,6 +120,10 @@ impl MfH264Encoder {
         }
     }
 
+    pub fn request_keyframe_soon(&mut self) {
+        self.keyframes.request_now();
+    }
+
     fn encode_sync(&mut self, sample: IMFSample) -> Option<Vec<u8>> {
         unsafe {
             self.transform.ProcessInput(0, &sample, 0).ok()?;
