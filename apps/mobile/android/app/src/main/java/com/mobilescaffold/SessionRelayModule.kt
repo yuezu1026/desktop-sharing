@@ -32,6 +32,7 @@ class SessionRelayModule(private val reactContext: ReactApplicationContext) :
   private val running = AtomicBoolean(false)
   @Volatile private var worker: Thread? = null
   @Volatile private var socket: SSLSocket? = null
+  private var h264Decoder: H264ToJpegDecoder? = null
 
   override fun getName(): String = "SessionRelay"
 
@@ -50,6 +51,8 @@ class SessionRelayModule(private val reactContext: ReactApplicationContext) :
       } finally {
         running.set(false)
         closeSocket()
+        h264Decoder?.close()
+        h264Decoder = null
         emit("closed", null)
       }
     }
@@ -73,6 +76,8 @@ class SessionRelayModule(private val reactContext: ReactApplicationContext) :
   private fun stopInternal() {
     running.set(false)
     closeSocket()
+    h264Decoder?.close()
+    h264Decoder = null
     worker?.interrupt()
     worker = null
   }
@@ -100,8 +105,13 @@ class SessionRelayModule(private val reactContext: ReactApplicationContext) :
     output.writeInt(helloBody.size)
     output.write(helloBody)
     output.flush()
+    // 入会即请求关键帧，方便中途起解
+    val keyframe = encodeControlKeyframe()
+    output.write(keyframe)
+    output.flush()
     emit("connected", null)
 
+    h264Decoder = H264ToJpegDecoder()
     val input = DataInputStream(ssl.inputStream)
     val pending = ByteArrayOutputStream()
     val chunk = ByteArray(16 * 1024)
@@ -164,9 +174,40 @@ class SessionRelayModule(private val reactContext: ReactApplicationContext) :
       map.putInt("height", height)
       map.putString("jpegBase64", Base64.encodeToString(body, Base64.NO_WRAP))
       emit("frame", map)
-    } else if (codec == 2) {
-      emit("h264", null)
+      return
     }
+    if (codec != 2) return
+    val decoder = h264Decoder ?: return
+    val decoded = try {
+      decoder.pushAnnexB(body, width, height)
+    } catch (_: Exception) {
+      null
+    }
+    if (decoded == null) {
+      emit("h264", null)
+      return
+    }
+    val map = Arguments.createMap()
+    map.putInt("width", decoded.first)
+    map.putInt("height", decoded.second)
+    map.putString("jpegBase64", H264ToJpegDecoder.toBase64(decoded.third))
+    emit("frame", map)
+  }
+
+  private fun encodeControlKeyframe(): ByteArray {
+    // RDS1 · Control · RequestKeyframe(1)
+    val header = ByteArray(12)
+    header[0] = 'R'.code.toByte()
+    header[1] = 'D'.code.toByte()
+    header[2] = 'S'.code.toByte()
+    header[3] = '1'.code.toByte()
+    header[4] = 1
+    header[5] = 3
+    header[8] = 0
+    header[9] = 0
+    header[10] = 0
+    header[11] = 1
+    return header + byteArrayOf(1)
   }
 
   private fun emit(type: String, extra: com.facebook.react.bridge.WritableMap?) {

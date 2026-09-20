@@ -177,7 +177,7 @@ export function applyNativeRelayEvent(session, event) {
     };
   }
   if (type === "h264") {
-    return { ...session, relayAttached: true, notice: "已收到 H264（软解下一刀）" };
+    return { ...session, relayAttached: true, notice: "正在解 H264" };
   }
   if (type === "error") {
     return {
