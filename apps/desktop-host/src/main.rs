@@ -742,6 +742,7 @@ mod windows_host {
         let mut grabber = crate::capture::ScreenGrabber::new(encode_bitrate_kbps);
         let mut frame_width = 640;
         let mut frame_height = 360;
+        let mut next_bitrate_poll = std::time::Instant::now();
         crate::inject::set_input_allowed(true);
         'relay: loop {
             if let Ok(link) = direct_receiver.try_recv() {
@@ -756,6 +757,10 @@ mod windows_host {
                     remote_session_id.clone(),
                 );
                 return;
+            }
+            if next_bitrate_poll <= std::time::Instant::now() {
+                refresh_encode_bitrate(&origin, &token, &remote_session_id, &mut grabber);
+                next_bitrate_poll = std::time::Instant::now() + std::time::Duration::from_secs(2);
             }
             if let Some(frame) = grabber.grab_jpeg_frame() {
                 if let Ok((width, height, _, _)) = session_core::unpack_video(&frame.payload) {
@@ -799,7 +804,12 @@ mod windows_host {
             model.status_line = "已升直连".to_string();
         }
         refresh();
+        let mut next_bitrate_poll = std::time::Instant::now();
         loop {
+            if next_bitrate_poll <= std::time::Instant::now() {
+                refresh_encode_bitrate(&origin, &token, &remote_session_id, &mut grabber);
+                next_bitrate_poll = std::time::Instant::now() + std::time::Duration::from_secs(2);
+            }
             if let Some(frame) = grabber.grab_jpeg_frame() {
                 if let Ok((width, height, _, _)) = session_core::unpack_video(&frame.payload) {
                     frame_width = width as i32;
@@ -833,6 +843,27 @@ mod windows_host {
         report_direct_stop(&origin, &token, &remote_session_id);
         crate::inject::set_input_allowed(false);
         finish_host_relay();
+    }
+
+    fn refresh_encode_bitrate(
+        origin: &str,
+        token: &str,
+        remote_session_id: &str,
+        grabber: &mut crate::capture::ScreenGrabber,
+    ) {
+        if origin.is_empty() || token.is_empty() || remote_session_id.is_empty() {
+            return;
+        }
+        let Ok(body) = get_json(origin, &format!("/v1/remote-sessions/{remote_session_id}"), token) else {
+            return;
+        };
+        let Ok(parsed) = serde_json::from_str::<SessionBitrateBody>(&body) else {
+            return;
+        };
+        grabber.set_bitrate_kbps(parsed.bitrate_kbps);
+        if let Some(model) = lock_model().as_mut() {
+            model.encode_bitrate_kbps = parsed.bitrate_kbps;
+        }
     }
 
     fn finish_host_relay() {
@@ -1039,6 +1070,12 @@ mod windows_host {
         ticket: Option<String>,
         #[serde(rename = "remoteSessionId")]
         remote_session_id: Option<String>,
+        #[serde(rename = "bitrateKbps")]
+        bitrate_kbps: Option<u32>,
+    }
+
+    #[derive(Deserialize)]
+    struct SessionBitrateBody {
         #[serde(rename = "bitrateKbps")]
         bitrate_kbps: Option<u32>,
     }

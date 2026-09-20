@@ -38,6 +38,21 @@ impl ScreenGrabber {
         }
     }
 
+    /// 服务端降档后换码率；编码器下次打开时生效。
+    pub fn set_bitrate_kbps(&mut self, bitrate_kbps: Option<u32>) {
+        let resolved = resolve_bitrate_kbps(bitrate_kbps);
+        if resolved == self.bitrate_kbps {
+            return;
+        }
+        self.bitrate_kbps = resolved;
+        self.h264 = None;
+        self.last_hash = 0;
+    }
+
+    pub fn bitrate_kbps(&self) -> u32 {
+        self.bitrate_kbps
+    }
+
     /// 静止画面不重复送。失败时返回 None，调用方跳过这一拍。
     pub fn grab_jpeg_frame(&mut self) -> Option<Frame> {
         let (width, height, bgr) = self.grab_bgr_scaled()?;
@@ -194,3 +209,25 @@ unsafe fn capture_bgr_scaled_gdi(max_width: i32) -> Option<(i32, i32, Vec<u8>)> 
     }
     Some((target_width, target_height, compact))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn set_bitrate_rebuilds_encoder_slot() {
+        let mut grabber = ScreenGrabber {
+            last_hash: 1,
+            dxgi: None,
+            prefer_dxgi: false,
+            h264: None,
+            bitrate_kbps: 900,
+        };
+        grabber.set_bitrate_kbps(Some(4_000));
+        assert_eq!(grabber.bitrate_kbps(), 4_000);
+        assert_eq!(grabber.last_hash, 0);
+        grabber.set_bitrate_kbps(Some(4_000));
+        assert_eq!(grabber.bitrate_kbps(), 4_000);
+    }
+}
+
