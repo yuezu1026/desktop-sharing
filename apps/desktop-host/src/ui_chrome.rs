@@ -341,8 +341,12 @@ unsafe fn draw_in(device_context: HDC, text: &str, rect: LayoutRect, style: Draw
 
 unsafe fn draw_mono_in(device_context: HDC, text: &str, rect: LayoutRect, size: i32) {
     let _ = SetTextColor(device_context, COLORREF(COLOR_TEXT));
-    // HF `.id` letter-spacing ≈ 0.08em
-    let extra = (size as f32 * 0.08).round() as i32;
+    // 仅识别码加大字距；临时密码保持自然宽度。
+    let extra = if size >= 24 {
+        (size as f32 * 0.08).round() as i32
+    } else {
+        0
+    };
     let previous = SetTextCharacterExtra(device_context, extra);
     with_font(device_context, "Consolas", size, 600, || {
         draw_text(device_context, text, rect, DT_LEFT | DT_SINGLELINE);

@@ -77,8 +77,9 @@ pub const RIGHT_FRAUD: Rect = Rect {
 pub const LABEL_CODE: Rect = Rect::from_xywh(40, 40, 220, 18);
 pub const VALUE_CODE: Rect = Rect::from_xywh(40, 64, 220, 34);
 pub const LABEL_PASSWORD: Rect = Rect::from_xywh(40, 118, 220, 18);
-pub const VALUE_PASSWORD: Rect = Rect::from_xywh(40, 142, 220, 28);
-pub const PASSWORD_HINT: Rect = Rect::from_xywh(40, 176, 300, 44);
+pub const VALUE_PASSWORD: Rect = Rect::from_xywh(40, 142, 200, 32);
+/// 与密码行留出呼吸距；宽度吃满左栏内边，避免「荐）。」孤行。
+pub const PASSWORD_HINT: Rect = Rect::from_xywh(40, 186, 304, 52);
 
 /// 开关贴左栏底部，消除大块空白。
 pub const ACCEPT_SWITCH_TRACK: Rect = Rect::from_xywh(40, 372, 44, 26);
@@ -104,7 +105,7 @@ pub const BTN_COPY: NativeButton = NativeButton {
     rect: Rect::from_xywh(276, 64, 68, 36),
 };
 pub const BTN_ROTATE: NativeButton = NativeButton {
-    rect: Rect::from_xywh(276, 140, 68, 36),
+    rect: Rect::from_xywh(276, 142, 68, 36),
 };
 pub const BTN_STOP: NativeButton = NativeButton {
     rect: Rect::from_xywh(376, 428, 120, DESKTOP_MIN_PX),
@@ -251,5 +252,13 @@ mod tests {
         assert!(BTN_STOP.rect.bottom <= MAIN_HEIGHT);
         assert_eq!(LEFT_PANEL.width(), 340);
         assert_eq!(RIGHT_STATUS.left - LEFT_PANEL.right, 16);
+    }
+
+    #[test]
+    fn 临时密码与说明不挤在一起() {
+        let gap = PASSWORD_HINT.top - VALUE_PASSWORD.bottom;
+        assert!(gap >= 10, "密码与说明间距应 ≥ 10，实际 {gap}");
+        assert!(PASSWORD_HINT.width() >= 300, "说明应尽量吃满左栏宽度");
+        assert!(PASSWORD_HINT.right <= LEFT_PANEL.right - 12);
     }
 }

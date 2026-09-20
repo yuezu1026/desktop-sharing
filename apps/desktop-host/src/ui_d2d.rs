@@ -221,9 +221,9 @@ impl DcFrame {
         };
         let format = make_text_format(face, size, weight, align, wrap)?;
         let brush = self.solid_brush(colorref, 1.0)?;
-        // h2 `.id` 0.08em / `.pass` 0.12em：逐字推进近似字距。
-        if matches!(style, TextStyle::Mono { .. }) && !wrap {
-            let tracking = if size >= 24.0 { size * 0.08 } else { size * 0.12 };
+        // 仅识别码做字距；临时密码用自然宽度，避免「w 2 f 8 x d」过疏挤到说明。
+        if matches!(style, TextStyle::Mono { size } if size >= 24.0) && !wrap {
+            let tracking = size * 0.08;
             let mut cursor_x = rect.left as f32;
             for character in text.chars() {
                 let mut utf16_buf = [0u16; 2];
@@ -231,7 +231,7 @@ impl DcFrame {
                 let advance = if character == ' ' {
                     size * 0.35
                 } else {
-                    size * 0.62 + tracking
+                    size * 0.55 + tracking
                 };
                 let cell = D2D_RECT_F {
                     left: cursor_x,
