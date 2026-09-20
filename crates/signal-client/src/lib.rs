@@ -1,5 +1,7 @@
 //! 信令交换与打洞探测。探测失败只记结果，不弹窗，也不停中继。
 
+mod stun;
+
 use std::io::{Read, Write};
 use std::net::{SocketAddr, TcpStream, UdpSocket};
 use std::time::{Duration, Instant};
@@ -11,6 +13,7 @@ const PUNCH_MAGIC: &[u8] = b"RDS1PUNCH";
 const JOIN_ROUNDS: u32 = 20;
 const JOIN_WAIT: Duration = Duration::from_millis(400);
 const PROBE_WAIT: Duration = Duration::from_secs(3);
+const DEFAULT_STUN: &str = "stun.l.google.com:19302";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SignalError {
@@ -40,7 +43,7 @@ struct JoinOk {
     peer_candidates: Option<Vec<String>>,
 }
 
-/// 绑定本机 UDP，返回内网可达候选列表。含环回以便本机自测；不做 STUN。
+/// 绑定本机 UDP，返回内网候选；若 STUN 可达再附一条公网映射。失败不挡内网候选。
 pub fn bind_local_candidates() -> Result<(UdpSocket, Vec<String>), SignalError> {
     let socket = UdpSocket::bind("0.0.0.0:0").map_err(|_| SignalError::Address)?;
     socket
@@ -52,9 +55,28 @@ pub fn bind_local_candidates() -> Result<(UdpSocket, Vec<String>), SignalError> 
         .map(|host| format!("{host}:{port}"))
         .collect::<Vec<_>>();
     candidates.push(format!("127.0.0.1:{port}"));
+    if let Some(mapped) = discover_stun_mapped(&socket) {
+        candidates.push(mapped);
+    }
     candidates.sort();
     candidates.dedup();
     Ok((socket, candidates))
+}
+
+fn discover_stun_mapped(socket: &UdpSocket) -> Option<String> {
+    let stun_text = std::env::var("STUN_ADDR").unwrap_or_else(|_| DEFAULT_STUN.to_string());
+    let stun_addr = resolve_stun_addr(&stun_text)?;
+    let mapped = stun::query_mapped_v4(socket, stun_addr)?;
+    Some(mapped.to_string())
+}
+
+fn resolve_stun_addr(raw: &str) -> Option<SocketAddr> {
+    if let Ok(address) = raw.parse::<SocketAddr>() {
+        return Some(address);
+    }
+    std::net::ToSocketAddrs::to_socket_addrs(&raw)
+        .ok()?
+        .find(|address| address.is_ipv4())
 }
 
 fn local_ipv4_hosts() -> Vec<String> {
