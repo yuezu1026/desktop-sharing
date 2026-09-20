@@ -16,12 +16,16 @@ use windows::core::PCWSTR;
 use crate::host_hf::{self, HostConfirmView, HostMainView};
 use crate::host_layout::{self, Rect as LayoutRect};
 use crate::ui_theme::{
-    COLOR_BG, COLOR_BRAND, COLOR_LINE, COLOR_ON_SOLID, COLOR_SURFACE, COLOR_SURFACE2, COLOR_SWITCH_OFF, COLOR_TEXT,
+    COLOR_BG, COLOR_BRAND, COLOR_LINE, COLOR_OK, COLOR_ON_SOLID, COLOR_SURFACE, COLOR_SWITCH_OFF, COLOR_TEXT,
     COLOR_TEXT2,
 };
 
 const COLOR_THUMB: u32 = COLOR_ON_SOLID;
+/// 对齐 tokens `--brand-soft` / `--ok-soft` / `--surface3` / `--line2`（Win32 BGR）。
 const COLOR_BRAND_SOFT: u32 = 0x00FDEFE7;
+const COLOR_OK_SOFT: u32 = 0x00EDF4E2;
+const COLOR_SURFACE3: u32 = 0x00F8EEE9;
+const COLOR_LINE2: u32 = 0x00E4D3C9;
 const PANEL_RADIUS: i32 = 14;
 const PILL_RADIUS: i32 = 14;
 const BUTTON_RADIUS: i32 = 10;
@@ -69,7 +73,7 @@ pub fn hit_accept_switch(click_x: i32, click_y: i32) -> bool {
 pub unsafe fn paint_main_shell(device_context: HDC, view: &HostMainView) {
     fill_bg(device_context, host_layout::MAIN_WIDTH, host_layout::MAIN_HEIGHT, COLOR_BG);
     fill_panel(device_context, host_layout::LEFT_PANEL, COLOR_SURFACE, COLOR_LINE);
-    fill_panel(device_context, host_layout::RIGHT_STATUS, COLOR_SURFACE2, COLOR_LINE);
+    fill_panel(device_context, host_layout::RIGHT_STATUS, COLOR_SURFACE, COLOR_LINE);
     fill_panel(device_context, host_layout::RIGHT_SWITCHES, COLOR_SURFACE, COLOR_LINE);
     fill_panel(device_context, host_layout::RIGHT_FRAUD, COLOR_BRAND_SOFT, COLOR_LINE);
     SetBkMode(device_context, TRANSPARENT);
@@ -89,7 +93,13 @@ pub unsafe fn paint_main_shell(device_context: HDC, view: &HostMainView) {
     );
 
     draw_in(device_context, host_hf::STATUS_TITLE, host_layout::STATUS_TITLE, DrawStyle::Bold);
-    paint_pill_at(device_context, host_layout::STATUS_PILL.left, host_layout::STATUS_PILL.top, &view.status_pill, false);
+    paint_pill_at(
+        device_context,
+        host_layout::STATUS_PILL.left,
+        host_layout::STATUS_PILL.top,
+        &view.status_pill,
+        PillKind::Neutral,
+    );
     draw_in(device_context, &view.status_hint, host_layout::STATUS_HINT, DrawStyle::Muted);
 
     draw_in(device_context, host_hf::SWITCHES_TITLE, host_layout::SWITCHES_TITLE, DrawStyle::Bold);
@@ -121,12 +131,13 @@ unsafe fn paint_main_actions(device_context: HDC, show_session_actions: bool) {
 }
 
 unsafe fn paint_outline_button(device_context: HDC, rect: LayoutRect, label: &str) {
-    fill_round_rect(device_context, rect, COLOR_TEXT, BUTTON_RADIUS);
+    // HF `.btn`：1px line2 细边，不是粗黑框。
+    fill_round_rect(device_context, rect, COLOR_LINE2, BUTTON_RADIUS);
     let inset = LayoutRect {
-        left: rect.left + 2,
-        top: rect.top + 2,
-        right: rect.right - 2,
-        bottom: rect.bottom - 2,
+        left: rect.left + 1,
+        top: rect.top + 1,
+        right: rect.right - 1,
+        bottom: rect.bottom - 1,
     };
     fill_round_rect(device_context, inset, COLOR_SURFACE, BUTTON_RADIUS.saturating_sub(1));
     let _ = SetTextColor(device_context, COLORREF(COLOR_TEXT));
@@ -160,7 +171,7 @@ pub unsafe fn paint_confirm_shell(device_context: HDC, view: &HostConfirmView) {
         host_layout::CONFIRM_PILL.left,
         host_layout::CONFIRM_PILL.top,
         host_hf::connection_pill(view.first_connection),
-        true,
+        PillKind::Fact,
     );
 
     draw_in(device_context, host_hf::CONFIRM_CAN_LABEL, host_layout::CONFIRM_CAN_LABEL, DrawStyle::Label);
@@ -269,14 +280,44 @@ unsafe fn fill_round_rect(device_context: HDC, rect: LayoutRect, fill: u32, radi
     let _ = DeleteObject(HGDIOBJ::from(pen));
 }
 
-unsafe fn paint_pill_at(device_context: HDC, left: i32, top: i32, label: &str, fact: bool) {
-    let width = (label.encode_utf16().count() as i32 * 14 + 24).max(72);
-    let height = 28;
+#[derive(Clone, Copy)]
+enum PillKind {
+    /// 状态「未被连接」、资源「均衡」
+    Neutral,
+    /// 「开」
+    Ok,
+    /// 「首次连接」描边事实标
+    Fact,
+}
+
+unsafe fn paint_pill_at(device_context: HDC, left: i32, top: i32, label: &str, kind: PillKind) {
+    let width = (label.encode_utf16().count() as i32 * 11 + 18).max(48);
+    let height = 22;
     let rect = LayoutRect::from_xywh(left, top, width, height);
-    let fill = if fact { COLOR_BRAND_SOFT } else { COLOR_SURFACE2 };
-    fill_round_rect(device_context, rect, fill, PILL_RADIUS);
-    let _ = SetTextColor(device_context, COLORREF(if fact { COLOR_BRAND } else { COLOR_TEXT2 }));
-    draw_centered_in(device_context, label, rect);
+    match kind {
+        PillKind::Neutral => {
+            fill_round_rect(device_context, rect, COLOR_SURFACE3, PILL_RADIUS);
+            let _ = SetTextColor(device_context, COLORREF(COLOR_TEXT2));
+        }
+        PillKind::Ok => {
+            fill_round_rect(device_context, rect, COLOR_OK_SOFT, PILL_RADIUS);
+            let _ = SetTextColor(device_context, COLORREF(COLOR_OK));
+        }
+        PillKind::Fact => {
+            fill_round_rect(device_context, rect, COLOR_TEXT, PILL_RADIUS);
+            let inset = LayoutRect {
+                left: rect.left + 1,
+                top: rect.top + 1,
+                right: rect.right - 1,
+                bottom: rect.bottom - 1,
+            };
+            fill_round_rect(device_context, inset, COLOR_SURFACE, PILL_RADIUS.saturating_sub(1));
+            let _ = SetTextColor(device_context, COLORREF(COLOR_TEXT));
+        }
+    }
+    with_font(device_context, "Microsoft YaHei UI", 12, 650, || {
+        draw_text(device_context, label, rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+    });
 }
 
 unsafe fn draw_switch_row(device_context: HDC, row: LayoutRect, label: &str, value: &str, on: bool) {
@@ -284,9 +325,9 @@ unsafe fn draw_switch_row(device_context: HDC, row: LayoutRect, label: &str, val
     paint_pill_at(
         device_context,
         row.left + host_layout::SWITCH_ROW_PILL_OFFSET_X,
-        row.top - 2,
+        row.top - 1,
         value,
-        on,
+        if on { PillKind::Ok } else { PillKind::Neutral },
     );
 }
 

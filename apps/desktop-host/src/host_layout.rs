@@ -78,9 +78,9 @@ pub const LABEL_PASSWORD: Rect = Rect::from_xywh(40, 126, 280, 22);
 pub const VALUE_PASSWORD: Rect = Rect::from_xywh(40, 154, 170, 30);
 pub const PASSWORD_HINT: Rect = Rect::from_xywh(40, 196, 280, 56);
 
-pub const ACCEPT_SWITCH_TRACK: Rect = Rect::from_xywh(40, 300, 48, 26);
-pub const ACCEPT_SWITCH_HIT: Rect = Rect::from_xywh(40, 300, 180, 40);
-pub const ACCEPT_SWITCH_LABEL: Rect = Rect::from_xywh(96, 302, 180, 24);
+pub const ACCEPT_SWITCH_TRACK: Rect = Rect::from_xywh(40, 268, 48, 26);
+pub const ACCEPT_SWITCH_HIT: Rect = Rect::from_xywh(40, 268, 180, 40);
+pub const ACCEPT_SWITCH_LABEL: Rect = Rect::from_xywh(96, 270, 180, 24);
 
 pub const STATUS_TITLE: Rect = Rect::from_xywh(380, 36, 460, 24);
 pub const STATUS_PILL: Rect = Rect::from_xywh(380, 72, 120, 28);
