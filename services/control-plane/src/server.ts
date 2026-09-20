@@ -13,6 +13,7 @@ import { attachWebRelayBridge } from "./web-relay-bridge.js";
 type Json = Record<string, unknown>;
 
 const buyPagePath = join(dirname(fileURLToPath(import.meta.url)), "..", "buy", "index.html");
+const buyUiPath = join(dirname(fileURLToPath(import.meta.url)), "..", "buy", "purchase-ui.mjs");
 const grantPagePath = join(dirname(fileURLToPath(import.meta.url)), "..", "grant", "index.html");
 const opsPagePath = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "apps", "ops", "index.html");
 const webControllerPagePath = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "apps", "web-controller", "index.html");
@@ -67,6 +68,16 @@ async function handle(
         "content-length": String(page.length),
       });
       response.end(page);
+      return;
+    }
+    if (method === "GET" && url.pathname === "/buy/purchase-ui.mjs") {
+      const script = readFileSync(buyUiPath);
+      response.writeHead(200, {
+        "content-type": "text/javascript; charset=utf-8",
+        "cache-control": "no-store",
+        "content-length": String(script.length),
+      });
+      response.end(script);
       return;
     }
     if (method === "GET" && (url.pathname === "/grant" || url.pathname === "/grant/")) {

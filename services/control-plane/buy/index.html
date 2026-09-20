@@ -11,16 +11,19 @@
     section, aside { background: #fff; border: 1px solid #d8dbe0; border-radius: 8px; padding: 16px; }
     aside { width: 280px; }
     h1 { font-size: 16px; margin: 0; }
-    .row { display: flex; align-items: center; gap: 8px; }
+    h2 { font-size: 18px; margin: 0 0 8px; }
+    .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .muted { color: #5c6570; font-size: 13px; line-height: 1.6; }
     button { min-height: 36px; padding: 0 12px; }
-    button.on { outline: 2px solid #1f6feb; }
-    button.solid { width: 100%; background: #1f6feb; color: #fff; border: 0; border-radius: 6px; }
+    button.on { outline: 2px solid #1a1a1a; }
+    button.solid { width: 100%; background: #1a1a1a; color: #fff; border: 0; border-radius: 6px; }
     button:disabled { opacity: 0.55; }
     label { display: block; margin-top: 8px; }
-    input { display: block; width: 100%; box-sizing: border-box; min-height: 36px; margin-top: 4px; }
+    input[type="text"], input[type="password"], input[type="tel"] { display: block; width: 100%; box-sizing: border-box; min-height: 36px; margin-top: 4px; }
     .qr { width: 88px; height: 88px; border: 1px dashed #99a; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 12px; color: #5c6570; }
     .price { font-size: 20px; }
+    #resultPanel[hidden], #buyPanel[hidden], #invoiceFields[hidden] { display: none !important; }
+    #resultLines p { margin: 6px 0; line-height: 1.5; }
   </style>
 </head>
 <body>
@@ -42,47 +45,83 @@
           <p class="muted" id="loginError"></p>
         </form>
       </section>
-      <section>
-        <div class="row">
-          <strong>个人版</strong>
-          <button type="button" id="planYearly" class="on">年付</button>
-          <button type="button" id="planMonthly">月付</button>
-        </div>
-        <p><strong class="price" id="priceAmount">价格读取中</strong> <span class="muted" id="priceNote"></span></p>
-        <p class="muted" id="priceVersion">价格与权益由服务端下发</p>
-      </section>
-      <section>
-        <p>支付方式</p>
-        <div class="row">
-          <button type="button" id="channelWechat">微信支付</button>
-          <button type="button" id="channelAlipay">支付宝</button>
-        </div>
-        <p class="muted">微信和支付宝可以在官网直接选择。本页只在官网使用，不放进 iOS App。</p>
-      </section>
-      <section>
-        <p>或扫码支付</p>
-        <div class="row">
-          <div class="qr" id="qrBox">渠道尚未签发</div>
-          <div>
-            <p>用微信或支付宝扫码</p>
-            <p class="muted">二维码由渠道签发后 15 分钟内有效。本页不预生成支付码。</p>
-            <button type="button" id="refreshQr">刷新二维码</button>
+
+      <div id="buyPanel">
+        <section>
+          <div class="row">
+            <strong>个人版</strong>
+            <button type="button" id="planYearly" class="on">年付</button>
+            <button type="button" id="planMonthly">月付</button>
           </div>
-        </div>
+          <p><strong class="price" id="priceAmount">价格读取中</strong> <span class="muted" id="priceNote"></span></p>
+          <p class="muted" id="priceVersion">价格与权益由服务端下发</p>
+          <p class="muted">只卖更多中继时长，不解锁功能。</p>
+        </section>
+        <section>
+          <p>支付方式</p>
+          <div class="row">
+            <button type="button" id="channelWechat">微信支付</button>
+            <button type="button" id="channelAlipay">支付宝</button>
+          </div>
+          <p class="muted">微信和支付宝可以在官网直接选择。本页只在官网使用，不放进 iOS App。</p>
+        </section>
+        <section>
+          <p>发票（支付前填写）</p>
+          <label class="row"><input type="checkbox" id="wantsInvoice"> 需要发票</label>
+          <div id="invoiceFields" hidden>
+            <label>抬头类型
+              <select id="invoiceTitleKind">
+                <option value="personal">个人</option>
+                <option value="enterprise">企业</option>
+              </select>
+            </label>
+            <label>抬头
+              <input id="invoiceTitle" type="text" autocomplete="organization">
+            </label>
+            <label>税号
+              <input id="invoiceTaxNumber" type="text">
+            </label>
+          </div>
+        </section>
+        <section>
+          <p>或扫码支付</p>
+          <div class="row">
+            <div class="qr" id="qrBox">渠道尚未签发</div>
+            <div>
+              <p>用微信或支付宝扫码</p>
+              <p class="muted">二维码由渠道签发后 15 分钟内有效。本页不预生成支付码。</p>
+              <button type="button" id="refreshQr">刷新二维码</button>
+            </div>
+          </div>
+        </section>
+        <button type="button" class="solid" id="payButton" disabled>去支付</button>
+        <p class="muted">支付由微信或支付宝收银台完成；本页不采集卡号与支付密码。收银台不是我们的界面。</p>
+        <p class="muted" id="orderError"></p>
+      </div>
+
+      <section id="resultPanel" hidden>
+        <h2 id="resultTitle"></h2>
+        <div id="resultLines"></div>
+        <p class="muted" id="resultHint"></p>
+        <p><button type="button" id="backToBuy">返回购买</button></p>
       </section>
-      <button type="button" class="solid" id="payButton" disabled>去支付</button>
-      <p class="muted">支付由微信或支付宝收银台完成；本页不采集卡号与支付密码。</p>
-      <p class="muted" id="orderResult"></p>
     </div>
     <aside>
       <p><strong>本页只对官网存在</strong></p>
       <p class="muted">与以后的 iOS 购买页是两套实现，不得共用文案。iOS App 内不得出现本页，也不得出现扫码支付。</p>
-      <p class="muted">跳转到微信或支付宝收银台是第三方页面，不是我们的界面。本页停在跳转之前。</p>
+      <p class="muted">跳转到微信或支付宝收银台是第三方页面，不是我们的界面。本页停在跳转之前，并展示支付结果四态。</p>
     </aside>
   </main>
-  <script>
-    // 金额、价格版本都从目录接口来。未登录不能下单。刷新不会造出支付二维码。
+  <script type="module">
+    import {
+      catalogOfferCopy,
+      findOrder,
+      presentResult,
+      shouldPollOrder,
+    } from "/buy/purchase-ui.mjs";
+
     const sessionKey = "webBuyToken";
+    const watchedOrderKey = "webBuyOrderId";
     const priceAmount = document.getElementById("priceAmount");
     const priceNote = document.getElementById("priceNote");
     const priceVersion = document.getElementById("priceVersion");
@@ -90,45 +129,36 @@
     const loginBox = document.getElementById("loginBox");
     const loginError = document.getElementById("loginError");
     const payButton = document.getElementById("payButton");
-    const orderResult = document.getElementById("orderResult");
+    const orderError = document.getElementById("orderError");
     const qrBox = document.getElementById("qrBox");
     const planYearly = document.getElementById("planYearly");
     const planMonthly = document.getElementById("planMonthly");
     const channelWechat = document.getElementById("channelWechat");
     const channelAlipay = document.getElementById("channelAlipay");
+    const buyPanel = document.getElementById("buyPanel");
+    const resultPanel = document.getElementById("resultPanel");
+    const resultTitle = document.getElementById("resultTitle");
+    const resultLines = document.getElementById("resultLines");
+    const resultHint = document.getElementById("resultHint");
+    const wantsInvoice = document.getElementById("wantsInvoice");
+    const invoiceFields = document.getElementById("invoiceFields");
 
     let catalog = null;
     let selectedPlan = "yearly";
     let selectedChannel = "";
-
-    function formatYuan(amountCents) {
-      const wholeYuan = Math.trunc(amountCents / 100);
-      const fenPart = String(Math.abs(amountCents % 100)).padStart(2, "0");
-      return "¥" + String(wholeYuan) + "." + fenPart;
-    }
+    let pollTimer = 0;
 
     function storedToken() {
       return sessionStorage.getItem(sessionKey);
     }
 
     function paintPrice() {
-      if (!catalog) {
-        priceAmount.textContent = "价格读取中";
-        priceNote.textContent = "";
-        payButton.textContent = "去支付";
-        payButton.disabled = true;
-        return;
-      }
-      const offer = selectedPlan === "monthly" ? catalog.monthly : catalog.yearly;
-      priceAmount.textContent = formatYuan(offer.amountCents);
-      if (selectedPlan === "yearly") {
-        priceNote.textContent = "/ 年（约 ¥" + catalog.yearly.perMonthLabel + " / 月，只展示不另收费）";
-      } else {
-        priceNote.textContent = offer.autoRenew ? "/ 月 · 自动续费" : "/ 月";
-      }
-      priceVersion.textContent = "价格版本 " + catalog.priceVersion + " · 由服务端下发";
-      payButton.textContent = "去支付 " + formatYuan(offer.amountCents);
-      payButton.disabled = !storedToken() || selectedChannel === "";
+      const offer = catalogOfferCopy(catalog, selectedPlan);
+      priceAmount.textContent = offer.amountText;
+      priceNote.textContent = offer.note;
+      priceVersion.textContent = offer.version;
+      payButton.textContent = offer.ready ? "去支付 " + offer.amountText : "去支付";
+      payButton.disabled = !offer.ready || !storedToken() || selectedChannel === "";
     }
 
     function selectPlan(planName) {
@@ -145,13 +175,57 @@
       paintPrice();
     }
 
-    async function readJson(response) {
-      return response.json();
+    function showBuy() {
+      buyPanel.hidden = false;
+      resultPanel.hidden = true;
+      if (pollTimer) {
+        clearInterval(pollTimer);
+        pollTimer = 0;
+      }
+    }
+
+    function paintResult(order) {
+      const view = presentResult(order);
+      resultTitle.textContent = view.title;
+      resultLines.innerHTML = "";
+      for (const line of view.lines) {
+        const paragraph = document.createElement("p");
+        paragraph.textContent = line;
+        resultLines.appendChild(paragraph);
+      }
+      resultHint.textContent = view.actionHint;
+      buyPanel.hidden = true;
+      resultPanel.hidden = false;
+    }
+
+    async function refreshWatchedOrder() {
+      const token = storedToken();
+      const orderId = sessionStorage.getItem(watchedOrderKey);
+      if (!token || !orderId) return;
+      const response = await fetch("/v1/orders", { headers: { authorization: "Bearer " + token } });
+      const body = await response.json();
+      if (!response.ok || body.ok !== true) return;
+      const order = findOrder(body.orders, orderId);
+      if (!order) return;
+      paintResult(order);
+      if (!shouldPollOrder(order.state) && pollTimer) {
+        clearInterval(pollTimer);
+        pollTimer = 0;
+      }
+    }
+
+    function watchOrder(orderId) {
+      sessionStorage.setItem(watchedOrderKey, orderId);
+      void refreshWatchedOrder();
+      if (pollTimer) clearInterval(pollTimer);
+      pollTimer = setInterval(() => {
+        void refreshWatchedOrder();
+      }, 3000);
     }
 
     async function loadCatalog() {
       const response = await fetch("/v1/catalog");
-      const body = await readJson(response);
+      const body = await response.json();
       if (!response.ok || body.ok !== true) {
         priceAmount.textContent = "价格暂时取不到，不能下单";
         payButton.disabled = true;
@@ -170,7 +244,7 @@
         return;
       }
       const response = await fetch("/v1/account", { headers: { authorization: "Bearer " + token } });
-      const body = await readJson(response);
+      const body = await response.json();
       if (!response.ok) {
         sessionStorage.removeItem(sessionKey);
         loginState.textContent = "未登录";
@@ -181,6 +255,7 @@
       loginState.textContent = "已登录 · " + body.phoneMask;
       loginBox.hidden = true;
       paintPrice();
+      if (sessionStorage.getItem(watchedOrderKey)) watchOrder(sessionStorage.getItem(watchedOrderKey));
     }
 
     document.getElementById("loginForm").addEventListener("submit", async (event) => {
@@ -194,7 +269,7 @@
           password: document.getElementById("password").value,
         }),
       });
-      const body = await readJson(response);
+      const body = await response.json();
       if (!response.ok || !body.token) {
         loginError.textContent = body.message || "登录失败";
         return;
@@ -204,6 +279,10 @@
       await showAccount();
     });
 
+    wantsInvoice.addEventListener("change", () => {
+      invoiceFields.hidden = !wantsInvoice.checked;
+    });
+
     planYearly.addEventListener("click", () => selectPlan("yearly"));
     planMonthly.addEventListener("click", () => selectPlan("monthly"));
     channelWechat.addEventListener("click", () => selectChannel("wechat"));
@@ -211,35 +290,50 @@
 
     document.getElementById("refreshQr").addEventListener("click", () => {
       qrBox.textContent = "渠道尚未签发";
-      orderResult.textContent = "渠道尚未签发二维码，刷新不会生成支付码。";
+      orderError.textContent = "渠道尚未签发二维码，刷新不会生成支付码。";
+    });
+
+    document.getElementById("backToBuy").addEventListener("click", () => {
+      sessionStorage.removeItem(watchedOrderKey);
+      orderError.textContent = "";
+      showBuy();
     });
 
     payButton.addEventListener("click", async () => {
       const token = storedToken();
       if (!token) {
-        orderResult.textContent = "请先登录。未登录不能下单。";
+        orderError.textContent = "请先登录。未登录不能下单。";
         return;
       }
       if (!catalog || selectedChannel === "") {
-        orderResult.textContent = "请先选择微信或支付宝。";
+        orderError.textContent = "请先选择微信或支付宝。";
         return;
       }
-      orderResult.textContent = "";
+      orderError.textContent = "";
+      const payload = {
+        plan: selectedPlan,
+        payChannel: selectedChannel,
+        wantsInvoice: wantsInvoice.checked,
+      };
+      if (wantsInvoice.checked) {
+        payload.titleKind = document.getElementById("invoiceTitleKind").value;
+        payload.title = document.getElementById("invoiceTitle").value;
+        payload.taxNumber = document.getElementById("invoiceTaxNumber").value;
+      }
       const response = await fetch("/v1/orders", {
         method: "POST",
         headers: {
           "content-type": "application/json",
           authorization: "Bearer " + token,
         },
-        body: JSON.stringify({ plan: selectedPlan, payChannel: selectedChannel }),
+        body: JSON.stringify(payload),
       });
-      const body = await readJson(response);
+      const body = await response.json();
       if (!response.ok || body.ok !== true) {
-        orderResult.textContent = body.message || "下单失败";
+        orderError.textContent = body.message || "下单失败";
         return;
       }
-      const channelLabel = body.payChannel === "alipay" ? "支付宝" : "微信支付";
-      orderResult.textContent = "订单已建立，状态是" + body.stateLabel + "，金额 " + formatYuan(body.amountCents) + "。下一步应跳到" + channelLabel + "，收银台不在本页。";
+      watchOrder(body.orderId);
     });
 
     loadCatalog();
