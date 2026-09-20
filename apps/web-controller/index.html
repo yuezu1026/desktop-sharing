@@ -43,16 +43,19 @@
     import {
       FRAME_KIND_VIDEO,
       VIDEO_CODEC_JPEG,
+      VIDEO_CODEC_H264,
       frameKind,
       framePayload,
       unpackVideo,
     } from "/web/frame.mjs";
+    import { createH264Painter } from "/web/h264-painter.mjs";
 
     const errorLine = document.getElementById("error");
     const linkBadge = document.getElementById("linkBadge");
     const pictureLabel = document.getElementById("pictureLabel");
     const frameCanvas = document.getElementById("frameCanvas");
     const frameContext = frameCanvas.getContext("2d");
+    const h264Painter = createH264Painter(frameCanvas);
     const controllerFingerprint = crypto.randomUUID();
     let phase = PHASE.idle;
     let pollTimer = 0;
@@ -80,6 +83,7 @@
         relaySocket.close();
         relaySocket = null;
       }
+      h264Painter.close();
     }
 
     function openRelayBridge() {
@@ -113,9 +117,15 @@
         if (!video) return;
         if (video.codec === VIDEO_CODEC_JPEG) {
           await drawJpeg(video.body, video.width, video.height);
-        } else {
-          pictureLabel.textContent = "已收到 H264（WebCodecs 下一刀）";
-          pictureLabel.style.display = "block";
+        } else if (video.codec === VIDEO_CODEC_H264) {
+          const painted = h264Painter.pushAnnexB(video.body);
+          if (painted) {
+            pictureLabel.style.display = "none";
+            linkBadge.textContent = "中继";
+          } else if (!h264Painter.supported) {
+            pictureLabel.textContent = "当前浏览器不支持 H264 硬解";
+            pictureLabel.style.display = "block";
+          }
         }
       });
       socket.addEventListener("close", () => {

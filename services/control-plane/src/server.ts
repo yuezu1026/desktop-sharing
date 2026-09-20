@@ -17,6 +17,16 @@ const opsPagePath = join(dirname(fileURLToPath(import.meta.url)), "..", "..", ".
 const webControllerPagePath = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "apps", "web-controller", "index.html");
 const webControllerUiPath = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "apps", "web-controller", "session-ui.mjs");
 const webControllerFramePath = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "apps", "web-controller", "frame.mjs");
+const webControllerH264Path = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "apps", "web-controller", "h264.mjs");
+const webControllerH264PainterPath = join(
+  dirname(fileURLToPath(import.meta.url)),
+  "..",
+  "..",
+  "..",
+  "apps",
+  "web-controller",
+  "h264-painter.mjs",
+);
 
 export function createHttpServer(
   pool: Pool,
@@ -117,6 +127,26 @@ async function handle(
     }
     if (method === "GET" && url.pathname === "/web/frame.mjs") {
       const script = readFileSync(webControllerFramePath);
+      response.writeHead(200, {
+        "content-type": "text/javascript; charset=utf-8",
+        "cache-control": "no-store",
+        "content-length": String(script.length),
+      });
+      response.end(script);
+      return;
+    }
+    if (method === "GET" && url.pathname === "/web/h264.mjs") {
+      const script = readFileSync(webControllerH264Path);
+      response.writeHead(200, {
+        "content-type": "text/javascript; charset=utf-8",
+        "cache-control": "no-store",
+        "content-length": String(script.length),
+      });
+      response.end(script);
+      return;
+    }
+    if (method === "GET" && url.pathname === "/web/h264-painter.mjs") {
+      const script = readFileSync(webControllerH264PainterPath);
       response.writeHead(200, {
         "content-type": "text/javascript; charset=utf-8",
         "cache-control": "no-store",
