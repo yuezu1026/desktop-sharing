@@ -19,13 +19,22 @@ fn main() {
 mod capture;
 
 #[cfg(windows)]
+mod color_nv12;
+
+#[cfg(windows)]
 mod dxgi;
 
 #[cfg(windows)]
 mod h264_encode;
 
 #[cfg(windows)]
+mod h264_soft;
+
+#[cfg(windows)]
 mod inject;
+
+#[cfg(windows)]
+mod mf_h264;
 
 #[cfg(windows)]
 mod windows_host {

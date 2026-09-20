@@ -45,6 +45,42 @@ pub fn annex_b_has_idr(bytes: &[u8]) -> bool {
     first_vcl_nal_type(bytes) == Some(5)
 }
 
+/// 把 4 字节大端长度前缀的 AVCC 风格 NAL 串改成 Annex-B。已是 Annex-B 则原样拷贝。
+pub fn ensure_annex_b(bytes: &[u8]) -> Option<Vec<u8>> {
+    if looks_like_annex_b(bytes) {
+        return Some(bytes.to_vec());
+    }
+    length_prefixed_to_annex_b(bytes)
+}
+
+/// 输入：连续的 `[u32 BE length][nal…]`；输出：带起始码的 Annex-B。
+pub fn length_prefixed_to_annex_b(bytes: &[u8]) -> Option<Vec<u8>> {
+    if bytes.is_empty() {
+        return None;
+    }
+    let mut index = 0usize;
+    let mut out = Vec::with_capacity(bytes.len() + 16);
+    while index + 4 <= bytes.len() {
+        let length = u32::from_be_bytes([
+            bytes[index],
+            bytes[index + 1],
+            bytes[index + 2],
+            bytes[index + 3],
+        ]) as usize;
+        index += 4;
+        if length == 0 || index + length > bytes.len() {
+            return None;
+        }
+        out.extend_from_slice(&[0, 0, 0, 1]);
+        out.extend_from_slice(&bytes[index..index + length]);
+        index += length;
+    }
+    if index != bytes.len() || out.is_empty() {
+        return None;
+    }
+    Some(out)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -73,5 +109,24 @@ mod tests {
         assert!(looks_like_annex_b(&stream));
         assert!(!annex_b_has_idr(&stream));
         assert_eq!(first_vcl_nal_type(&stream), Some(1));
+    }
+
+    #[test]
+    fn length_prefixed_converts_to_annex_b() {
+        let nal = [0x65u8, 0x88, 0x80];
+        let mut avcc = Vec::new();
+        avcc.extend_from_slice(&(nal.len() as u32).to_be_bytes());
+        avcc.extend_from_slice(&nal);
+        let annex = length_prefixed_to_annex_b(&avcc).expect("convert");
+        assert_eq!(&annex[..4], &[0, 0, 0, 1]);
+        assert_eq!(&annex[4..], &nal);
+        assert!(annex_b_has_idr(&annex));
+    }
+
+    #[test]
+    fn ensure_annex_b_passthrough() {
+        let stream = [0, 0, 0, 1, 0x65, 0x00];
+        let out = ensure_annex_b(&stream).expect("ok");
+        assert_eq!(out, stream);
     }
 }

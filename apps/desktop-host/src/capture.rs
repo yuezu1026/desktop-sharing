@@ -1,4 +1,4 @@
-//! 会话进行中才采集。空闲不占编码器。优先 DXGI；编码优先 H264 软编，失败回退 JPEG。
+//! 会话进行中才采集。空闲不占编码器。优先 DXGI；编码优先 MF（硬编/系统 MFT）再 OpenH264，失败回退 JPEG。
 
 use std::mem::size_of;
 
@@ -12,7 +12,7 @@ use windows::Win32::Graphics::Gdi::{
 use windows::Win32::UI::WindowsAndMessaging::{GetSystemMetrics, SM_CXSCREEN, SM_CYSCREEN};
 
 use crate::dxgi::DxgiGrabber;
-use crate::h264_encode::SoftH264Encoder;
+use crate::h264_encode::H264Encoder;
 
 const MAX_WIDTH: i32 = 640;
 const JPEG_QUALITY: u8 = 50;
@@ -21,7 +21,7 @@ pub struct ScreenGrabber {
     last_hash: u64,
     dxgi: Option<DxgiGrabber>,
     prefer_dxgi: bool,
-    h264: Option<SoftH264Encoder>,
+    h264: Option<H264Encoder>,
 }
 
 impl ScreenGrabber {
@@ -57,7 +57,7 @@ impl ScreenGrabber {
 
     fn try_h264_frame(&mut self, width: i32, height: i32, bgr: &[u8]) -> Option<Frame> {
         if self.h264.is_none() {
-            self.h264 = SoftH264Encoder::open(width as u32, height as u32);
+            self.h264 = H264Encoder::open(width as u32, height as u32);
         }
         let encoder = self.h264.as_mut()?;
         let annex_b = encoder.encode_bgr(width as u32, height as u32, bgr)?;
