@@ -3,10 +3,10 @@
 
 use windows::Win32::Foundation::{COLORREF, RECT};
 use windows::Win32::Graphics::Gdi::{
-    CreateCompatibleBitmap, CreateCompatibleDC, CreateFontW, CreateSolidBrush, DeleteDC, DeleteObject, DrawTextW,
-    FillRect, GetDC, ReleaseDC, SelectObject, SetBkMode, SetTextColor, CLIP_DEFAULT_PRECIS, DEFAULT_CHARSET,
-    DEFAULT_QUALITY, DT_CENTER, DT_LEFT, DT_SINGLELINE, DT_VCENTER, DT_WORDBREAK, HDC, HGDIOBJ, OUT_DEFAULT_PRECIS,
-    TRANSPARENT,
+    CreateCompatibleBitmap, CreateCompatibleDC, CreateFontW, CreatePen, CreateSolidBrush, DeleteDC, DeleteObject,
+    DrawTextW, FillRect, GetDC, ReleaseDC, RoundRect, SelectObject, SetBkMode, SetTextColor, CLIP_DEFAULT_PRECIS,
+    DEFAULT_CHARSET, DEFAULT_QUALITY, DT_CENTER, DT_LEFT, DT_SINGLELINE, DT_VCENTER, DT_WORDBREAK, HDC, HGDIOBJ,
+    OUT_DEFAULT_PRECIS, PS_NULL, TRANSPARENT,
 };
 use windows::Win32::UI::WindowsAndMessaging::{
     AdjustWindowRectEx, CreateIconIndirect, HICON, ICONINFO, WINDOW_EX_STYLE, WINDOW_STYLE,
@@ -22,6 +22,9 @@ use crate::ui_theme::{
 
 const COLOR_THUMB: u32 = COLOR_ON_SOLID;
 const COLOR_BRAND_SOFT: u32 = 0x00FDEFE7;
+const PANEL_RADIUS: i32 = 14;
+const PILL_RADIUS: i32 = 14;
+const BUTTON_RADIUS: i32 = 10;
 
 pub use host_layout::{CONFIRM_HEIGHT, CONFIRM_WIDTH, MAIN_HEIGHT, MAIN_WIDTH};
 
@@ -103,30 +106,29 @@ pub unsafe fn paint_main_shell(device_context: HDC, view: &HostMainView) {
     draw_in(device_context, host_hf::FRAUD_TITLE, host_layout::FRAUD_TITLE, DrawStyle::Bold);
     draw_in(device_context, host_hf::FRAUD_BODY, host_layout::FRAUD_BODY, DrawStyle::Muted);
 
-    paint_main_actions(device_context);
+    paint_main_actions(device_context, view.show_session_actions);
 }
 
-unsafe fn paint_main_actions(device_context: HDC) {
+unsafe fn paint_main_actions(device_context: HDC, show_session_actions: bool) {
     paint_outline_button(device_context, host_layout::BTN_COPY.rect, host_hf::BTN_COPY);
     paint_outline_button(device_context, host_layout::BTN_ROTATE.rect, host_hf::BTN_ROTATE);
+    if !show_session_actions {
+        return;
+    }
     paint_outline_button(device_context, host_layout::BTN_STOP.rect, host_hf::BTN_STOP);
     paint_outline_button(device_context, host_layout::BTN_VIEW_ONLY.rect, host_hf::BTN_VIEW_ONLY);
     paint_outline_button(device_context, host_layout::BTN_RESTORE_INPUT.rect, host_hf::BTN_RESTORE_INPUT);
 }
 
 unsafe fn paint_outline_button(device_context: HDC, rect: LayoutRect, label: &str) {
-    let border_brush = CreateSolidBrush(COLORREF(COLOR_TEXT));
-    FillRect(device_context, &to_gdi(rect), border_brush);
-    let _ = DeleteObject(HGDIOBJ::from(border_brush));
-    let inset = RECT {
+    fill_round_rect(device_context, rect, COLOR_TEXT, BUTTON_RADIUS);
+    let inset = LayoutRect {
         left: rect.left + 2,
         top: rect.top + 2,
         right: rect.right - 2,
         bottom: rect.bottom - 2,
     };
-    let inset_brush = CreateSolidBrush(COLORREF(COLOR_SURFACE));
-    FillRect(device_context, &inset, inset_brush);
-    let _ = DeleteObject(HGDIOBJ::from(inset_brush));
+    fill_round_rect(device_context, inset, COLOR_SURFACE, BUTTON_RADIUS.saturating_sub(1));
     let _ = SetTextColor(device_context, COLORREF(COLOR_TEXT));
     draw_centered_in(device_context, label, rect);
 }
@@ -200,35 +202,18 @@ pub unsafe fn paint_confirm_shell(device_context: HDC, view: &HostConfirmView) {
 /// 「拒绝」实心主按钮；「允许本次」同尺寸描边。
 pub unsafe fn paint_confirm_buttons(device_context: HDC) {
     let refuse = host_layout::CONFIRM_REFUSE.rect;
-    let refuse_brush = CreateSolidBrush(COLORREF(COLOR_TEXT));
-    FillRect(device_context, &to_gdi(refuse), refuse_brush);
-    let _ = DeleteObject(HGDIOBJ::from(refuse_brush));
+    fill_round_rect(device_context, refuse, COLOR_TEXT, BUTTON_RADIUS);
     let _ = SetTextColor(device_context, COLORREF(COLOR_ON_SOLID));
     draw_centered_in(device_context, host_hf::CONFIRM_REFUSE, refuse);
 
-    let allow = host_layout::CONFIRM_ALLOW.rect;
-    let border_brush = CreateSolidBrush(COLORREF(COLOR_TEXT));
-    FillRect(device_context, &to_gdi(allow), border_brush);
-    let _ = DeleteObject(HGDIOBJ::from(border_brush));
-    let inset = RECT {
-        left: allow.left + 2,
-        top: allow.top + 2,
-        right: allow.right - 2,
-        bottom: allow.bottom - 2,
-    };
-    let inset_brush = CreateSolidBrush(COLORREF(COLOR_SURFACE));
-    FillRect(device_context, &inset, inset_brush);
-    let _ = DeleteObject(HGDIOBJ::from(inset_brush));
-    let _ = SetTextColor(device_context, COLORREF(COLOR_TEXT));
-    draw_centered_in(device_context, host_hf::CONFIRM_ALLOW, allow);
+    paint_outline_button(device_context, host_layout::CONFIRM_ALLOW.rect, host_hf::CONFIRM_ALLOW);
 }
 
 pub unsafe fn paint_accept_switch(device_context: HDC, accepting: bool) {
     let track = host_layout::ACCEPT_SWITCH_TRACK;
     let track_color = if accepting { COLOR_BRAND } else { COLOR_SWITCH_OFF };
-    let track_brush = CreateSolidBrush(COLORREF(track_color));
-    FillRect(device_context, &to_gdi(track), track_brush);
-    let _ = DeleteObject(HGDIOBJ::from(track_brush));
+    let track_radius = track.height() / 2;
+    fill_round_rect(device_context, track, track_color, track_radius);
 
     let thumb_size = track.height() - 4;
     let thumb_left = if accepting {
@@ -237,9 +222,7 @@ pub unsafe fn paint_accept_switch(device_context: HDC, accepting: bool) {
         track.left + 2
     };
     let thumb = LayoutRect::from_xywh(thumb_left, track.top + 2, thumb_size, thumb_size);
-    let thumb_brush = CreateSolidBrush(COLORREF(COLOR_THUMB));
-    FillRect(device_context, &to_gdi(thumb), thumb_brush);
-    let _ = DeleteObject(HGDIOBJ::from(thumb_brush));
+    fill_round_rect(device_context, thumb, COLOR_THUMB, thumb_size / 2);
 }
 
 unsafe fn fill_bg(device_context: HDC, width: i32, height: i32, color: u32) {
@@ -255,18 +238,35 @@ unsafe fn fill_bg(device_context: HDC, width: i32, height: i32, color: u32) {
 }
 
 unsafe fn fill_panel(device_context: HDC, panel: LayoutRect, fill: u32, border: u32) {
-    let border_brush = CreateSolidBrush(COLORREF(border));
-    FillRect(device_context, &to_gdi(panel), border_brush);
-    let _ = DeleteObject(HGDIOBJ::from(border_brush));
-    let inset = RECT {
+    fill_round_rect(device_context, panel, border, PANEL_RADIUS);
+    let inset = LayoutRect {
         left: panel.left + 1,
         top: panel.top + 1,
         right: panel.right - 1,
         bottom: panel.bottom - 1,
     };
-    let fill_brush = CreateSolidBrush(COLORREF(fill));
-    FillRect(device_context, &inset, fill_brush);
-    let _ = DeleteObject(HGDIOBJ::from(fill_brush));
+    fill_round_rect(device_context, inset, fill, PANEL_RADIUS.saturating_sub(1));
+}
+
+unsafe fn fill_round_rect(device_context: HDC, rect: LayoutRect, fill: u32, radius: i32) {
+    let brush = CreateSolidBrush(COLORREF(fill));
+    let pen = CreatePen(PS_NULL, 0, COLORREF(0));
+    let old_brush = SelectObject(device_context, HGDIOBJ::from(brush));
+    let old_pen = SelectObject(device_context, HGDIOBJ::from(pen));
+    let diameter = (radius * 2).max(2);
+    let _ = RoundRect(
+        device_context,
+        rect.left,
+        rect.top,
+        rect.right,
+        rect.bottom,
+        diameter,
+        diameter,
+    );
+    SelectObject(device_context, old_brush);
+    SelectObject(device_context, old_pen);
+    let _ = DeleteObject(HGDIOBJ::from(brush));
+    let _ = DeleteObject(HGDIOBJ::from(pen));
 }
 
 unsafe fn paint_pill_at(device_context: HDC, left: i32, top: i32, label: &str, fact: bool) {
@@ -274,9 +274,7 @@ unsafe fn paint_pill_at(device_context: HDC, left: i32, top: i32, label: &str, f
     let height = 28;
     let rect = LayoutRect::from_xywh(left, top, width, height);
     let fill = if fact { COLOR_BRAND_SOFT } else { COLOR_SURFACE2 };
-    let brush = CreateSolidBrush(COLORREF(fill));
-    FillRect(device_context, &to_gdi(rect), brush);
-    let _ = DeleteObject(HGDIOBJ::from(brush));
+    fill_round_rect(device_context, rect, fill, PILL_RADIUS);
     let _ = SetTextColor(device_context, COLORREF(if fact { COLOR_BRAND } else { COLOR_TEXT2 }));
     draw_centered_in(device_context, label, rect);
 }

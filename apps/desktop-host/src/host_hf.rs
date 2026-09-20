@@ -103,6 +103,8 @@ pub struct HostMainView {
     pub accepting: bool,
     pub status_pill: String,
     pub status_hint: String,
+    /// W2-01 空闲等待页不展示会话三钮；仅会话进行中才为 true。
+    pub show_session_actions: bool,
 }
 
 /// 确认页绘制快照。
@@ -111,6 +113,11 @@ pub struct HostConfirmView {
     pub controller_line: String,
     pub first_connection: bool,
     pub device_note: String,
+}
+
+/// 停止被控 / 仅查看 / 恢复键鼠：仅会话进行中出现。
+pub fn session_actions_visible(status_line: &str) -> bool {
+    status_line.contains("已被连接") || status_line.contains("仅查看")
 }
 
 pub fn build_main_view(
@@ -123,11 +130,15 @@ pub fn build_main_view(
     let idle = status_line.contains("未被连接");
     let status_pill = if idle {
         STATUS_IDLE_PILL.to_string()
+    } else if status_line.contains("不允许被连接") {
+        "不允许被连接".to_string()
     } else {
         status_line.to_string()
     };
     let status_hint = if idle {
         STATUS_IDLE_HINT.to_string()
+    } else if status_line.contains("不允许被连接") {
+        "已关闭被连接。".to_string()
     } else if input_allowed {
         "对方可以操作你的键鼠。".to_string()
     } else {
@@ -139,6 +150,7 @@ pub fn build_main_view(
         accepting,
         status_pill,
         status_hint,
+        show_session_actions: session_actions_visible(status_line),
     }
 }
 
@@ -197,7 +209,19 @@ mod tests {
         let view = build_main_view("123 456 789", "abcd1234", true, "未被连接", true);
         assert_eq!(view.status_pill, STATUS_IDLE_PILL);
         assert_eq!(view.status_hint, STATUS_IDLE_HINT);
+        assert!(!view.show_session_actions);
         assert!(find_forbidden_billing(&view.status_hint).is_empty());
+    }
+
+    #[test]
+    fn 会话态才展示底栏三钮() {
+        assert!(!session_actions_visible("未被连接"));
+        assert!(!session_actions_visible("不允许被连接"));
+        assert!(!session_actions_visible("有人请求控制"));
+        assert!(session_actions_visible("已被连接"));
+        assert!(session_actions_visible("仅查看中"));
+        let connected = build_main_view("1", "p", true, "已被连接", true);
+        assert!(connected.show_session_actions);
     }
 
     #[test]

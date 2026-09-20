@@ -121,12 +121,15 @@ pub enum MainAction {
     RestoreInput,
 }
 
-pub fn hit_main_action(click_x: i32, click_y: i32) -> Option<MainAction> {
+pub fn hit_main_action(click_x: i32, click_y: i32, session_actions: bool) -> Option<MainAction> {
     if BTN_COPY.rect.contains(click_x, click_y) {
         return Some(MainAction::Copy);
     }
     if BTN_ROTATE.rect.contains(click_x, click_y) {
         return Some(MainAction::Rotate);
+    }
+    if !session_actions {
+        return None;
     }
     if BTN_STOP.rect.contains(click_x, click_y) {
         return Some(MainAction::Stop);
@@ -196,26 +199,27 @@ mod tests {
     #[test]
     fn 主界面五钮命中互斥() {
         assert_eq!(
-            hit_main_action(BTN_COPY.rect.left + 2, BTN_COPY.rect.top + 2),
+            hit_main_action(BTN_COPY.rect.left + 2, BTN_COPY.rect.top + 2, true),
             Some(MainAction::Copy)
         );
         assert_eq!(
-            hit_main_action(BTN_ROTATE.rect.left + 2, BTN_ROTATE.rect.top + 2),
+            hit_main_action(BTN_ROTATE.rect.left + 2, BTN_ROTATE.rect.top + 2, false),
             Some(MainAction::Rotate)
         );
         assert_eq!(
-            hit_main_action(BTN_STOP.rect.left + 2, BTN_STOP.rect.top + 2),
+            hit_main_action(BTN_STOP.rect.left + 2, BTN_STOP.rect.top + 2, true),
             Some(MainAction::Stop)
         );
         assert_eq!(
-            hit_main_action(BTN_VIEW_ONLY.rect.left + 2, BTN_VIEW_ONLY.rect.top + 2),
+            hit_main_action(BTN_VIEW_ONLY.rect.left + 2, BTN_VIEW_ONLY.rect.top + 2, true),
             Some(MainAction::ViewOnly)
         );
         assert_eq!(
-            hit_main_action(BTN_RESTORE_INPUT.rect.left + 2, BTN_RESTORE_INPUT.rect.top + 2),
+            hit_main_action(BTN_RESTORE_INPUT.rect.left + 2, BTN_RESTORE_INPUT.rect.top + 2, true),
             Some(MainAction::RestoreInput)
         );
-        assert_eq!(hit_main_action(0, 0), None);
+        assert_eq!(hit_main_action(BTN_STOP.rect.left + 2, BTN_STOP.rect.top + 2, false), None);
+        assert_eq!(hit_main_action(0, 0, true), None);
     }
 
     #[test]

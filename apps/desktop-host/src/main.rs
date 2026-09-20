@@ -241,15 +241,21 @@ mod windows_host {
                 if hit_accept_switch(click_x, click_y) {
                     toggle_accept();
                     refresh();
-                } else if let Some(action) = host_layout::hit_main_action(click_x, click_y) {
-                    match action {
-                        MainAction::Copy => copy_code(),
-                        MainAction::Rotate => rotate_password(),
-                        MainAction::Stop => stop_now(),
-                        MainAction::ViewOnly => set_session_input(false),
-                        MainAction::RestoreInput => set_session_input(true),
+                } else {
+                    let session_actions = lock_model()
+                        .as_ref()
+                        .map(|model| host_hf::session_actions_visible(&model.status_line))
+                        .unwrap_or(false);
+                    if let Some(action) = host_layout::hit_main_action(click_x, click_y, session_actions) {
+                        match action {
+                            MainAction::Copy => copy_code(),
+                            MainAction::Rotate => rotate_password(),
+                            MainAction::Stop => stop_now(),
+                            MainAction::ViewOnly => set_session_input(false),
+                            MainAction::RestoreInput => set_session_input(true),
+                        }
+                        refresh();
                     }
-                    refresh();
                 }
                 LRESULT(0)
             }
