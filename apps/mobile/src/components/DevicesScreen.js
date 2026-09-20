@@ -1,8 +1,11 @@
 import React from "react";
-import { Pressable, SafeAreaView, ScrollView, Text, TextInput, View } from "react-native";
+import { Platform, Pressable, SafeAreaView, ScrollView, Text, TextInput, View } from "react-native";
 import { DEVICES_HF, deviceSubtitle } from "../devices/devices-hf.mjs";
 import { hit, radius, space } from "../theme.mjs";
 import { HitButton } from "./HitButton.js";
+
+/** Android 手势条会裁切底栏；无 safe-area 依赖时用固定垫高。 */
+const bottomBarPad = Platform.OS === "android" ? space["5"] : space["3"];
 
 /**
  * 移动端设备列表，对齐 W6-01：顶栏配额 / 搜索 / 卡片 / 底栏。
@@ -150,7 +153,8 @@ export function DevicesScreen(props) {
           flexDirection: "row",
           alignItems: "center",
           paddingHorizontal: space["4"],
-          paddingVertical: space["3"],
+          paddingTop: space["3"],
+          paddingBottom: bottomBarPad,
           borderTopWidth: 1,
           borderTopColor: palette.line,
           backgroundColor: palette.surface,
