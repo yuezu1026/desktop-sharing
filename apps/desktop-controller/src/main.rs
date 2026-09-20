@@ -204,6 +204,12 @@ mod windows_controller {
                             model.ways_open = !model.ways_open;
                         }
                     }
+                } else if restore_hit(click_x, click_y) {
+                    if let Some(model) = lock_model().as_mut() {
+                        if model.view_only == "permission" {
+                            model.notice = "已提示：请被控端点「恢复键鼠」".to_string();
+                        }
+                    }
                 } else {
                     queue_pointer(window, lparam, PointerAction::Up(0));
                 }
@@ -768,7 +774,8 @@ mod windows_controller {
             let moving = wide_chars("画面仍在实时更新，只是你的键盘鼠标不再发送到对方电脑。");
             draw_text(device_context, &moving, 16, top, client_width - 32, 40, false);
             let restore = wide_chars("请求恢复控制");
-            draw_text(device_context, &restore, 16, top + 44, 160, 24, false);
+            let button = restore_button();
+            draw_text(device_context, &restore, button.left, button.top, button.width, button.height, false);
         }
     }
 
@@ -776,8 +783,22 @@ mod windows_controller {
         FrameRect { left: 16, top: 150, width: 140, height: 28 }
     }
 
+    fn restore_button() -> FrameRect {
+        FrameRect {
+            left: 16,
+            top: 220,
+            width: 160,
+            height: 28,
+        }
+    }
+
     fn ways_hit(click_x: i32, click_y: i32) -> bool {
         let button = ways_button();
+        click_x >= button.left && click_x < button.left + button.width && click_y >= button.top && click_y < button.top + button.height
+    }
+
+    fn restore_hit(click_x: i32, click_y: i32) -> bool {
+        let button = restore_button();
         click_x >= button.left && click_x < button.left + button.width && click_y >= button.top && click_y < button.top + button.height
     }
 

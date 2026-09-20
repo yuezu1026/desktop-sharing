@@ -645,10 +645,12 @@ mod windows_host {
                 return;
             }
             model.relay_ticket = Some(ticket.clone());
+            model.input_allowed = true;
             if let Some(session_id) = remote_session_id.clone() {
                 model.remote_session_id = Some(session_id);
             }
             model.status_line = "中继票已就绪".to_string();
+            crate::inject::set_input_allowed(true);
             (
                 model.origin.clone(),
                 model.token.clone().unwrap_or_default(),
