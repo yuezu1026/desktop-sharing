@@ -41,6 +41,12 @@ mod keyframe_schedule;
 mod ui_theme;
 
 #[cfg(windows)]
+mod host_hf;
+
+#[cfg(windows)]
+mod host_layout;
+
+#[cfg(windows)]
 mod ui_chrome;
 
 #[cfg(windows)]
@@ -61,11 +67,7 @@ mod windows_host {
     use sha2::{Digest, Sha256};
     use windows::core::{w, PCWSTR};
     use windows::Win32::Foundation::{HANDLE, HWND, LPARAM, LRESULT, POINT, WPARAM};
-    use windows::Win32::Graphics::Gdi::{
-        BeginPaint, CreateFontW, DeleteObject, DrawTextW, EndPaint, InvalidateRect, SelectObject, SetBkMode,
-        CLIP_DEFAULT_PRECIS, HGDIOBJ, DEFAULT_CHARSET, DEFAULT_QUALITY, DT_LEFT, DT_WORDBREAK, OUT_DEFAULT_PRECIS,
-        PAINTSTRUCT, TRANSPARENT,
-    };
+    use windows::Win32::Graphics::Gdi::{BeginPaint, EndPaint, InvalidateRect, PAINTSTRUCT};
     use windows::Win32::System::DataExchange::{CloseClipboard, EmptyClipboard, OpenClipboard, SetClipboardData};
     use windows::Win32::System::LibraryLoader::GetModuleHandleW;
     use windows::Win32::System::Memory::{GlobalAlloc, GlobalLock, GlobalUnlock, GMEM_MOVEABLE};
@@ -80,11 +82,12 @@ mod windows_host {
         WINDOW_EX_STYLE, WINDOW_STYLE, WM_CLOSE, WM_COMMAND, WM_CREATE, WM_DESTROY, WM_KEYDOWN, WM_LBUTTONDOWN, WM_PAINT,
         WM_RBUTTONUP, WM_TIMER, WNDCLASSW, WS_CAPTION, WS_CHILD, WS_EX_TOPMOST, WS_OVERLAPPED, WS_SYSMENU, WS_VISIBLE,
     };
+    use crate::host_hf;
+    use crate::host_layout;
     use crate::ui_chrome::{
-        create_brand_icon, hit_accept_switch, hit_confirm_allow, hit_confirm_refuse, paint_accept_switch,
-        paint_confirm_buttons,
+        create_brand_icon, hit_accept_switch, hit_confirm_allow, hit_confirm_refuse, paint_confirm_shell,
+        paint_main_shell, CONFIRM_HEIGHT, CONFIRM_WIDTH, MAIN_HEIGHT, MAIN_WIDTH,
     };
-    use crate::ui_theme::DESKTOP_MIN_PX;
 
     const COPY_CODE: i32 = 101;
     const ROTATE_PASSWORD: i32 = 102;
@@ -109,6 +112,8 @@ mod windows_host {
         confirm_window: HWND,
         incoming_id: Option<String>,
         incoming_who: String,
+        incoming_first: bool,
+        incoming_device_note: String,
         token: Option<String>,
         origin: String,
         host_device_id: Option<String>,
@@ -135,6 +140,8 @@ mod windows_host {
             confirm_window: HWND::default(),
             incoming_id: None,
             incoming_who: String::new(),
+            incoming_first: true,
+            incoming_device_note: String::new(),
             token,
             origin,
             host_device_id: None,
@@ -171,15 +178,16 @@ mod windows_host {
         };
         RegisterClassW(&main_class);
         RegisterClassW(&confirm);
+        let window_title = wide_string(host_hf::WINDOW_TITLE);
         let window = CreateWindowExW(
             WINDOW_EX_STYLE::default(),
             class_name,
-            w!("远程桌面 · 本机"),
+            PCWSTR(window_title.as_ptr()),
             WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_VISIBLE,
             CW_USEDEFAULT,
             CW_USEDEFAULT,
-            760,
-            520,
+            MAIN_WIDTH,
+            MAIN_HEIGHT,
             None,
             None,
             Some(instance.into()),
@@ -299,14 +307,26 @@ mod windows_host {
     }
 
     unsafe fn create_buttons(window: HWND) {
-        create_button(window, "复制", 430, 78, 120, DESKTOP_MIN_PX, COPY_CODE, false);
-        create_button(window, "换一个", 430, 168, 120, DESKTOP_MIN_PX, ROTATE_PASSWORD, false);
-        create_button(window, "停止被控", 430, 300, 120, DESKTOP_MIN_PX, STOP_CONTROL, false);
-        create_button(window, "仅查看（停键鼠）", 430, 340, 160, DESKTOP_MIN_PX, REVOKE_INPUT, false);
-        create_button(window, "恢复键鼠", 430, 380, 120, DESKTOP_MIN_PX, RESTORE_INPUT, false);
+        create_native_button(window, host_hf::BTN_COPY, host_layout::BTN_COPY.rect, COPY_CODE, false);
+        create_native_button(window, host_hf::BTN_ROTATE, host_layout::BTN_ROTATE.rect, ROTATE_PASSWORD, false);
+        create_native_button(window, host_hf::BTN_STOP, host_layout::BTN_STOP.rect, STOP_CONTROL, false);
+        create_native_button(window, host_hf::BTN_VIEW_ONLY, host_layout::BTN_VIEW_ONLY.rect, REVOKE_INPUT, false);
+        create_native_button(
+            window,
+            host_hf::BTN_RESTORE_INPUT,
+            host_layout::BTN_RESTORE_INPUT.rect,
+            RESTORE_INPUT,
+            false,
+        );
     }
 
-    unsafe fn create_button(parent: HWND, label: &str, left: i32, top: i32, width: i32, height: i32, command_id: i32, primary: bool) {
+    unsafe fn create_native_button(
+        parent: HWND,
+        label: &str,
+        rect: host_layout::Rect,
+        command_id: i32,
+        primary: bool,
+    ) {
         let wide = wide_string(label);
         let button_style = WINDOW_STYLE(if primary { BS_DEFPUSHBUTTON as u32 } else { BS_PUSHBUTTON as u32 });
         let style = WS_CHILD | WS_VISIBLE | button_style;
@@ -315,10 +335,10 @@ mod windows_host {
             w!("BUTTON"),
             PCWSTR(wide.as_ptr()),
             style,
-            left,
-            top,
-            width,
-            height,
+            rect.left,
+            rect.top,
+            rect.width(),
+            rect.height(),
             Some(parent),
             Some(HMENU(command_id as isize as *mut core::ffi::c_void)),
             None,
@@ -329,34 +349,17 @@ mod windows_host {
     unsafe fn paint_main(window: HWND) {
         let mut paint = PAINTSTRUCT::default();
         let device_context = BeginPaint(window, &mut paint);
-        SetBkMode(device_context, TRANSPARENT);
-        let snapshot = lock_model().as_ref().map(|model| {
-            (
+        let view = lock_model().as_ref().map(|model| {
+            host_hf::build_main_view(
                 display_code(&model.device_code),
                 model.temp_password.clone(),
                 model.accepting,
-                model.status_line.clone(),
+                &model.status_line,
                 model.input_allowed,
             )
         });
-        if let Some((code_text, password_text, accepting, status_line, input_allowed)) = snapshot {
-            let code = wide_chars(&format!("本机识别码    {code_text}"));
-            let password = wide_chars(&format!("临时密码    {password_text}"));
-            let accept_label = wide_chars("允许被连接");
-            let status = wide_chars(&format!("当前状态    {status_line}"));
-            let input = wide_chars(if input_allowed {
-                "键鼠    对方可操作"
-            } else {
-                "键鼠    仅查看中（对方键鼠已停）"
-            });
-            let safety = wide_chars("安全提示：只把识别码与密码告诉你信任的人。任何人以「客服/公检法需要看屏幕」为由索要，都是诈骗。");
-            draw_code(device_context, &code, 24, 70, 390, 40);
-            draw_line(device_context, &password, 24, 160, 390, 36);
-            paint_accept_switch(device_context, accepting);
-            draw_line(device_context, &accept_label, 84, 234, 200, 28);
-            draw_line(device_context, &status, 24, 300, 360, 28);
-            draw_line(device_context, &input, 24, 330, 390, 28);
-            draw_line(device_context, &safety, 24, 380, 680, 64);
+        if let Some(view) = view.as_ref() {
+            paint_main_shell(device_context, view);
         }
         let _ = EndPaint(window, &paint);
     }
@@ -364,57 +367,15 @@ mod windows_host {
     unsafe fn paint_confirm(window: HWND) {
         let mut paint = PAINTSTRUCT::default();
         let device_context = BeginPaint(window, &mut paint);
-        SetBkMode(device_context, TRANSPARENT);
-        let who = lock_model().as_ref().map(|model| model.incoming_who.clone()).unwrap_or_default();
-        let title = wide_chars("有人请求控制本设备");
-        let person = wide_chars(&who);
-        let can = wide_chars("允许后，对方可以：看到你屏幕上的所有内容；操作你的鼠标与键盘。");
-        let line1 = wide_chars("① 你正在允许对方控制本设备");
-        let line2 = wide_chars("② 对方能看到并操作你屏幕上的一切");
-        let line3 = wide_chars("③ 不要向陌生人开启；任何自称「客服 / 公检法」要求你打开屏幕的，都是诈骗");
-        draw_line(device_context, &title, 24, 24, 500, 32);
-        draw_line(device_context, &person, 24, 64, 500, 48);
-        draw_line(device_context, &can, 24, 120, 500, 48);
-        draw_line(device_context, &line1, 24, 180, 500, 24);
-        draw_line(device_context, &line2, 24, 206, 500, 24);
-        draw_line(device_context, &line3, 24, 232, 500, 40);
-        paint_confirm_buttons(device_context);
+        let view = lock_model().as_ref().map(|model| host_hf::HostConfirmView {
+            controller_line: model.incoming_who.clone(),
+            first_connection: model.incoming_first,
+            device_note: model.incoming_device_note.clone(),
+        });
+        if let Some(view) = view.as_ref() {
+            paint_confirm_shell(device_context, view);
+        }
         let _ = EndPaint(window, &paint);
-    }
-
-    unsafe fn draw_code(device_context: windows::Win32::Graphics::Gdi::HDC, text: &[u16], left: i32, top: i32, width: i32, height: i32) {
-        let face = wide_string("Consolas");
-        let font = CreateFontW(
-            28,
-            0,
-            0,
-            0,
-            400,
-            0,
-            0,
-            0,
-            DEFAULT_CHARSET,
-            OUT_DEFAULT_PRECIS,
-            CLIP_DEFAULT_PRECIS,
-            DEFAULT_QUALITY,
-            1,
-            PCWSTR(face.as_ptr()),
-        );
-        let previous = SelectObject(device_context, HGDIOBJ::from(font));
-        draw_line(device_context, text, left, top, width, height);
-        SelectObject(device_context, previous);
-        let _ = DeleteObject(HGDIOBJ::from(font));
-    }
-
-    unsafe fn draw_line(device_context: windows::Win32::Graphics::Gdi::HDC, text: &[u16], left: i32, top: i32, width: i32, height: i32) {
-        let mut owned = text.to_vec();
-        let mut rect = windows::Win32::Foundation::RECT {
-            left,
-            top,
-            right: left + width,
-            bottom: top + height,
-        };
-        DrawTextW(device_context, &mut owned, &mut rect, DT_LEFT | DT_WORDBREAK);
     }
 
     unsafe fn add_tray(window: HWND) {
@@ -652,9 +613,11 @@ mod windows_host {
                 return;
             }
             model.incoming_id = Some(first.remote_session_id);
-            let who = first.controller_phone_mask.unwrap_or_else(|| "未知账号".to_string());
-            let first_label = if first.first_connection { "首次连接" } else { "再次连接" };
-            model.incoming_who = format!("账号 {who} · {first_label}");
+            let phone_mask = first.controller_phone_mask.unwrap_or_default();
+            let confirm_view = host_hf::build_confirm_view(&phone_mask, first.first_connection, "本机");
+            model.incoming_who = confirm_view.controller_line;
+            model.incoming_first = confirm_view.first_connection;
+            model.incoming_device_note = confirm_view.device_note;
             model.status_line = "有人请求控制".to_string();
             model.main_window
         };
@@ -1031,15 +994,16 @@ mod windows_host {
 
     unsafe fn open_confirm(parent: HWND) {
         let instance = GetModuleHandleW(None).unwrap_or_default();
+        let window_title = wide_string(host_hf::WINDOW_TITLE);
         let window = CreateWindowExW(
             WS_EX_TOPMOST,
             w!("DesktopHostConfirm"),
-            w!("远程桌面 · 本机"),
+            PCWSTR(window_title.as_ptr()),
             WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_VISIBLE,
             CW_USEDEFAULT,
             CW_USEDEFAULT,
-            560,
-            380,
+            CONFIRM_WIDTH,
+            CONFIRM_HEIGHT,
             Some(parent),
             None,
             Some(instance.into()),
@@ -1202,10 +1166,6 @@ mod windows_host {
 
     fn wide_string(text: &str) -> Vec<u16> {
         text.encode_utf16().chain(std::iter::once(0)).collect()
-    }
-
-    fn wide_chars(text: &str) -> Vec<u16> {
-        text.encode_utf16().collect()
     }
 
     fn post_json(origin: &str, path: &str, token: &str, payload: &str) -> Result<String, String> {

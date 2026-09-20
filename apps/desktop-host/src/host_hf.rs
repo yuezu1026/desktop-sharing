@@ -1,0 +1,195 @@
+//! 被控端文案与结构契约，对齐高保真 h2 / W2-01 / W2-02。
+//! 界面禁止出现金额、余额、充值、会员。
+
+#![allow(dead_code)]
+
+pub const WINDOW_TITLE: &str = "远程桌面 · 本机";
+
+pub const LABEL_DEVICE_CODE: &str = "本机识别码";
+pub const LABEL_TEMP_PASSWORD: &str = "临时密码";
+pub const PASSWORD_HINT: &str = "每次连接后自动更换；也可设为固定密码（不推荐）。";
+pub const SWITCH_ALLOW: &str = "允许被连接";
+
+pub const STATUS_TITLE: &str = "当前状态";
+pub const STATUS_IDLE_HINT: &str = "现在没有人在看你的屏幕。";
+pub const STATUS_IDLE_PILL: &str = "未被连接";
+
+pub const SWITCHES_TITLE: &str = "常用开关";
+pub const SWITCH_AUTO_START: &str = "开机自动启动";
+pub const SWITCH_IDLE_ZERO: &str = "空闲时近零占用";
+pub const SWITCH_RESOURCE: &str = "资源档位";
+pub const SWITCH_ON: &str = "开";
+pub const SWITCH_BALANCED: &str = "均衡";
+
+pub const FRAUD_TITLE: &str = "只把识别码和密码告诉你信任的人";
+pub const FRAUD_BODY: &str = "任何人以「客服 / 公检法需要看屏幕」为由索要，都是诈骗。";
+
+pub const CONFIRM_TITLE: &str = "有人请求控制本设备";
+pub const CONFIRM_CAN_LABEL: &str = "允许后，对方可以";
+pub const CONFIRM_CAN_SEE: &str = "看到你屏幕上的所有内容";
+pub const CONFIRM_CAN_INPUT: &str = "操作你的鼠标与键盘";
+pub const CONFIRM_CAN_FILES: &str = "在你允许时传输文件";
+pub const CONFIRM_FRAUD_TITLE: &str = "请确认你认识对方";
+pub const CONFIRM_FRAUD_1: &str = "你正在允许对方控制本设备。";
+pub const CONFIRM_FRAUD_2: &str = "对方能看到并操作你屏幕上的一切。";
+pub const CONFIRM_FRAUD_3: &str = "不要向陌生人开启。自称客服或公检法、要求打开屏幕的，都是诈骗。";
+pub const CONFIRM_ALLOW: &str = "允许本次";
+pub const CONFIRM_REFUSE: &str = "拒绝";
+pub const PILL_FIRST: &str = "首次连接";
+pub const PILL_AGAIN: &str = "再次连接";
+
+pub const BTN_COPY: &str = "复制";
+pub const BTN_ROTATE: &str = "换一个";
+pub const BTN_STOP: &str = "停止被控";
+pub const BTN_VIEW_ONLY: &str = "仅查看（停键鼠）";
+pub const BTN_RESTORE_INPUT: &str = "恢复键鼠";
+
+/// 界面文案不得包含的催费词。
+pub const FORBIDDEN_BILLING: &[&str] = &["余额", "充值", "会员", "开通", "¥", "元/月"];
+
+pub fn confirm_can_lines() -> [&'static str; 3] {
+    [CONFIRM_CAN_SEE, CONFIRM_CAN_INPUT, CONFIRM_CAN_FILES]
+}
+
+pub fn confirm_fraud_lines() -> [&'static str; 3] {
+    [CONFIRM_FRAUD_1, CONFIRM_FRAUD_2, CONFIRM_FRAUD_3]
+}
+
+pub fn format_controller_line(phone_mask: &str) -> String {
+    let mask = phone_mask.trim();
+    if mask.is_empty() {
+        "账号 未知".to_string()
+    } else {
+        format!("账号 {mask}")
+    }
+}
+
+pub fn connection_pill(first_connection: bool) -> &'static str {
+    if first_connection {
+        PILL_FIRST
+    } else {
+        PILL_AGAIN
+    }
+}
+
+pub fn find_forbidden_billing(text: &str) -> Vec<&'static str> {
+    FORBIDDEN_BILLING
+        .iter()
+        .copied()
+        .filter(|word| text.contains(word))
+        .collect()
+}
+
+/// 主界面绘制快照：会话层组装，chrome 只渲染。
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct HostMainView {
+    pub code_text: String,
+    pub password_text: String,
+    pub accepting: bool,
+    pub status_pill: String,
+    pub status_hint: String,
+}
+
+/// 确认页绘制快照。
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct HostConfirmView {
+    pub controller_line: String,
+    pub first_connection: bool,
+    pub device_note: String,
+}
+
+pub fn build_main_view(
+    code_text: impl Into<String>,
+    password_text: impl Into<String>,
+    accepting: bool,
+    status_line: &str,
+    input_allowed: bool,
+) -> HostMainView {
+    let idle = status_line.contains("未被连接");
+    let status_pill = if idle {
+        STATUS_IDLE_PILL.to_string()
+    } else {
+        status_line.to_string()
+    };
+    let status_hint = if idle {
+        STATUS_IDLE_HINT.to_string()
+    } else if input_allowed {
+        "对方可以操作你的键鼠。".to_string()
+    } else {
+        "仅查看中：对方键鼠已停。".to_string()
+    };
+    HostMainView {
+        code_text: code_text.into(),
+        password_text: password_text.into(),
+        accepting,
+        status_pill,
+        status_hint,
+    }
+}
+
+pub fn build_confirm_view(
+    phone_mask: &str,
+    first_connection: bool,
+    device_note: impl Into<String>,
+) -> HostConfirmView {
+    HostConfirmView {
+        controller_line: format_controller_line(phone_mask),
+        first_connection,
+        device_note: device_note.into(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn 主界面文案无金额() {
+        let joined = [
+            LABEL_DEVICE_CODE,
+            LABEL_TEMP_PASSWORD,
+            PASSWORD_HINT,
+            SWITCH_ALLOW,
+            STATUS_TITLE,
+            STATUS_IDLE_HINT,
+            SWITCHES_TITLE,
+            FRAUD_TITLE,
+            FRAUD_BODY,
+        ]
+        .join("\n");
+        assert!(find_forbidden_billing(&joined).is_empty());
+    }
+
+    #[test]
+    fn 确认页文案结构() {
+        assert_eq!(CONFIRM_TITLE, "有人请求控制本设备");
+        assert_eq!(CONFIRM_REFUSE, "拒绝");
+        assert_eq!(CONFIRM_ALLOW, "允许本次");
+        assert_eq!(confirm_can_lines().len(), 3);
+        assert_eq!(confirm_fraud_lines().len(), 3);
+        assert!(find_forbidden_billing(&confirm_fraud_lines().join("")).is_empty());
+    }
+
+    #[test]
+    fn 身份行与首次连接标签() {
+        assert_eq!(format_controller_line("139****9000"), "账号 139****9000");
+        assert_eq!(connection_pill(true), "首次连接");
+        assert_eq!(connection_pill(false), "再次连接");
+    }
+
+    #[test]
+    fn 主界面快照空闲态() {
+        let view = build_main_view("123 456 789", "abcd1234", true, "未被连接", true);
+        assert_eq!(view.status_pill, STATUS_IDLE_PILL);
+        assert_eq!(view.status_hint, STATUS_IDLE_HINT);
+        assert!(find_forbidden_billing(&view.status_hint).is_empty());
+    }
+
+    #[test]
+    fn 确认页快照组装() {
+        let view = build_confirm_view("139****9000", true, "本机");
+        assert_eq!(view.controller_line, "账号 139****9000");
+        assert!(view.first_connection);
+        assert_eq!(view.device_note, "本机");
+    }
+}

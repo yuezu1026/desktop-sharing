@@ -1,92 +1,168 @@
-//! 被控端开关与确认页的命中区 / 绘制 / 品牌图标。
-//! 布局常量集中于此，便于改版时不动会话与采集逻辑。
+//! 被控端绘制与命中：只消费 `host_layout` 矩形 + `host_hf` 快照。
+//! 禁止在本文件另写页面坐标。
 
 use windows::Win32::Foundation::{COLORREF, RECT};
 use windows::Win32::Graphics::Gdi::{
-    CreateCompatibleBitmap, CreateCompatibleDC, CreateSolidBrush, DeleteDC, DeleteObject, DrawTextW, FillRect, GetDC,
-    ReleaseDC, SelectObject, SetTextColor, DT_LEFT, DT_WORDBREAK, HDC, HGDIOBJ,
+    CreateCompatibleBitmap, CreateCompatibleDC, CreateFontW, CreateSolidBrush, DeleteDC, DeleteObject, DrawTextW,
+    FillRect, GetDC, ReleaseDC, SelectObject, SetBkMode, SetTextColor, CLIP_DEFAULT_PRECIS, DEFAULT_CHARSET,
+    DEFAULT_QUALITY, DT_CENTER, DT_LEFT, DT_SINGLELINE, DT_VCENTER, DT_WORDBREAK, HDC, HGDIOBJ, OUT_DEFAULT_PRECIS,
+    TRANSPARENT,
 };
 use windows::Win32::UI::WindowsAndMessaging::{CreateIconIndirect, HICON, ICONINFO};
+use windows::core::PCWSTR;
 
-use crate::ui_theme::{COLOR_BRAND, COLOR_ON_SOLID, COLOR_SWITCH_OFF, COLOR_TEXT, DESKTOP_MIN_PX};
-
-pub const SWITCH_LEFT: i32 = 24;
-pub const SWITCH_TOP: i32 = 232;
-pub const SWITCH_TRACK_W: i32 = 48;
-pub const SWITCH_TRACK_H: i32 = 26;
-pub const SWITCH_HIT_RIGHT: i32 = 220;
-pub const SWITCH_HIT_BOTTOM: i32 = 262;
-pub const CONFIRM_ALLOW_LEFT: i32 = 40;
-pub const CONFIRM_REFUSE_LEFT: i32 = 360;
-pub const CONFIRM_BTN_TOP: i32 = 280;
-pub const CONFIRM_BTN_W: i32 = 140;
-pub const CONFIRM_BTN_H: i32 = DESKTOP_MIN_PX;
+use crate::host_hf::{self, HostConfirmView, HostMainView};
+use crate::host_layout::{self, Rect as LayoutRect};
+use crate::ui_theme::{
+    COLOR_BG, COLOR_BRAND, COLOR_LINE, COLOR_ON_SOLID, COLOR_SURFACE, COLOR_SURFACE2, COLOR_SWITCH_OFF, COLOR_TEXT,
+    COLOR_TEXT2,
+};
 
 const COLOR_THUMB: u32 = COLOR_ON_SOLID;
+const COLOR_BRAND_SOFT: u32 = 0x00FDEFE7;
 
-pub fn hit_rect(click_x: i32, click_y: i32, left: i32, top: i32, width: i32, height: i32) -> bool {
-    click_x >= left && click_x < left + width && click_y >= top && click_y < top + height
+pub use host_layout::{CONFIRM_HEIGHT, CONFIRM_WIDTH, MAIN_HEIGHT, MAIN_WIDTH};
+
+fn to_gdi(rect: LayoutRect) -> RECT {
+    RECT {
+        left: rect.left,
+        top: rect.top,
+        right: rect.right,
+        bottom: rect.bottom,
+    }
 }
 
 pub fn hit_confirm_refuse(click_x: i32, click_y: i32) -> bool {
-    hit_rect(
-        click_x,
-        click_y,
-        CONFIRM_REFUSE_LEFT,
-        CONFIRM_BTN_TOP,
-        CONFIRM_BTN_W,
-        CONFIRM_BTN_H,
-    )
+    host_layout::CONFIRM_REFUSE.rect.contains(click_x, click_y)
 }
 
 pub fn hit_confirm_allow(click_x: i32, click_y: i32) -> bool {
-    hit_rect(
-        click_x,
-        click_y,
-        CONFIRM_ALLOW_LEFT,
-        CONFIRM_BTN_TOP,
-        CONFIRM_BTN_W,
-        CONFIRM_BTN_H,
-    )
+    host_layout::CONFIRM_ALLOW.rect.contains(click_x, click_y)
 }
 
 pub fn hit_accept_switch(click_x: i32, click_y: i32) -> bool {
-    click_x >= SWITCH_LEFT
-        && click_x <= SWITCH_HIT_RIGHT
-        && click_y >= SWITCH_TOP
-        && click_y <= SWITCH_HIT_BOTTOM
+    host_layout::ACCEPT_SWITCH_HIT.contains(click_x, click_y)
+}
+
+pub unsafe fn paint_main_shell(device_context: HDC, view: &HostMainView) {
+    fill_bg(device_context, host_layout::MAIN_WIDTH, host_layout::MAIN_HEIGHT, COLOR_BG);
+    fill_panel(device_context, host_layout::LEFT_PANEL, COLOR_SURFACE, COLOR_LINE);
+    fill_panel(device_context, host_layout::RIGHT_STATUS, COLOR_SURFACE2, COLOR_LINE);
+    fill_panel(device_context, host_layout::RIGHT_SWITCHES, COLOR_SURFACE, COLOR_LINE);
+    fill_panel(device_context, host_layout::RIGHT_FRAUD, COLOR_BRAND_SOFT, COLOR_LINE);
+    SetBkMode(device_context, TRANSPARENT);
+
+    draw_in(device_context, host_hf::LABEL_DEVICE_CODE, host_layout::LABEL_CODE, DrawStyle::Label);
+    draw_mono_in(device_context, &view.code_text, host_layout::VALUE_CODE, 26);
+    draw_in(device_context, host_hf::LABEL_TEMP_PASSWORD, host_layout::LABEL_PASSWORD, DrawStyle::Label);
+    draw_mono_in(device_context, &view.password_text, host_layout::VALUE_PASSWORD, 20);
+    draw_in(device_context, host_hf::PASSWORD_HINT, host_layout::PASSWORD_HINT, DrawStyle::Muted);
+
+    paint_accept_switch(device_context, view.accepting);
+    draw_in(
+        device_context,
+        host_hf::SWITCH_ALLOW,
+        host_layout::ACCEPT_SWITCH_LABEL,
+        DrawStyle::Body,
+    );
+
+    draw_in(device_context, host_hf::STATUS_TITLE, host_layout::STATUS_TITLE, DrawStyle::Bold);
+    paint_pill_at(device_context, host_layout::STATUS_PILL.left, host_layout::STATUS_PILL.top, &view.status_pill, false);
+    draw_in(device_context, &view.status_hint, host_layout::STATUS_HINT, DrawStyle::Muted);
+
+    draw_in(device_context, host_hf::SWITCHES_TITLE, host_layout::SWITCHES_TITLE, DrawStyle::Bold);
+    draw_switch_row(device_context, host_layout::SWITCH_ROW_1, host_hf::SWITCH_AUTO_START, host_hf::SWITCH_ON, true);
+    draw_switch_row(device_context, host_layout::SWITCH_ROW_2, host_hf::SWITCH_IDLE_ZERO, host_hf::SWITCH_ON, true);
+    draw_switch_row(
+        device_context,
+        host_layout::SWITCH_ROW_3,
+        host_hf::SWITCH_RESOURCE,
+        host_hf::SWITCH_BALANCED,
+        false,
+    );
+
+    draw_in(device_context, host_hf::FRAUD_TITLE, host_layout::FRAUD_TITLE, DrawStyle::Bold);
+    draw_in(device_context, host_hf::FRAUD_BODY, host_layout::FRAUD_BODY, DrawStyle::Muted);
+}
+
+pub unsafe fn paint_confirm_shell(device_context: HDC, view: &HostConfirmView) {
+    fill_bg(device_context, host_layout::CONFIRM_WIDTH, host_layout::CONFIRM_HEIGHT, COLOR_BG);
+    fill_panel(device_context, host_layout::CONFIRM_CARD, COLOR_SURFACE, COLOR_LINE);
+    SetBkMode(device_context, TRANSPARENT);
+
+    draw_in(device_context, host_hf::CONFIRM_TITLE, host_layout::CONFIRM_TITLE, DrawStyle::Bold);
+
+    let avatar = to_gdi(host_layout::CONFIRM_AVATAR);
+    let avatar_brush = CreateSolidBrush(COLORREF(COLOR_BRAND));
+    FillRect(device_context, &avatar, avatar_brush);
+    let _ = DeleteObject(HGDIOBJ::from(avatar_brush));
+    let _ = SetTextColor(device_context, COLORREF(COLOR_ON_SOLID));
+    let avatar_letter = view
+        .controller_line
+        .chars()
+        .find(|ch| ch.is_ascii_digit() || ('\u{4e00}'..='\u{9fff}').contains(ch))
+        .map(|ch| ch.to_string())
+        .unwrap_or_else(|| "客".to_string());
+    draw_centered_in(device_context, &avatar_letter, host_layout::CONFIRM_AVATAR);
+
+    draw_in(device_context, &view.controller_line, host_layout::CONFIRM_WHO, DrawStyle::Bold);
+    draw_in(device_context, &view.device_note, host_layout::CONFIRM_DEVICE_NOTE, DrawStyle::Muted);
+    paint_pill_at(
+        device_context,
+        host_layout::CONFIRM_PILL.left,
+        host_layout::CONFIRM_PILL.top,
+        host_hf::connection_pill(view.first_connection),
+        true,
+    );
+
+    draw_in(device_context, host_hf::CONFIRM_CAN_LABEL, host_layout::CONFIRM_CAN_LABEL, DrawStyle::Label);
+    let mut can_top = host_layout::CONFIRM_CAN_FIRST.top;
+    for line in host_hf::confirm_can_lines() {
+        let line_rect = LayoutRect::from_xywh(
+            host_layout::CONFIRM_CAN_FIRST.left,
+            can_top,
+            host_layout::CONFIRM_CAN_FIRST.width(),
+            host_layout::CONFIRM_CAN_FIRST.height(),
+        );
+        draw_in(device_context, line, line_rect, DrawStyle::Body);
+        can_top += host_layout::CONFIRM_CAN_LINE_STEP;
+    }
+
+    fill_panel(device_context, host_layout::CONFIRM_FRAUD_PANEL, COLOR_BRAND_SOFT, COLOR_LINE);
+    draw_in(
+        device_context,
+        host_hf::CONFIRM_FRAUD_TITLE,
+        host_layout::CONFIRM_FRAUD_TITLE,
+        DrawStyle::Bold,
+    );
+    let mut fraud_top = host_layout::CONFIRM_FRAUD_FIRST.top;
+    for (index, line) in host_hf::confirm_fraud_lines().iter().enumerate() {
+        let numbered = format!("{}. {line}", index + 1);
+        let line_rect = LayoutRect::from_xywh(
+            host_layout::CONFIRM_FRAUD_FIRST.left,
+            fraud_top,
+            host_layout::CONFIRM_FRAUD_FIRST.width(),
+            host_layout::CONFIRM_FRAUD_FIRST.height(),
+        );
+        draw_in(device_context, &numbered, line_rect, DrawStyle::Muted);
+        fraud_top += host_layout::CONFIRM_FRAUD_LINE_STEP;
+    }
+
+    paint_confirm_buttons(device_context);
 }
 
 /// 「拒绝」实心主按钮；「允许本次」同尺寸描边。
 pub unsafe fn paint_confirm_buttons(device_context: HDC) {
-    let refuse = RECT {
-        left: CONFIRM_REFUSE_LEFT,
-        top: CONFIRM_BTN_TOP,
-        right: CONFIRM_REFUSE_LEFT + CONFIRM_BTN_W,
-        bottom: CONFIRM_BTN_TOP + CONFIRM_BTN_H,
-    };
+    let refuse = host_layout::CONFIRM_REFUSE.rect;
     let refuse_brush = CreateSolidBrush(COLORREF(COLOR_TEXT));
-    FillRect(device_context, &refuse, refuse_brush);
+    FillRect(device_context, &to_gdi(refuse), refuse_brush);
     let _ = DeleteObject(HGDIOBJ::from(refuse_brush));
     let _ = SetTextColor(device_context, COLORREF(COLOR_ON_SOLID));
-    let refuse_label = wide_chars("拒绝");
-    draw_line(
-        device_context,
-        &refuse_label,
-        CONFIRM_REFUSE_LEFT,
-        CONFIRM_BTN_TOP + 8,
-        CONFIRM_BTN_W,
-        20,
-    );
+    draw_centered_in(device_context, host_hf::CONFIRM_REFUSE, refuse);
 
-    let allow = RECT {
-        left: CONFIRM_ALLOW_LEFT,
-        top: CONFIRM_BTN_TOP,
-        right: CONFIRM_ALLOW_LEFT + CONFIRM_BTN_W,
-        bottom: CONFIRM_BTN_TOP + CONFIRM_BTN_H,
-    };
+    let allow = host_layout::CONFIRM_ALLOW.rect;
     let border_brush = CreateSolidBrush(COLORREF(COLOR_TEXT));
-    FillRect(device_context, &allow, border_brush);
+    FillRect(device_context, &to_gdi(allow), border_brush);
     let _ = DeleteObject(HGDIOBJ::from(border_brush));
     let inset = RECT {
         left: allow.left + 2,
@@ -94,48 +170,148 @@ pub unsafe fn paint_confirm_buttons(device_context: HDC) {
         right: allow.right - 2,
         bottom: allow.bottom - 2,
     };
-    let inset_brush = CreateSolidBrush(COLORREF(COLOR_ON_SOLID));
+    let inset_brush = CreateSolidBrush(COLORREF(COLOR_SURFACE));
     FillRect(device_context, &inset, inset_brush);
     let _ = DeleteObject(HGDIOBJ::from(inset_brush));
     let _ = SetTextColor(device_context, COLORREF(COLOR_TEXT));
-    let allow_label = wide_chars("允许本次");
-    draw_line(
-        device_context,
-        &allow_label,
-        CONFIRM_ALLOW_LEFT,
-        CONFIRM_BTN_TOP + 8,
-        CONFIRM_BTN_W,
-        20,
-    );
+    draw_centered_in(device_context, host_hf::CONFIRM_ALLOW, allow);
 }
 
 pub unsafe fn paint_accept_switch(device_context: HDC, accepting: bool) {
-    let track = RECT {
-        left: SWITCH_LEFT,
-        top: SWITCH_TOP,
-        right: SWITCH_LEFT + SWITCH_TRACK_W,
-        bottom: SWITCH_TOP + SWITCH_TRACK_H,
-    };
+    let track = host_layout::ACCEPT_SWITCH_TRACK;
     let track_color = if accepting { COLOR_BRAND } else { COLOR_SWITCH_OFF };
     let track_brush = CreateSolidBrush(COLORREF(track_color));
-    FillRect(device_context, &track, track_brush);
+    FillRect(device_context, &to_gdi(track), track_brush);
     let _ = DeleteObject(HGDIOBJ::from(track_brush));
 
-    let thumb_size = SWITCH_TRACK_H - 4;
+    let thumb_size = track.height() - 4;
     let thumb_left = if accepting {
-        SWITCH_LEFT + SWITCH_TRACK_W - thumb_size - 2
+        track.right - thumb_size - 2
     } else {
-        SWITCH_LEFT + 2
+        track.left + 2
     };
-    let thumb = RECT {
-        left: thumb_left,
-        top: SWITCH_TOP + 2,
-        right: thumb_left + thumb_size,
-        bottom: SWITCH_TOP + 2 + thumb_size,
-    };
+    let thumb = LayoutRect::from_xywh(thumb_left, track.top + 2, thumb_size, thumb_size);
     let thumb_brush = CreateSolidBrush(COLORREF(COLOR_THUMB));
-    FillRect(device_context, &thumb, thumb_brush);
+    FillRect(device_context, &to_gdi(thumb), thumb_brush);
     let _ = DeleteObject(HGDIOBJ::from(thumb_brush));
+}
+
+unsafe fn fill_bg(device_context: HDC, width: i32, height: i32, color: u32) {
+    let full = RECT {
+        left: 0,
+        top: 0,
+        right: width,
+        bottom: height,
+    };
+    let brush = CreateSolidBrush(COLORREF(color));
+    FillRect(device_context, &full, brush);
+    let _ = DeleteObject(HGDIOBJ::from(brush));
+}
+
+unsafe fn fill_panel(device_context: HDC, panel: LayoutRect, fill: u32, border: u32) {
+    let border_brush = CreateSolidBrush(COLORREF(border));
+    FillRect(device_context, &to_gdi(panel), border_brush);
+    let _ = DeleteObject(HGDIOBJ::from(border_brush));
+    let inset = RECT {
+        left: panel.left + 1,
+        top: panel.top + 1,
+        right: panel.right - 1,
+        bottom: panel.bottom - 1,
+    };
+    let fill_brush = CreateSolidBrush(COLORREF(fill));
+    FillRect(device_context, &inset, fill_brush);
+    let _ = DeleteObject(HGDIOBJ::from(fill_brush));
+}
+
+unsafe fn paint_pill_at(device_context: HDC, left: i32, top: i32, label: &str, fact: bool) {
+    let width = (label.encode_utf16().count() as i32 * 14 + 24).max(72);
+    let height = 28;
+    let rect = LayoutRect::from_xywh(left, top, width, height);
+    let fill = if fact { COLOR_BRAND_SOFT } else { COLOR_SURFACE2 };
+    let brush = CreateSolidBrush(COLORREF(fill));
+    FillRect(device_context, &to_gdi(rect), brush);
+    let _ = DeleteObject(HGDIOBJ::from(brush));
+    let _ = SetTextColor(device_context, COLORREF(if fact { COLOR_BRAND } else { COLOR_TEXT2 }));
+    draw_centered_in(device_context, label, rect);
+}
+
+unsafe fn draw_switch_row(device_context: HDC, row: LayoutRect, label: &str, value: &str, on: bool) {
+    draw_in(device_context, label, row, DrawStyle::Body);
+    paint_pill_at(
+        device_context,
+        row.left + host_layout::SWITCH_ROW_PILL_OFFSET_X,
+        row.top - 2,
+        value,
+        on,
+    );
+}
+
+enum DrawStyle {
+    Label,
+    Body,
+    Bold,
+    Muted,
+}
+
+unsafe fn draw_in(device_context: HDC, text: &str, rect: LayoutRect, style: DrawStyle) {
+    let (color, size, weight, format) = match style {
+        DrawStyle::Label => (COLOR_TEXT2, 16, 400, DT_LEFT | DT_SINGLELINE),
+        DrawStyle::Body => (COLOR_TEXT, 18, 400, DT_LEFT | DT_WORDBREAK),
+        DrawStyle::Bold => (COLOR_TEXT, 18, 700, DT_LEFT | DT_WORDBREAK),
+        DrawStyle::Muted => (COLOR_TEXT2, 15, 400, DT_LEFT | DT_WORDBREAK),
+    };
+    let _ = SetTextColor(device_context, COLORREF(color));
+    with_font(device_context, "Microsoft YaHei UI", size, weight, || {
+        draw_text(device_context, text, rect, format);
+    });
+}
+
+unsafe fn draw_mono_in(device_context: HDC, text: &str, rect: LayoutRect, size: i32) {
+    let _ = SetTextColor(device_context, COLORREF(COLOR_TEXT));
+    with_font(device_context, "Consolas", size, 600, || {
+        draw_text(device_context, text, rect, DT_LEFT | DT_SINGLELINE);
+    });
+}
+
+unsafe fn draw_centered_in(device_context: HDC, text: &str, rect: LayoutRect) {
+    with_font(device_context, "Microsoft YaHei UI", 16, 600, || {
+        draw_text(device_context, text, rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+    });
+}
+
+unsafe fn with_font<F: FnOnce()>(device_context: HDC, face: &str, size: i32, weight: i32, paint: F) {
+    let face_wide = wide_z(face);
+    let font = CreateFontW(
+        size,
+        0,
+        0,
+        0,
+        weight,
+        0,
+        0,
+        0,
+        DEFAULT_CHARSET,
+        OUT_DEFAULT_PRECIS,
+        CLIP_DEFAULT_PRECIS,
+        DEFAULT_QUALITY,
+        1,
+        PCWSTR(face_wide.as_ptr()),
+    );
+    let previous = SelectObject(device_context, HGDIOBJ::from(font));
+    paint();
+    SelectObject(device_context, previous);
+    let _ = DeleteObject(HGDIOBJ::from(font));
+}
+
+unsafe fn draw_text(
+    device_context: HDC,
+    text: &str,
+    rect: LayoutRect,
+    format: windows::Win32::Graphics::Gdi::DRAW_TEXT_FORMAT,
+) {
+    let mut owned = wide_chars(text);
+    let mut gdi_rect = to_gdi(rect);
+    DrawTextW(device_context, &mut owned, &mut gdi_rect, format);
 }
 
 /// 双视口品牌标（对齐高保真 h0），供窗体与托盘使用。
@@ -222,45 +398,37 @@ pub unsafe fn create_brand_icon(size: i32) -> windows::core::Result<HICON> {
     Ok(icon)
 }
 
-unsafe fn draw_line(device_context: HDC, text: &[u16], left: i32, top: i32, width: i32, height: i32) {
-    let mut owned = text.to_vec();
-    let mut rect = RECT {
-        left,
-        top,
-        right: left + width,
-        bottom: top + height,
-    };
-    DrawTextW(device_context, &mut owned, &mut rect, DT_LEFT | DT_WORDBREAK);
-}
-
 fn wide_chars(text: &str) -> Vec<u16> {
     text.encode_utf16().collect()
 }
 
+fn wide_z(text: &str) -> Vec<u16> {
+    text.encode_utf16().chain(std::iter::once(0)).collect()
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{
-        hit_accept_switch, hit_confirm_allow, hit_confirm_refuse, CONFIRM_ALLOW_LEFT, CONFIRM_BTN_H, CONFIRM_BTN_TOP,
-        CONFIRM_BTN_W, CONFIRM_REFUSE_LEFT, SWITCH_HIT_BOTTOM, SWITCH_HIT_RIGHT, SWITCH_LEFT, SWITCH_TOP,
-    };
+    use super::{hit_accept_switch, hit_confirm_allow, hit_confirm_refuse};
+    use crate::host_layout;
 
     #[test]
     fn 开关命中含轨道与标签() {
-        assert!(hit_accept_switch(SWITCH_LEFT + 4, SWITCH_TOP + 4));
-        assert!(hit_accept_switch(SWITCH_HIT_RIGHT - 4, SWITCH_HIT_BOTTOM - 4));
-        assert!(!hit_accept_switch(SWITCH_LEFT - 2, SWITCH_TOP + 4));
-        assert!(!hit_accept_switch(SWITCH_LEFT + 4, SWITCH_TOP - 2));
+        let track = host_layout::ACCEPT_SWITCH_TRACK;
+        assert!(hit_accept_switch(track.left + 4, track.top + 4));
+        assert!(hit_accept_switch(
+            host_layout::ACCEPT_SWITCH_HIT.right - 4,
+            host_layout::ACCEPT_SWITCH_HIT.bottom - 4
+        ));
+        assert!(!hit_accept_switch(track.left - 2, track.top + 4));
     }
 
     #[test]
     fn 确认页拒绝为默认命中区() {
-        assert!(hit_confirm_refuse(CONFIRM_REFUSE_LEFT + 10, CONFIRM_BTN_TOP + 10));
-        assert!(hit_confirm_allow(CONFIRM_ALLOW_LEFT + 10, CONFIRM_BTN_TOP + 10));
-        assert!(!hit_confirm_refuse(CONFIRM_ALLOW_LEFT + 10, CONFIRM_BTN_TOP + 10));
-        assert!(!hit_confirm_allow(
-            CONFIRM_REFUSE_LEFT + 10,
-            CONFIRM_BTN_TOP + CONFIRM_BTN_H + 2
-        ));
-        let _ = CONFIRM_BTN_W;
+        let refuse = host_layout::CONFIRM_REFUSE.rect;
+        let allow = host_layout::CONFIRM_ALLOW.rect;
+        assert!(hit_confirm_refuse(refuse.left + 10, refuse.top + 10));
+        assert!(hit_confirm_allow(allow.left + 10, allow.top + 10));
+        assert!(!hit_confirm_refuse(allow.left + 10, allow.top + 10));
+        assert!(!hit_confirm_allow(refuse.left + 10, refuse.bottom + 2));
     }
 }
