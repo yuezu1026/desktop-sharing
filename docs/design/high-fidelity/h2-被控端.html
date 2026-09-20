@@ -10,15 +10,24 @@
   <body>
     <nav class="site-nav">
       <a href="index.html">视觉系统</a>
+      <a href="h0-品牌图标.html">品牌图标</a>
       <a href="h1-控制端.html">控制端</a>
       <a href="h2-被控端.html" aria-current="page">被控端</a>
+      <a href="h3-账号.html">账号</a>
       <a href="h4-计费.html">计费</a>
       <a href="h6-移动端.html">移动端</a>
       <a href="h-红线组件.html">红线组件</a>
       <a href="../wireframe/w2-被控端.html">对照低保真 W2</a>
+      <button type="button" class="theme-btn" data-theme-toggle><span data-theme-label>暗色</span></button>
     </nav>
 
     <main class="wrap">
+      <p class="kicker">Host · Desktop</p>
+      <h1>识别码一眼可抄，金额一概不出现。</h1>
+      <p class="lede">
+        对照低保真 W2。被控端不出现余额、充值、会员。「拒绝」是确认页唯一实心按钮。
+      </p>
+
       <section class="shot">
         <div class="meta"><span class="chip-id">W2-01</span></div>
         <h2>本机正在等待</h2>
@@ -28,6 +37,11 @@
         </p>
         <div class="window">
           <div class="chrome">
+            <svg class="mark" viewBox="0 0 18 18" aria-hidden="true" style="color: var(--brand)">
+              <rect x="1" y="2" width="10" height="7" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.4" />
+              <rect x="6" y="8" width="11" height="8" rx="1.4" fill="currentColor" />
+              <rect x="8" y="13.2" width="7" height="1.2" rx="0.6" fill="var(--surface2)" />
+            </svg>
             <span class="title">远程桌面 · 本机</span>
             <span class="spacer"></span>
             <span class="win-btn">—</span>
@@ -68,8 +82,8 @@
               </section>
               <section class="panel">
                 <b>常用开关</b>
-                <div class="split" style="margin-top: 8px"><span>开机自动启动</span><span class="spacer"></span><span class="pill pill-on">开</span></div>
-                <div class="split" style="margin-top: 8px"><span>空闲时近零占用</span><span class="spacer"></span><span class="pill pill-on">开</span></div>
+                <div class="split" style="margin-top: 8px"><span>开机自动启动</span><span class="spacer"></span><span class="pill pill-ok">开</span></div>
+                <div class="split" style="margin-top: 8px"><span>空闲时近零占用</span><span class="spacer"></span><span class="pill pill-ok">开</span></div>
                 <div class="split" style="margin-top: 8px"><span>资源档位</span><span class="spacer"></span><span class="pill">均衡</span></div>
               </section>
               <section class="fraud">
@@ -91,6 +105,11 @@
         </p>
         <div class="window stage-host">
           <div class="chrome">
+            <svg class="mark" viewBox="0 0 18 18" aria-hidden="true" style="color: var(--brand)">
+              <rect x="1" y="2" width="10" height="7" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.4" />
+              <rect x="6" y="8" width="11" height="8" rx="1.4" fill="currentColor" />
+              <rect x="8" y="13.2" width="7" height="1.2" rx="0.6" fill="var(--surface2)" />
+            </svg>
             <span class="title">远程桌面 · 本机</span>
           </div>
           <div class="host" style="filter: blur(1px); min-height: 480px; pointer-events: none">
@@ -131,7 +150,7 @@
               </div>
               <footer>
                 <span class="btn">允许本次</span>
-                <span class="btn btn-ink is-keyfocus">拒绝</span>
+                <span class="btn btn-solid is-keyfocus">拒绝</span>
               </footer>
             </div>
           </div>
@@ -142,5 +161,6 @@
         </p>
       </section>
     </main>
+      <script src="theme.js"></script>
   </body>
 </html>

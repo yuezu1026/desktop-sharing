@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
 import {
+  applyBalance,
   applyNativeRelayEvent,
   applyRemoteSessionState,
   createSession,
+  sessionChrome,
   shouldAttachRelay,
 } from "./handheld.mjs";
 
@@ -28,5 +30,34 @@ const framed = applyNativeRelayEvent(connected, { type: "frame", width: 320, hei
 assert.equal(framed.notice, "已收到画面");
 assert.equal(framed.pictureWidth, 320);
 assert.equal(framed.frameUri, "data:image/jpeg;base64,qq");
+assert.equal(framed.surfaceVideo, false);
+
+const surfaceFramed = applyNativeRelayEvent(connected, { type: "frame", width: 1920, height: 1080, surface: true });
+assert.equal(surfaceFramed.notice, "已收到画面");
+assert.equal(surfaceFramed.pictureWidth, 1920);
+assert.equal(surfaceFramed.frameUri, "");
+assert.equal(surfaceFramed.surfaceVideo, true);
+
+const kept = applyBalance({ ...framed, notice: "正在解 H264" }, { showBalance: true, displayMinutes: 12 });
+assert.equal(kept.notice, "正在解 H264");
+assert.equal(kept.displayMinutes, 12);
+
+const chromeHidden = sessionChrome(createSession());
+assert.equal(chromeHidden.quotaNumber, null);
+const chromeShown = sessionChrome(
+  applyBalance(createSession(), {
+    showBalance: true,
+    displayMinutes: 18,
+    footnote: "按当前画质估算 · 切换画质会变",
+  }),
+);
+assert.equal(chromeShown.quotaNumber, 18);
+assert.equal(chromeShown.quotaFootnote, "按当前画质估算 · 切换画质会变");
+
+const polled = applyRemoteSessionState(
+  { ...framed, notice: "已收到画面", ticket: "t".repeat(24) },
+  { state: "active", remoteSessionId: "11111111-1111-1111-1111-111111111111" },
+);
+assert.equal(polled.notice, "已收到画面");
 
 console.log("mobile handheld remote-state ok");

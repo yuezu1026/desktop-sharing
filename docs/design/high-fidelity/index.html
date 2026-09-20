@@ -3,60 +3,76 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>纸澄 · 高保真视觉系统</title>
+    <title>远程桌面 · 高保真视觉系统</title>
     <link rel="stylesheet" href="tokens.css" />
     <link rel="stylesheet" href="high.css" />
   </head>
   <body>
     <nav class="site-nav">
       <a href="index.html" aria-current="page">视觉系统</a>
+      <a href="h0-品牌图标.html">品牌图标</a>
       <a href="h1-控制端.html">控制端</a>
       <a href="h2-被控端.html">被控端</a>
+      <a href="h3-账号.html">账号</a>
       <a href="h4-计费.html">计费</a>
       <a href="h6-移动端.html">移动端</a>
       <a href="h-红线组件.html">红线组件</a>
       <a href="../wireframe/index.html">返回低保真</a>
+      <button type="button" class="theme-btn" data-theme-toggle><span data-theme-label>暗色</span></button>
     </nav>
 
     <main class="wrap">
-      <p class="kicker">纸澄 · 视觉语言</p>
+      <p class="kicker">Design Tokens · 双主题</p>
       <h1>透明，比促销更先被看见。</h1>
       <p class="lede">
         这套高保真不重新发明信息架构。低保真已经回答「有哪些屏、放什么、哪条红线不能破」。
-        这里只回答好不好看：暖纸底、墨绿侧栏、青绿只表示直连和在线，琥珀只陈述「正在走中继」，
-        购买和「拒绝」都用墨色实心，但两者不是一回事。产品名仍叫「远程桌面」，不另起品牌。
+        这里只回答好不好看：语义色板对齐穿梭式 Design Tokens（品牌蓝 + 状态绿/琥珀/赤 + surface/icon 分层），
+        支持亮/暗主题。直连走成功绿，中继走琥珀事实色，购买与「拒绝」用中性实心，互不抢色。
+        产品名仍叫「远程桌面」，不另起品牌。
       </p>
 
-      <h2>颜色</h2>
+      <h2>颜色 · 语义 Token</h2>
       <p class="note">
-        青绿只表示直连、在线和「重新尝试直连」，不用于购买，也不用于「允许被连接」。
-        购买主动作用墨色实心。拒绝也是墨色实心，但是安全出口，不是促销。
-        断开比旁边的工具更重，不涂红。赤色只留给注销、删除这类真正的破坏，本批关键屏没有这种按钮。
+        <strong>ok</strong> 只表示直连、在线和「重新尝试直连」，不用于购买，也不用于「允许被连接」。
+        购买主动作用 <strong>text</strong> 中性实心。拒绝也是中性实心，但是安全出口，不是促销。
+        断开比旁边的工具更重，不涂红。<strong>err</strong> 只留给注销、删除。右上角可切换暗色主题。
       </p>
       <div class="swatches" style="margin-top: 14px">
         <div class="swatch">
-          <i style="background: #172420"></i>
-          <div><b>墨绿</b><span>#172420 · 导航</span></div>
+          <i style="background: var(--brand)"></i>
+          <div><b>brand</b><span>#2F6FED · 品牌 / 链接 / 软底</span></div>
         </div>
         <div class="swatch">
-          <i style="background: #0f6e5c"></i>
-          <div><b>青绿</b><span>#0F6E5C · 直连 / 主按钮</span></div>
+          <i style="background: var(--ok)"></i>
+          <div><b>ok</b><span>#15966F · 直连 / 在线</span></div>
         </div>
         <div class="swatch">
-          <i style="background: #8a4e0f"></i>
-          <div><b>琥珀</b><span>#8A4E0F · 中继事实，不是警报</span></div>
+          <i style="background: var(--warn)"></i>
+          <div><b>warn</b><span>#C77E0A · 中继事实，不是警报</span></div>
         </div>
         <div class="swatch">
-          <i style="background: #f3efe7"></i>
-          <div><b>纸</b><span>#F3EFE7 · 页面底</span></div>
+          <i style="background: var(--bg)"></i>
+          <div><b>bg</b><span>#EEF2F8 · 页面底</span></div>
         </div>
         <div class="swatch">
-          <i style="background: #1c1916"></i>
-          <div><b>墨</b><span>#1C1916 · 正文 / 安全出口</span></div>
+          <i style="background: var(--surface)"></i>
+          <div><b>surface</b><span>#FFFFFF · 卡片 / 窗体</span></div>
         </div>
         <div class="swatch">
-          <i style="background: #9d3b32"></i>
-          <div><b>赤</b><span>#9D3B32 · 注销 / 删除，不用于断开</span></div>
+          <i style="background: var(--text)"></i>
+          <div><b>text</b><span>#14213A · 正文 / 购买 / 拒绝</span></div>
+        </div>
+        <div class="swatch">
+          <i style="background: var(--err)"></i>
+          <div><b>err</b><span>#D43C3C · 注销 / 删除，不用于断开</span></div>
+        </div>
+        <div class="swatch">
+          <i style="background: var(--icon)"></i>
+          <div><b>icon</b><span>#5F6F8E · 图标默认重量</span></div>
+        </div>
+        <div class="swatch">
+          <i style="background: var(--surface2)"></i>
+          <div><b>surface2</b><span>#F3F6FC · 侧栏 / 次级面</span></div>
         </div>
       </div>
 
@@ -69,16 +85,16 @@
         <article class="meter">
           <div class="label">态 A · 未到阈值（设计说明）。不是一进会话就贴脸。</div>
           <div class="meter-bar">
-            <span class="pill pill-amber">中继</span>
+            <span class="pill pill-warn">中继</span>
             <span class="spacer"></span>
-            <span style="color: var(--ink-faint)">—</span>
+            <span style="color: var(--text3)">—</span>
           </div>
           <p class="note">界面上只显示链路类型，不显示任何计数。</p>
         </article>
         <article class="meter">
           <div class="label">态 B · 用掉约八成（设计说明）。示意，分钟由服务端下发。</div>
           <div class="meter-bar">
-            <span class="pill pill-amber">中继</span>
+            <span class="pill pill-warn">中继</span>
             <span>免费中继时长剩余约 xx 分钟</span>
             <span class="spacer"></span>
             <span>▾</span>
@@ -103,24 +119,32 @@
 
       <h2>按钮权重</h2>
       <p class="note">
-        日常连接用青绿。购买用墨色实心，避免和直连抢色。
+        日常连接 / 尝试直连用 ok 绿。登录 / 注册用品牌蓝。购买与「拒绝」用 text 中性实心，避免和直连抢色。
         反诈页唯一的实心按钮是「拒绝」，焦点也停在它上面；「允许本次」同尺寸描边。
-        「断开」描边加粗，不涂红。
+        「断开」描边加粗，不涂红。「允许被连接」是开关，开态用品牌蓝，不用 ok。
       </p>
       <div class="card-actions" style="margin-top: 12px">
         <span class="btn btn-primary">连接</span>
-        <span class="btn btn-ink">立即开通</span>
-        <span class="btn btn-ink is-keyfocus">拒绝</span>
+        <span class="btn btn-brand">登录</span>
+        <span class="btn btn-solid">立即开通</span>
+        <span class="btn btn-solid is-keyfocus">拒绝</span>
         <span class="btn">允许本次</span>
         <span class="btn btn-exit">断开</span>
       </div>
 
       <h2>已出的关键屏</h2>
       <p class="note">
+        品牌图标与启动页见
+        <a href="h0-品牌图标.html">品牌图标</a>。
         降级、两种仅查看、全屏角标、支付确认中、用尽后的四条路，见
         <a href="h-红线组件.html">红线组件</a>。不要只用颜色去猜这些屏。
       </p>
       <div class="meters" style="margin-top: 14px">
+        <a class="meter" href="h0-品牌图标.html" style="text-decoration: none; color: inherit">
+          <div class="label">ICON-01 … ICON-05</div>
+          <b>品牌图标</b>
+          <p class="note">双视口主图标、桌面/托盘、冷启动页、导出清单。</p>
+        </a>
         <a class="meter" href="h1-控制端.html" style="text-decoration: none; color: inherit">
           <div class="label">W1-01 · W1-03 · W1-07</div>
           <b>控制端</b>
@@ -130,6 +154,11 @@
           <div class="label">W2-01 · W2-02</div>
           <b>被控端</b>
           <p class="note">识别码一眼可抄。确认页反诈块不折叠。没有任何金额。</p>
+        </a>
+        <a class="meter" href="h3-账号.html" style="text-decoration: none; color: inherit">
+          <div class="label">W3-01 · W3-02 · W3-10 · W3-12</div>
+          <b>账号</b>
+          <p class="note">登录注册、重置密码与恢复码拆开、邮箱路径、就地错误态。</p>
         </a>
         <a class="meter" href="h4-计费.html" style="text-decoration: none; color: inherit">
           <div class="label">W4-01 · W4-02</div>
@@ -141,5 +170,6 @@
         移动端手持与安卓被控在 <a href="h6-移动端.html">h6-移动端.html</a>（W6-02 · W7-02）。触控按钮命中高度 44px。
       </p>
     </main>
+    <script src="theme.js"></script>
   </body>
 </html>

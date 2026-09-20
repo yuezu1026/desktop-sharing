@@ -4,6 +4,7 @@ import type { Pool, PoolClient } from "pg";
 import { AccountService, type Failure, type SessionContext } from "./account-service.js";
 import type { AppConfig } from "./config.js";
 import { createToken, hashSecret, maskPhone } from "./passwords.js";
+import { decideRelayHeartbeat, type RelayDirective } from "./relay-directive.js";
 
 const SHANGHAI_OFFSET_MS = 8 * 60 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -11,7 +12,7 @@ const NEW_ACCOUNT_FREEZE_MS = DAY_MS;
 const HEARTBEAT_MAX_BYTES = 256 * 1024 * 1024;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-type Directive = "continue" | "warn" | "suggest_direct" | "degraded" | "stop_relay";
+type Directive = RelayDirective;
 
 /** 免费额度用到一半才提示。50% 是已定阈值，不从客户端传入。 */
 const REAL_NAME_USED_SHARE = 2;
@@ -313,7 +314,8 @@ export class SessionService {
         [remoteSessionId, now],
       );
       await this.audit(client, session.accountId, "remote_session.consent", { remoteSessionId });
-      return this.openRelay(client, { ...session, accountId: row.account_id }, remoteSessionId, row.controller_fingerprint, now, true, true);
+      // 票留给 host-attach / 被控端轮询；若在此 clearPlain，实验室用账号代同意后被控端永远拿不到票。
+      return this.openRelay(client, { ...session, accountId: row.account_id }, remoteSessionId, row.controller_fingerprint, now, true, false);
     });
   }
 
@@ -872,34 +874,27 @@ export class SessionService {
       if (input.bytes > 0) await this.deduct(client, ticket.accountId, ticket.remoteSessionId, input.bytes, now);
       const remainingBytes = await this.remainingBytes(client, ticket.accountId, now);
       const totalBytes = await this.grantTotal(client, ticket.accountId, now);
-      const usedRatio = totalBytes <= 0 ? 1 : (totalBytes - remainingBytes) / totalBytes;
       const prompt = remainingBytes > 0
         ? await this.realNamePrompt(client, ticket.accountId, ticket.controllerFingerprint, now, ticket.hostDeviceId)
         : null;
-      let bitrateKbps = ticket.bitrateKbps;
-      let directive: Directive = "continue";
-      let notice: string | null = null;
+      const decided = decideRelayHeartbeat({
+        remainingBytes,
+        totalBytes,
+        bitrateKbps: ticket.bitrateKbps,
+        freeBitrateKbps: this.config.freeBitrateKbps,
+        degradeFloorKbps: this.config.displayMinuteFloorKbps,
+        acceptDegrade: input.acceptDegrade,
+        stopNotice: prompt?.message ?? null,
+      });
+      let bitrateKbps = decided.bitrateKbps;
+      const directive: Directive = decided.directive;
+      const notice = decided.notice;
 
-      if (remainingBytes <= 0) {
-        directive = "stop_relay";
-        notice = "中继已停，会话还在。可以改走直连";
-      } else if (prompt) {
-        directive = "stop_relay";
-        notice = prompt.message;
-      } else if (input.acceptDegrade && bitrateKbps > this.config.freeBitrateKbps && usedRatio >= 0.8) {
-        bitrateKbps = this.config.freeBitrateKbps;
-        directive = "degraded";
-        notice = `画质已降低到 ${formatRate(bitrateKbps)}`;
+      if (directive === "degraded" && bitrateKbps !== ticket.bitrateKbps) {
         await client.query("UPDATE remote_sessions SET bitrate_kbps = $2 WHERE remote_session_id = $1", [
           ticket.remoteSessionId,
           bitrateKbps,
         ]);
-      } else if (usedRatio >= 0.95) {
-        directive = "suggest_direct";
-        notice = "免费中继时长将尽，可以重新尝试直连";
-      } else if (usedRatio >= 0.8) {
-        directive = "warn";
-        notice = "免费中继时长已用到约八成";
       }
 
       let nextTicket: string | null = null;
@@ -1413,11 +1408,6 @@ function shanghaiMonth(now: Date): { start: Date; end: Date } {
     start: new Date(Date.UTC(year, month, 1) - SHANGHAI_OFFSET_MS),
     end: new Date(Date.UTC(year, month + 1, 1) - SHANGHAI_OFFSET_MS),
   };
-}
-
-function formatRate(kbps: number): string {
-  if (kbps % 1000 === 0) return `${kbps / 1000} Mbps`;
-  return `${kbps} kbps`;
 }
 
 function isUuid(value: string): boolean {

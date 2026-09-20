@@ -10,15 +10,24 @@
   <body>
     <nav class="site-nav">
       <a href="index.html">视觉系统</a>
+      <a href="h0-品牌图标.html">品牌图标</a>
       <a href="h1-控制端.html" aria-current="page">控制端</a>
       <a href="h2-被控端.html">被控端</a>
+      <a href="h3-账号.html">账号</a>
       <a href="h4-计费.html">计费</a>
       <a href="h6-移动端.html">移动端</a>
       <a href="h-红线组件.html">红线组件</a>
       <a href="../wireframe/w1-控制端-连接与额度.html">对照低保真 W1</a>
+      <button type="button" class="theme-btn" data-theme-toggle><span data-theme-label>暗色</span></button>
     </nav>
 
     <main class="wrap">
+      <p class="kicker">Controller · Desktop</p>
+      <h1>先看见设备，再谈连接事实。</h1>
+      <p class="lede">
+        对照低保真 W1。状态栏不放升级；转直连引导不出现购买。直连用 ok 绿，购买与会员不进这一页。
+      </p>
+
       <section class="shot">
         <div class="meta"><span class="chip-id">W1-01</span></div>
         <h2>我的设备</h2>
@@ -27,9 +36,10 @@
         </p>
         <div class="window">
           <div class="chrome">
-            <svg class="mark" viewBox="0 0 18 18" aria-hidden="true">
-              <rect x="1" y="2" width="10" height="7" rx="1.4" fill="none" stroke="#0f6e5c" stroke-width="1.4" />
-              <rect x="6" y="8" width="11" height="8" rx="1.4" fill="#0f6e5c" />
+            <svg class="mark" viewBox="0 0 18 18" aria-hidden="true" style="color: var(--brand)">
+              <rect x="1" y="2" width="10" height="7" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.4" />
+              <rect x="6" y="8" width="11" height="8" rx="1.4" fill="currentColor" />
+              <rect x="8" y="13.2" width="7" height="1.2" rx="0.6" fill="var(--surface2)" />
             </svg>
             <span class="title">远程桌面</span>
             <span class="spacer"></span>
@@ -40,9 +50,10 @@
           <div class="shell">
             <aside class="side">
               <div class="brand">
-                <svg class="mark" viewBox="0 0 18 18" aria-hidden="true">
-                  <rect x="1" y="2" width="10" height="7" rx="1.4" fill="none" stroke="#e8f2ee" stroke-width="1.4" />
-                  <rect x="6" y="8" width="11" height="8" rx="1.4" fill="#e8f2ee" />
+                <svg class="mark" viewBox="0 0 18 18" aria-hidden="true" style="color: var(--brand)">
+                  <rect x="1" y="2" width="10" height="7" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.4" />
+                  <rect x="6" y="8" width="11" height="8" rx="1.4" fill="currentColor" />
+                  <rect x="8" y="13.2" width="7" height="1.2" rx="0.6" fill="var(--surface3)" />
                 </svg>
                 远程桌面
               </div>
@@ -66,7 +77,7 @@
                   </div>
                   <div class="card-top">
                     <b>我的台式机</b>
-                    <span class="pill pill-on">在线</span>
+                    <span class="pill pill-ok">在线</span>
                   </div>
                   <p>Windows 11 · 刚刚</p>
                   <div class="card-actions">
@@ -96,7 +107,7 @@
               </div>
               <div class="foot">
                 <span class="dot" aria-hidden="true"></span>
-                <b style="color: var(--ink); font-weight: 650">最近一次连接：直连</b>
+                <b style="color: var(--text); font-weight: 650">最近一次连接：直连</b>
                 <span>直连不经过中继，不消耗免费中继时长</span>
                 <span class="spacer"></span>
                 <span>已实名</span>
@@ -149,7 +160,7 @@
             <span class="btn">剪贴板</span>
             <span class="btn">全屏</span>
             <span class="spacer"></span>
-            <span class="pill pill-on">直连</span>
+            <span class="pill pill-ok">直连</span>
             <span class="btn btn-exit">断开</span>
           </div>
         </div>
@@ -158,7 +169,7 @@
           全屏后工具条可以藏，右上角仍留「直连」或「中继」角标。
         </p>
         <div class="fact fact-relay" style="margin-top: 12px; border-radius: 10px">
-          <span class="dot dot-amber" aria-hidden="true"></span>
+          <span class="dot dot-warn" aria-hidden="true"></span>
           <b>本次连接：中继</b>
           <span>在消耗免费中继时长</span>
         </div>
@@ -178,11 +189,11 @@
             <div class="now">
               <div class="split">
                 <b>你现在走的是中继</b>
-                <span class="pill pill-amber">中继</span>
+                <span class="pill pill-warn">中继</span>
               </div>
               <span>中继会经过我们的服务器转发，因此占用免费中继时长。</span>
             </div>
-            <div style="text-align: center; color: var(--ink-soft); font-size: 13px">
+            <div style="text-align: center; color: var(--text2); font-size: 13px">
               换成直连：点对点，不经过服务器
             </div>
             <div class="steps">
@@ -226,5 +237,6 @@
         </div>
       </section>
     </main>
+      <script src="theme.js"></script>
   </body>
 </html>

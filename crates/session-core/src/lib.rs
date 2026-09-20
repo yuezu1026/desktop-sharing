@@ -15,7 +15,8 @@ pub use control::{decode_control, encode_control, ControlError, ControlMessage, 
 pub use crypto::{DirectCipher, EndpointRole, HandshakeError, HandshakeOffer, SessionKeys};
 pub use frame::{decode_frame, encode_frame, Frame, FrameError, FrameKind, PROTOCOL_VERSION};
 pub use h264::{
-    annex_b_has_idr, ensure_annex_b, first_vcl_nal_type, length_prefixed_to_annex_b, looks_like_annex_b,
+    align_h264_dimension, annex_b_has_idr, ensure_annex_b, first_vcl_nal_type, length_prefixed_to_annex_b,
+    looks_like_annex_b,
 };
 pub use input::{decode_input, encode_input, InputError, InputEvent};
 pub use relay_hello::{encode_relay_hello, HelloError, RelayRole};

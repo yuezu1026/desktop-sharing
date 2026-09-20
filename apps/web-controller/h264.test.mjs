@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import {
+  annexBForDecoderInput,
   annexBHasIdr,
   annexBToLengthPrefixed,
   buildAvcC,
@@ -41,5 +42,15 @@ assert.ok(avc);
 assert.equal(avc[0], 0);
 assert.equal(avc[3], 3);
 assert.equal(avc[4], 0x65);
+
+const decoderInput = annexBForDecoderInput(stream);
+assert.ok(decoderInput);
+assert.equal(decoderInput[0], 0);
+assert.equal(decoderInput[1], 0);
+assert.equal(decoderInput[2], 0);
+assert.equal(decoderInput[3], 1);
+assert.equal(decoderInput[4], 0x65);
+assert.equal(annexBHasIdr(decoderInput), true);
+assert.equal(findSpsPps(decoderInput), null);
 
 console.log("web-controller h264 ok");

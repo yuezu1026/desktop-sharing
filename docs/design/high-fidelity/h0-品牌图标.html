@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>高保真 · 品牌图标与启动页</title>
+    <link rel="stylesheet" href="tokens.css" />
+    <link rel="stylesheet" href="high.css" />
+  </head>
+  <body>
+    <!-- 品牌图形：双视口（近端控制面 + 远端桌面），16px 仍可辨 -->
+    <svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" aria-hidden="true" style="position: absolute">
+      <symbol id="mark-glyph" viewBox="0 0 64 64">
+        <!-- 远端桌面（退后） -->
+        <rect x="8" y="12" width="34" height="26" rx="5" fill="none" stroke="currentColor" stroke-width="3.2" />
+        <!-- 近端视口（向前，实心） -->
+        <rect x="22" y="26" width="34" height="26" rx="5" fill="currentColor" />
+        <!-- 视口内一条「任务栏」暗示桌面 -->
+        <rect x="27" y="44" width="24" height="3.2" rx="1.6" fill="var(--glyph-inset, #fff)" opacity="0.92" />
+      </symbol>
+      <symbol id="mark-app" viewBox="0 0 64 64">
+        <defs>
+          <linearGradient id="mark-bg" x1="8" y1="4" x2="56" y2="60" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#4B86F5" />
+            <stop offset="1" stop-color="#1E5BD0" />
+          </linearGradient>
+        </defs>
+        <rect width="64" height="64" rx="14" fill="url(#mark-bg)" />
+        <!-- 远端描边：浅 -->
+        <rect x="10" y="13" width="30" height="23" rx="4.5" fill="none" stroke="#EAF1FF" stroke-width="2.6" opacity="0.92" />
+        <!-- 近端实心：白 -->
+        <rect x="23" y="27" width="31" height="23" rx="4.5" fill="#FFFFFF" />
+        <rect x="28" y="43" width="21" height="2.8" rx="1.4" fill="#2F6FED" opacity="0.85" />
+      </symbol>
+      <symbol id="mark-mono" viewBox="0 0 64 64">
+        <rect x="10" y="13" width="30" height="23" rx="4.5" fill="none" stroke="currentColor" stroke-width="3" />
+        <rect x="23" y="27" width="31" height="23" rx="4.5" fill="currentColor" />
+        <rect x="28" y="43" width="21" height="2.8" rx="1.4" fill="var(--glyph-inset, #fff)" />
+      </symbol>
+    </svg>
+
+    <nav class="site-nav">
+      <a href="index.html">视觉系统</a>
+      <a href="h0-品牌图标.html" aria-current="page">品牌图标</a>
+      <a href="h1-控制端.html">控制端</a>
+      <a href="h2-被控端.html">被控端</a>
+      <a href="h3-账号.html">账号</a>
+      <a href="h4-计费.html">计费</a>
+      <a href="h6-移动端.html">移动端</a>
+      <a href="h-红线组件.html">红线组件</a>
+      <a href="../wireframe/index.html">返回低保真</a>
+      <button type="button" class="theme-btn" data-theme-toggle><span data-theme-label>暗色</span></button>
+    </nav>
+
+    <main class="wrap">
+      <p class="kicker">Brand · App Icon · Splash</p>
+      <h1>一眼是「连到另一台电脑」，不是又一个蓝按钮。</h1>
+      <p class="lede">
+        图标不写字、不画地球、不画锁。图形是<strong>双视口</strong>：退后的是远端桌面轮廓，靠前的是你正在看的窗口。
+        主色只用品牌蓝渐变（`--brand`），绿色留给产品里的「直连」状态，不进图标。
+        本稿是视觉规格，不新增产品名或Slogan。
+      </p>
+
+      <div class="principles">
+        <div class="principle">
+          <b>16px 仍成立</b>
+          <span>托盘与任务栏只靠两个错位矩形辨认。细节任务栏在小尺寸可省略，大尺寸才出现。</span>
+        </div>
+        <div class="principle">
+          <b>状态色不进图标</b>
+          <span>ok / warn / err 只出现在会话内。图标恒为品牌蓝，避免「图标绿 = 已直连」的误读。</span>
+        </div>
+        <div class="principle">
+          <b>安全区</b>
+          <span>外圈虚线 ≈ 平台 mask 外边；内圈实线 ≈ 关键图形安全区。导出 1024 时按平台模板裁切。</span>
+        </div>
+        <div class="principle">
+          <b>启动页克制</b>
+          <span>只放图标 + 产品名「远程桌面」。不放价格、剩余时长、升级文案。被控端冷启动同样不加金额。</span>
+        </div>
+      </div>
+
+      <section class="shot">
+        <div class="meta"><span class="chip-id">ICON-01</span></div>
+        <h2>主图标 · 双视口</h2>
+        <p class="note">商店 / 桌面主图标。圆角随平台：iOS ~22.37%、Android Adaptive、Windows 随模板。下图圆角为示意。</p>
+        <div class="brand-grid">
+          <div class="brand-card">
+            <div class="icon-stage">
+              <div class="app-icon" style="width: 112px; height: 112px; border-radius: 26px">
+                <svg viewBox="0 0 64 64" role="img" aria-label="远程桌面应用图标"><use href="#mark-app" /></svg>
+              </div>
+            </div>
+            <div class="label">1024 → 展示</div>
+            <b>主图标</b>
+          </div>
+          <div class="brand-card">
+            <div class="icon-stage is-dark">
+              <div class="app-icon" style="width: 112px; height: 112px; border-radius: 26px">
+                <svg viewBox="0 0 64 64" role="img" aria-label="暗底预览"><use href="#mark-app" /></svg>
+              </div>
+            </div>
+            <div class="label">暗壁纸抽检</div>
+            <b>对比度</b>
+          </div>
+          <div class="brand-card">
+            <div class="icon-stage is-checker">
+              <div class="safe-ring">
+                <div class="app-icon">
+                  <svg viewBox="0 0 64 64" aria-hidden="true"><use href="#mark-app" /></svg>
+                </div>
+              </div>
+            </div>
+            <div class="label">虚线外框 · 实线安全区</div>
+            <b>Mask 安全区</b>
+          </div>
+        </div>
+        <div class="size-row" style="margin-top: 22px; justify-content: flex-start">
+          <figure>
+            <div class="app-icon" style="width: 180px; height: 180px; border-radius: 40px">
+              <svg viewBox="0 0 64 64" aria-hidden="true"><use href="#mark-app" /></svg>
+            </div>
+            <figcaption>180 · 手机主屏</figcaption>
+          </figure>
+          <figure>
+            <div class="app-icon is-sm">
+              <svg viewBox="0 0 64 64" aria-hidden="true"><use href="#mark-app" /></svg>
+            </div>
+            <figcaption>60</figcaption>
+          </figure>
+          <figure>
+            <div class="app-icon is-xs">
+              <svg viewBox="0 0 64 64" aria-hidden="true"><use href="#mark-app" /></svg>
+            </div>
+            <figcaption>32</figcaption>
+          </figure>
+          <figure>
+            <div class="app-icon" style="width: 16px; height: 16px; border-radius: 4px; box-shadow: none">
+              <svg viewBox="0 0 64 64" aria-hidden="true"><use href="#mark-app" /></svg>
+            </div>
+            <figcaption>16 · 极限</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="shot">
+        <div class="meta"><span class="chip-id">ICON-02</span></div>
+        <h2>桌面端 · Windows 任务栏与桌面</h2>
+        <p class="note">
+          桌面快捷方式与开始菜单用同一主图标。任务栏小尺寸可改用 mono 线稿，避免蓝底糊成一块。
+          窗体标题栏左侧的小标与图标同源（见下「应用内」。）
+        </p>
+        <div class="desk-icons">
+          <div class="desk-icon-item">
+            <div class="app-icon">
+              <svg viewBox="0 0 64 64" aria-hidden="true"><use href="#mark-app" /></svg>
+            </div>
+            远程桌面
+          </div>
+          <div class="desk-icon-item">
+            <div class="app-icon is-sm">
+              <svg viewBox="0 0 64 64" aria-hidden="true"><use href="#mark-app" /></svg>
+            </div>
+            开始菜单
+          </div>
+          <div class="desk-icon-item">
+            <div
+              class="app-icon is-xs"
+              style="background: color-mix(in srgb, #000 25%, transparent); border-radius: 4px; padding: 4px; box-sizing: content-box"
+            >
+              <svg viewBox="0 0 64 64" style="color: #fff; --glyph-inset: #2a4568" aria-hidden="true">
+                <use href="#mark-mono" />
+              </svg>
+            </div>
+            任务栏 24
+          </div>
+        </div>
+        <div class="brand-grid" style="margin-top: 16px">
+          <div class="brand-card">
+            <div class="icon-stage">
+              <div class="app-icon is-tray" style="color: var(--icon-strong); --glyph-inset: var(--surface)">
+                <svg viewBox="0 0 64 64" aria-hidden="true"><use href="#mark-mono" /></svg>
+              </div>
+            </div>
+            <div class="label">currentColor</div>
+            <b>托盘 · 默认</b>
+          </div>
+          <div class="brand-card">
+            <div class="icon-stage">
+              <div class="app-icon is-tray" style="color: var(--ok); --glyph-inset: var(--surface)">
+                <svg viewBox="0 0 64 64" aria-hidden="true"><use href="#mark-mono" /></svg>
+              </div>
+            </div>
+            <div class="label">仅状态着色，不换形</div>
+            <b>托盘 · 会话中（示意）</b>
+          </div>
+          <div class="brand-card">
+            <div class="icon-stage is-dark">
+              <div class="app-icon is-tray" style="color: #eaf0fa; --glyph-inset: #151e31">
+                <svg viewBox="0 0 64 64" aria-hidden="true"><use href="#mark-mono" /></svg>
+              </div>
+            </div>
+            <div class="label">浅色 glyph</div>
+            <b>托盘 · 深色任务栏</b>
+          </div>
+        </div>
+      </section>
+
+      <section class="shot">
+        <div class="meta"><span class="chip-id">ICON-03</span></div>
+        <h2>点击进入 · 启动页</h2>
+        <p class="note">
+          手机冷启动与桌面进程拉起的第一帧。只有品牌标与产品名；进度条是不确定态示意，不写百分比文案。
+          不出现金额、免费中继、升级。
+        </p>
+        <div class="splash-pair">
+          <div>
+            <div class="splash-phone">
+              <div class="splash-screen">
+                <div class="app-icon">
+                  <svg viewBox="0 0 64 64" aria-hidden="true"><use href="#mark-app" /></svg>
+                </div>
+                <div class="name">远程桌面</div>
+                <div class="sub">正在启动</div>
+                <div class="boot" aria-hidden="true"><i></i></div>
+              </div>
+            </div>
+            <p class="note">Android / 将来 iOS 启动页同一构图。</p>
+          </div>
+          <div style="flex: 1; min-width: 280px">
+            <div class="splash-desk">
+              <div class="chrome">
+                <span class="mark-live" style="color: var(--brand); --glyph-inset: var(--surface)">
+                  <svg viewBox="0 0 64 64" aria-hidden="true"><use href="#mark-mono" /></svg>
+                </span>
+                <span class="title">远程桌面</span>
+                <span class="spacer"></span>
+                <span class="win-btn">—</span>
+                <span class="win-btn">□</span>
+                <span class="win-btn">×</span>
+              </div>
+              <div class="pane">
+                <div class="app-icon">
+                  <svg viewBox="0 0 64 64" aria-hidden="true"><use href="#mark-app" /></svg>
+                </div>
+                <b style="font-size: 16px">远程桌面</b>
+                <span style="font-size: 13px; color: var(--text2)">正在连接控制面…</span>
+                <div class="boot" style="margin-top: 8px; width: 140px; height: 3px; border-radius: 99px; background: var(--surface3); overflow: hidden">
+                  <i style="display: block; width: 48%; height: 100%; background: var(--brand); border-radius: 99px"></i>
+                </div>
+              </div>
+            </div>
+            <p class="note">桌面控制端 / 被控端共用同一启动构图；被控端仍不得出现金额。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="shot">
+        <div class="meta"><span class="chip-id">ICON-04</span></div>
+        <h2>应用内小标</h2>
+        <p class="note">窗体标题栏、关于页、官网 favicon 用 mono 或主图标缩小版。色跟随 `--brand`，不要用 ok 绿。</p>
+        <div class="window" style="max-width: 420px">
+          <div class="chrome">
+            <span class="mark-live" style="color: var(--brand); --glyph-inset: var(--surface)">
+              <svg viewBox="0 0 64 64" aria-hidden="true"><use href="#mark-mono" /></svg>
+            </span>
+            <span class="title">远程桌面</span>
+            <span class="spacer"></span>
+            <span class="win-btn">—</span>
+            <span class="win-btn">□</span>
+            <span class="win-btn">×</span>
+          </div>
+          <div style="padding: 20px; display: flex; gap: 14px; align-items: center; background: var(--surface2)">
+            <div class="app-icon is-sm">
+              <svg viewBox="0 0 64 64" aria-hidden="true"><use href="#mark-app" /></svg>
+            </div>
+            <div>
+              <b style="display: block; font-size: 15px">远程桌面</b>
+              <span style="font-size: 12px; color: var(--text2)">版本示意 · 关于</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="shot">
+        <div class="meta"><span class="chip-id">ICON-05</span></div>
+        <h2>导出清单（给工程）</h2>
+        <p class="note">高保真只定形与色。落地导出时按此清单，勿另起第二套图形。</p>
+        <div class="meters" style="margin-top: 14px">
+          <article class="meter">
+            <div class="label">移动</div>
+            <b>Android</b>
+            <p class="note">mipmap 全密度；Adaptive：前景为双视口白/描边，背景为品牌渐变或纯 `#2F6FED`。</p>
+          </article>
+          <article class="meter">
+            <div class="label">桌面</div>
+            <b>Windows</b>
+            <p class="note">`.ico` 含 16 / 24 / 32 / 48 / 256。托盘另出 mono 模板（黑/白各一）。</p>
+          </article>
+          <article class="meter">
+            <div class="label">Web</div>
+            <b>Favicon</b>
+            <p class="note">32 PNG + SVG mono。PWA 遮罩图标与 Android Adaptive 同源。</p>
+          </article>
+        </div>
+      </section>
+    </main>
+    <script src="theme.js"></script>
+  </body>
+</html>

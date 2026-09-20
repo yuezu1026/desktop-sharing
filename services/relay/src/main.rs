@@ -304,7 +304,7 @@ fn report(app: &App, ticket: &str, bytes: u64, duration_seconds: u32) -> Result<
         "heartbeatId": new_uuid(),
         "bytes": bytes,
         "durationSeconds": duration_seconds,
-        "acceptDegrade": false,
+        "acceptDegrade": true,
     });
     let body = post_json(app, "/v1/relay/heartbeats", &payload.to_string())?;
     serde_json::from_str(&body).map_err(|_| "heartbeat parse".to_string())

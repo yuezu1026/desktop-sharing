@@ -149,8 +149,10 @@ fn bgra_rows_to_bgr(source: &[u8], pitch: usize, width: u32, height: u32) -> Vec
 }
 
 fn scale_bgr(source: &[u8], width: i32, height: i32, max_width: i32) -> (i32, i32, Vec<u8>) {
-    let target_width = width.min(max_width).max(1);
-    let target_height = ((height as i64 * target_width as i64) / width as i64).max(1) as i32;
+    let raw_width = width.min(max_width).max(1);
+    let raw_height = ((height as i64 * raw_width as i64) / width as i64).max(1) as i32;
+    let target_width = session_core::align_h264_dimension(raw_width);
+    let target_height = session_core::align_h264_dimension(raw_height);
     if target_width == width && target_height == height {
         return (width, height, source.to_vec());
     }

@@ -10,12 +10,15 @@
   <body>
     <nav class="site-nav">
       <a href="index.html">视觉系统</a>
+      <a href="h0-品牌图标.html">品牌图标</a>
       <a href="h1-控制端.html">控制端</a>
       <a href="h2-被控端.html">被控端</a>
+      <a href="h3-账号.html">账号</a>
       <a href="h4-计费.html">计费</a>
       <a href="h6-移动端.html" aria-current="page">移动端</a>
       <a href="h-红线组件.html">红线组件</a>
       <a href="../wireframe/w6-移动端手持.html">对照低保真 W6 / W7</a>
+      <button type="button" class="theme-btn" data-theme-toggle><span data-theme-label>暗色</span></button>
     </nav>
 
     <main class="wrap">
@@ -34,7 +37,7 @@
             <div class="phone-screen">
               <div class="status"><span>14:28</span><span>5G</span></div>
               <div class="phone-top">
-                <span class="pill pill-on">直连</span>
+                <span class="pill pill-ok">直连</span>
                 <span>我的台式机</span>
                 <span class="spacer"></span>
                 <span class="btn btn-quiet">免费中继时长</span>
@@ -93,7 +96,7 @@
                 <section class="panel">
                   <span class="field-label">本机识别码</span>
                   <div class="split">
-                    <span class="pass">123 456 789</span>
+                    <span class="id">123 456 789</span>
                     <span class="spacer"></span>
                     <span class="btn">复制</span>
                   </div>
@@ -112,15 +115,15 @@
                 </section>
                 <section class="panel">
                   <b>授权自检</b>
-                  <div class="check-row"><span>屏幕录制</span><span class="spacer"></span><span class="pill pill-on">正常</span></div>
-                  <div class="check-row"><span>无障碍服务</span><span class="spacer"></span><span class="pill pill-on">正常</span></div>
+                  <div class="check-row"><span>屏幕录制</span><span class="spacer"></span><span class="pill pill-ok">正常</span></div>
+                  <div class="check-row"><span>无障碍服务</span><span class="spacer"></span><span class="pill pill-ok">正常</span></div>
                   <button type="button" class="check-hit">
                     <span>电池与自启白名单</span>
                     <span class="spacer"></span>
                     <span class="pill">未设置</span>
                   </button>
                   <p class="hint-inline">不设置仍可被连接，只是息屏后可能被系统停掉。</p>
-                  <div class="check-row"><span>通知权限</span><span class="spacer"></span><span class="pill pill-on">正常</span></div>
+                  <div class="check-row"><span>通知权限</span><span class="spacer"></span><span class="pill pill-ok">正常</span></div>
                 </section>
                 <section class="fraud">
                   <b>只告诉信任的人</b>
@@ -144,5 +147,6 @@
         </section>
       </div>
     </main>
+      <script src="theme.js"></script>
   </body>
 </html>

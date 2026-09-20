@@ -20,6 +20,12 @@ fn main() {
 mod color_nv12;
 
 #[cfg(windows)]
+mod ui_theme;
+
+#[cfg(windows)]
+mod ui_layout;
+
+#[cfg(windows)]
 mod h264_decode;
 
 #[cfg(windows)]
@@ -36,8 +42,7 @@ mod windows_controller {
     use windows::core::w;
     use windows::Win32::Foundation::{COLORREF, HWND, LPARAM, LRESULT, POINT, RECT, WPARAM};
     use windows::Win32::Graphics::Gdi::{
-        BeginPaint, CreateSolidBrush, DeleteObject, DrawTextW, EndPaint, FillRect, GetMonitorInfoW, InvalidateRect,
-        MonitorFromWindow, SetBkMode, SetTextColor, DT_CENTER, DT_SINGLELINE, DT_VCENTER, HGDIOBJ, MONITORINFO,
+        BeginPaint, EndPaint, GetMonitorInfoW, InvalidateRect, MonitorFromWindow, SetBkMode, SetTextColor, MONITORINFO,
         MONITOR_DEFAULTTONEAREST, PAINTSTRUCT, TRANSPARENT,
     };
     use windows::Win32::System::LibraryLoader::GetModuleHandleW;
@@ -49,27 +54,21 @@ mod windows_controller {
         WM_KEYDOWN, WM_KEYUP, WM_LBUTTONDOWN, WM_LBUTTONUP, WM_MBUTTONDOWN, WM_MBUTTONUP, WM_MOUSEMOVE, WM_MOUSEWHEEL,
         WM_PAINT, WM_RBUTTONDOWN, WM_RBUTTONUP, WM_SIZE, WM_TIMER, WNDCLASSW, WS_OVERLAPPEDWINDOW, WS_POPUP, WS_VISIBLE,
     };
+    use crate::ui_layout::{
+        create_brand_icon, draw_text, fill, fill_frame, fullscreen_button, hit_frame, letterbox, paint_badge,
+        paint_subscription_badge, restore_button, ways_button, FrameRect, TOOLBAR_HEIGHT,
+    };
 
     const PICTURE_WIDTH: i32 = 16;
     const PICTURE_HEIGHT: i32 = 9;
-    const TOOLBAR_HEIGHT: i32 = 48;
-    const BADGE_HEIGHT: i32 = 28;
     const HIDE_TIMER: usize = 1;
     const METER_TIMER: usize = 2;
     const KEY_ESCAPE: u16 = 0x1b;
     const COLOR_BLACK: u32 = 0x0000_0000;
     const COLOR_PICTURE: u32 = 0x0017_1A1C;
-    const COLOR_PAPER: u32 = 0x00E7_EFF3;
-    const COLOR_INK: u32 = 0x0012_161A;
-    const COLOR_TEAL: u32 = 0x005C_6E0F;
-    const COLOR_AMBER: u32 = 0x000F_4E8A;
-
-    struct FrameRect {
-        left: i32,
-        top: i32,
-        width: i32,
-        height: i32,
-    }
+    use crate::ui_theme::{COLOR_ON_SOLID, COLOR_SURFACE2, COLOR_TEXT};
+    const COLOR_SURFACE: u32 = COLOR_SURFACE2;
+    const COLOR_INK: u32 = COLOR_TEXT;
 
     struct Model {
         main_window: HWND,
@@ -129,11 +128,12 @@ mod windows_controller {
     unsafe fn message_loop() -> windows::core::Result<()> {
         let instance = GetModuleHandleW(None)?;
         let class_name = w!("DesktopControllerWindow");
+        let brand_icon = create_brand_icon(32).unwrap_or_else(|_| LoadIconW(None, IDI_APPLICATION).unwrap_or_default());
         let window_class = WNDCLASSW {
             lpfnWndProc: Some(window_proc),
             hInstance: instance.into(),
             lpszClassName: class_name,
-            hIcon: LoadIconW(None, IDI_APPLICATION)?,
+            hIcon: brand_icon,
             ..Default::default()
         };
         RegisterClassW(&window_class);
@@ -509,7 +509,7 @@ mod windows_controller {
             } else {
                 fill_frame(&picture, device_context, COLOR_PICTURE);
                 SetBkMode(device_context, TRANSPARENT);
-                let _ = SetTextColor(device_context, COLORREF(0x00E7_EFF3));
+                let _ = SetTextColor(device_context, COLORREF(COLOR_ON_SOLID));
                 let waiting = wide_chars("等待画面");
                 draw_text(device_context, &waiting, picture.left, picture.top, picture.width, picture.height, true);
             }
@@ -524,7 +524,7 @@ mod windows_controller {
                     right: client_width,
                     bottom: client_height,
                 };
-                fill(&toolbar, device_context, COLOR_PAPER);
+                fill(&toolbar, device_context, COLOR_SURFACE);
                 let _ = SetTextColor(device_context, COLORREF(COLOR_INK));
                 let fullscreen = lock_model().as_ref().map(|model| model.fullscreen).unwrap_or(false);
                 let action = wide_chars(if fullscreen { "退出全屏" } else { "全屏" });
@@ -606,68 +606,6 @@ mod windows_controller {
         }
     }
 
-    unsafe fn paint_badge(device_context: windows::Win32::Graphics::Gdi::HDC, client_width: i32, link_direct: bool) {
-        let badge = FrameRect {
-            left: client_width - 96,
-            top: 12,
-            width: 80,
-            height: BADGE_HEIGHT,
-        };
-        fill_frame(&badge, device_context, if link_direct { COLOR_TEAL } else { COLOR_AMBER });
-        let _ = SetTextColor(device_context, COLORREF(0x00F3_EFE7));
-        let label = wide_chars(if link_direct { "● 直连" } else { "● 中继" });
-        draw_text(device_context, &label, badge.left, badge.top, badge.width, badge.height, true);
-    }
-
-    unsafe fn paint_subscription_badge(device_context: windows::Win32::Graphics::Gdi::HDC, client_width: i32, label_text: &str) {
-        let badge = FrameRect {
-            left: client_width - 236,
-            top: 12,
-            width: 128,
-            height: BADGE_HEIGHT,
-        };
-        fill_frame(&badge, device_context, COLOR_PAPER);
-        let _ = SetTextColor(device_context, COLORREF(COLOR_INK));
-        let label = wide_chars(label_text);
-        draw_text(device_context, &label, badge.left, badge.top, badge.width, badge.height, true);
-    }
-
-    unsafe fn fill(bounds: &RECT, device_context: windows::Win32::Graphics::Gdi::HDC, color: u32) {
-        let brush = CreateSolidBrush(COLORREF(color));
-        FillRect(device_context, bounds, brush);
-        let _ = DeleteObject(HGDIOBJ::from(brush));
-    }
-
-    unsafe fn fill_frame(frame: &FrameRect, device_context: windows::Win32::Graphics::Gdi::HDC, color: u32) {
-        let bounds = RECT {
-            left: frame.left,
-            top: frame.top,
-            right: frame.left + frame.width,
-            bottom: frame.top + frame.height,
-        };
-        fill(&bounds, device_context, color);
-    }
-
-    unsafe fn draw_text(
-        device_context: windows::Win32::Graphics::Gdi::HDC,
-        text: &[u16],
-        left: i32,
-        top: i32,
-        width: i32,
-        height: i32,
-        centered: bool,
-    ) {
-        let mut owned = text.to_vec();
-        let mut bounds = RECT {
-            left,
-            top,
-            right: left + width,
-            bottom: top + height,
-        };
-        let format = if centered { DT_CENTER | DT_VCENTER | DT_SINGLELINE } else { DT_SINGLELINE };
-        DrawTextW(device_context, &mut owned, &mut bounds, format);
-    }
-
     fn toolbar_hit(window: HWND, click_x: i32, click_y: i32) -> bool {
         let toolbar_visible = lock_model().as_ref().map(|model| model.toolbar_visible).unwrap_or(false);
         if !toolbar_visible {
@@ -676,41 +614,7 @@ mod windows_controller {
         let mut client = RECT::default();
         let Ok(()) = (unsafe { GetClientRect(window, &mut client) }) else { return false };
         let button = fullscreen_button(client.right - client.left, client.bottom - client.top);
-        click_x >= button.left && click_x < button.left + button.width && click_y >= button.top && click_y < button.top + button.height
-    }
-
-    fn fullscreen_button(client_width: i32, client_height: i32) -> FrameRect {
-        let _ = client_width;
-        FrameRect {
-            left: 16,
-            top: client_height - TOOLBAR_HEIGHT + 8,
-            width: 96,
-            height: 32,
-        }
-    }
-
-    /// 把远端画面放进窗口，多出来的地方留黑边。不改画面自身的宽高比。
-    fn letterbox(container_width: i32, container_height: i32, picture_width: i32, picture_height: i32) -> FrameRect {
-        if container_width <= 0 || container_height <= 0 || picture_width <= 0 || picture_height <= 0 {
-            return FrameRect { left: 0, top: 0, width: 0, height: 0 };
-        }
-        let scaled_width = container_height.saturating_mul(picture_width) / picture_height;
-        if scaled_width <= container_width {
-            FrameRect {
-                left: (container_width - scaled_width) / 2,
-                top: 0,
-                width: scaled_width,
-                height: container_height,
-            }
-        } else {
-            let scaled_height = container_width.saturating_mul(picture_height) / picture_width;
-            FrameRect {
-                left: 0,
-                top: (container_height - scaled_height) / 2,
-                width: container_width,
-                height: scaled_height,
-            }
-        }
+        hit_frame(click_x, click_y, &button)
     }
 
     fn empty_placement() -> WINDOWPLACEMENT {
@@ -743,7 +647,7 @@ mod windows_controller {
         });
         let Some((show_balance, display_minutes, footnote, notice, view_only, ways_open, way_titles, real_name_message)) = snapshot else { return };
         SetBkMode(device_context, TRANSPARENT);
-        let _ = SetTextColor(device_context, COLORREF(0x00E7_EFF3));
+        let _ = SetTextColor(device_context, COLORREF(COLOR_ON_SOLID));
         let mut top = 48;
         if show_balance {
             if let Some(minutes) = display_minutes {
@@ -791,27 +695,12 @@ mod windows_controller {
         }
     }
 
-    fn ways_button() -> FrameRect {
-        FrameRect { left: 16, top: 150, width: 140, height: 28 }
-    }
-
-    fn restore_button() -> FrameRect {
-        FrameRect {
-            left: 16,
-            top: 220,
-            width: 160,
-            height: 28,
-        }
-    }
-
     fn ways_hit(click_x: i32, click_y: i32) -> bool {
-        let button = ways_button();
-        click_x >= button.left && click_x < button.left + button.width && click_y >= button.top && click_y < button.top + button.height
+        hit_frame(click_x, click_y, &ways_button())
     }
 
     fn restore_hit(click_x: i32, click_y: i32) -> bool {
-        let button = restore_button();
-        click_x >= button.left && click_x < button.left + button.width && click_y >= button.top && click_y < button.top + button.height
+        hit_frame(click_x, click_y, &restore_button())
     }
 
     fn poll_meter() {

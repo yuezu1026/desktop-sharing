@@ -142,3 +142,29 @@ export function annexBToLengthPrefixed(bytes) {
   }
   return out;
 }
+
+/**
+ * 给 MediaCodec 用的 Annex-B 输入：去掉 SPS/PPS/AUD，每个 VCL 前加 4 字节起始码。
+ * 与 Android H264ToJpegDecoder 契约一致。
+ * @param {Uint8Array} bytes
+ */
+export function annexBForDecoderInput(bytes) {
+  const nals = splitAnnexB(bytes).filter((nal) => {
+    const type = nalType(nal);
+    return type !== 7 && type !== 8 && type !== 9;
+  });
+  if (nals.length === 0) return null;
+  let total = 0;
+  for (const nal of nals) total += 4 + nal.length;
+  const out = new Uint8Array(total);
+  let offset = 0;
+  for (const nal of nals) {
+    out[offset++] = 0;
+    out[offset++] = 0;
+    out[offset++] = 0;
+    out[offset++] = 1;
+    out.set(nal, offset);
+    offset += nal.length;
+  }
+  return out;
+}

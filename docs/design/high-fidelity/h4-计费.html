@@ -10,15 +10,24 @@
   <body>
     <nav class="site-nav">
       <a href="index.html">视觉系统</a>
+      <a href="h0-品牌图标.html">品牌图标</a>
       <a href="h1-控制端.html">控制端</a>
       <a href="h2-被控端.html">被控端</a>
+      <a href="h3-账号.html">账号</a>
       <a href="h4-计费.html" aria-current="page">计费</a>
       <a href="h6-移动端.html">移动端</a>
       <a href="h-红线组件.html">红线组件</a>
       <a href="../wireframe/w4-计费与个人中心.html">对照低保真 W4</a>
+      <button type="button" class="theme-btn" data-theme-toggle><span data-theme-label>暗色</span></button>
     </nav>
 
     <main class="wrap">
+      <p class="kicker">Billing · Paywall</p>
+      <h1>买的是中继时长，不是解锁开关。</h1>
+      <p class="lede">
+        对照低保真 W4。免费能力显式标「免费」。购买用中性实心，不用直连绿。iOS 只有 App Store。
+      </p>
+
       <section class="shot">
         <div class="meta"><span class="chip-id">W4-01</span></div>
         <h2>个人版 · 非 iOS</h2>
@@ -27,7 +36,14 @@
           价格是示意，上线必须由服务端下发。
         </p>
         <div class="window">
-          <div class="chrome"><span class="title">个人版</span></div>
+          <div class="chrome">
+            <svg class="mark" viewBox="0 0 18 18" aria-hidden="true" style="color: var(--brand)">
+              <rect x="1" y="2" width="10" height="7" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.4" />
+              <rect x="6" y="8" width="11" height="8" rx="1.4" fill="currentColor" />
+              <rect x="8" y="13.2" width="7" height="1.2" rx="0.6" fill="var(--surface2)" />
+            </svg>
+            <span class="title">个人版</span>
+          </div>
           <div class="billing">
             <div class="stack">
               <section class="panel">
@@ -62,7 +78,7 @@
                 </div>
                 <p class="note">支持开具发票。企业抬头可在支付前填写。</p>
               </section>
-              <span class="btn btn-ink" style="min-height: 44px">立即开通</span>
+              <span class="btn btn-solid" style="min-height: 44px">立即开通</span>
               <p class="legal">
                 开通即表示同意《服务协议》。到期前需你确认，不会自动扣费。
               </p>
@@ -90,7 +106,7 @@
         </div>
         <p class="note">
           当前选中年付，协议只留年付这一句。月付的自动续费文案在切到月付时才换上，不两套同时挂着。
-          微信支付是选中态。「立即开通」用墨色，不用青绿。
+          微信支付是选中态。「立即开通」用中性实心，不用直连绿。
           iOS 年付是 App Store 订阅，到期自动续订，和这边「不会自动扣费」不是同一条规则。页外说明，界面里不比价、不出现微信或支付宝。
         </p>
       </section>
@@ -127,11 +143,12 @@
                 <p class="note">通过 App Store 购买。订阅由 Apple 管理。</p>
                 <p class="note">这一档到期会自动续订。取消、变更和扣费提醒都在「设置 → Apple ID → 订阅」，不在本应用里。</p>
               </section>
-              <span class="btn btn-ink" style="min-height: 44px">继续（由 App Store 处理）</span>
+              <span class="btn btn-solid" style="min-height: 44px">继续（由 App Store 处理）</span>
             </div>
           </div>
         </div>
       </section>
     </main>
+      <script src="theme.js"></script>
   </body>
 </html>

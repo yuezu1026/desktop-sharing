@@ -45,6 +45,15 @@ pub fn annex_b_has_idr(bytes: &[u8]) -> bool {
     first_vcl_nal_type(bytes) == Some(5)
 }
 
+/// 采集宽高对齐到 H264 宏块（16 的倍数），避免部分安卓硬解因非对齐尺寸一直不出帧。
+pub fn align_h264_dimension(value: i32) -> i32 {
+    if value <= 0 {
+        return 16;
+    }
+    let aligned = (value / 16) * 16;
+    aligned.max(16)
+}
+
 /// 把 4 字节大端长度前缀的 AVCC 风格 NAL 串改成 Annex-B。已是 Annex-B 则原样拷贝。
 pub fn ensure_annex_b(bytes: &[u8]) -> Option<Vec<u8>> {
     if looks_like_annex_b(bytes) {
@@ -128,5 +137,13 @@ mod tests {
         let stream = [0, 0, 0, 1, 0x65, 0x00];
         let out = ensure_annex_b(&stream).expect("ok");
         assert_eq!(out, stream);
+    }
+
+    #[test]
+    fn aligns_dimension_to_macroblock() {
+        assert_eq!(align_h264_dimension(960), 960);
+        assert_eq!(align_h264_dimension(540), 528);
+        assert_eq!(align_h264_dimension(15), 16);
+        assert_eq!(align_h264_dimension(0), 16);
     }
 }

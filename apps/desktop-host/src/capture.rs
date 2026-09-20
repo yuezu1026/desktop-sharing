@@ -12,11 +12,13 @@ use windows::Win32::Graphics::Gdi::{
 use windows::Win32::UI::WindowsAndMessaging::{GetSystemMetrics, SM_CXSCREEN, SM_CYSCREEN};
 
 use crate::dxgi::DxgiGrabber;
-use crate::encode_bitrate::resolve_bitrate_kbps;
+use crate::encode_bitrate::{resolve_bitrate_kbps, resolve_capture_max_width};
 use crate::h264_encode::H264Encoder;
 
-const MAX_WIDTH: i32 = 640;
-const JPEG_QUALITY: u8 = 50;
+const JPEG_QUALITY: u8 = 75;
+/// JPEG 联调路径用更密的抽样，减少「画面动了但哈希未变」造成的迟滞感。
+const JPEG_HASH_STRIDE: usize = 16;
+const H264_HASH_STRIDE: usize = 64;
 
 pub struct ScreenGrabber {
     last_hash: u64,
@@ -24,27 +26,46 @@ pub struct ScreenGrabber {
     prefer_dxgi: bool,
     h264: Option<H264Encoder>,
     bitrate_kbps: u32,
+    max_width: i32,
+    /// 内网中继或点对点直连时不按码率档限宽。
+    uncapped_resolution: bool,
 }
 
 impl ScreenGrabber {
-    pub fn new(bitrate_kbps: Option<u32>) -> Self {
+    pub fn new(bitrate_kbps: Option<u32>, uncapped_resolution: bool) -> Self {
         let dxgi = DxgiGrabber::open();
+        let resolved = resolve_bitrate_kbps(bitrate_kbps);
         Self {
             last_hash: 0,
             prefer_dxgi: dxgi.is_some(),
             dxgi,
             h264: None,
-            bitrate_kbps: resolve_bitrate_kbps(bitrate_kbps),
+            bitrate_kbps: resolved,
+            max_width: resolve_capture_max_width(resolved, uncapped_resolution),
+            uncapped_resolution,
         }
     }
 
-    /// 服务端降档后换码率；编码器下次打开时生效。
+    /// 服务端降档后换码率；内网/直连仍不按档位砍分辨率。
     pub fn set_bitrate_kbps(&mut self, bitrate_kbps: Option<u32>) {
         let resolved = resolve_bitrate_kbps(bitrate_kbps);
-        if resolved == self.bitrate_kbps {
+        let width = resolve_capture_max_width(resolved, self.uncapped_resolution);
+        if resolved == self.bitrate_kbps && width == self.max_width {
             return;
         }
         self.bitrate_kbps = resolved;
+        self.max_width = width;
+        self.h264 = None;
+        self.last_hash = 0;
+    }
+
+    /// 升直连：点对点不再按公网中继的码率档限分辨率。
+    pub fn enable_peer_native_resolution(&mut self) {
+        if self.uncapped_resolution {
+            return;
+        }
+        self.uncapped_resolution = true;
+        self.max_width = resolve_capture_max_width(self.bitrate_kbps, true);
         self.h264 = None;
         self.last_hash = 0;
     }
@@ -61,16 +82,26 @@ impl ScreenGrabber {
         self.bitrate_kbps
     }
 
+    pub fn max_width(&self) -> i32 {
+        self.max_width
+    }
+
     /// 静止画面不重复送。失败时返回 None，调用方跳过这一拍。
     pub fn grab_jpeg_frame(&mut self) -> Option<Frame> {
         let (width, height, bgr) = self.grab_bgr_scaled()?;
-        let hash = fnv1a(&bgr);
+        // 紧急联调：仅当 DESKTOP_HOST_FORCE_JPEG=1 时跳过 H264。默认走 H264，JPEG 只作编码失败回退。
+        let force_jpeg = std::env::var("DESKTOP_HOST_FORCE_JPEG")
+            .map(|value| value == "1" || value.eq_ignore_ascii_case("true"))
+            .unwrap_or(false);
+        let hash = fnv1a(&bgr, if force_jpeg { JPEG_HASH_STRIDE } else { H264_HASH_STRIDE });
         if hash == self.last_hash {
             return None;
         }
         self.last_hash = hash;
-        if let Some(frame) = self.try_h264_frame(width, height, &bgr) {
-            return Some(frame);
+        if !force_jpeg {
+            if let Some(frame) = self.try_h264_frame(width, height, &bgr) {
+                return Some(frame);
+            }
         }
         let jpeg = encode_jpeg_bgr(width as u32, height as u32, &bgr)?;
         let payload = pack_video(width as u16, height as u16, VIDEO_CODEC_JPEG, &jpeg);
@@ -96,12 +127,13 @@ impl ScreenGrabber {
     }
 
     fn grab_bgr_scaled(&mut self) -> Option<(i32, i32, Vec<u8>)> {
+        let max_width = self.max_width;
         if self.prefer_dxgi {
             if self.dxgi.is_none() {
                 self.dxgi = DxgiGrabber::open();
             }
             if let Some(grabber) = self.dxgi.as_mut() {
-                match grabber.grab_bgr_scaled(MAX_WIDTH) {
+                match grabber.grab_bgr_scaled(max_width) {
                     Ok(Some(frame)) => return Some(frame),
                     Ok(None) => return None,
                     Err(()) => {
@@ -110,7 +142,7 @@ impl ScreenGrabber {
                 }
             }
         }
-        unsafe { capture_bgr_scaled_gdi(MAX_WIDTH) }
+        unsafe { capture_bgr_scaled_gdi(max_width) }
     }
 }
 
@@ -127,9 +159,10 @@ fn encode_jpeg_bgr(width: u32, height: u32, bgr: &[u8]) -> Option<Vec<u8>> {
     Some(jpeg)
 }
 
-fn fnv1a(bytes: &[u8]) -> u64 {
+fn fnv1a(bytes: &[u8], stride: usize) -> u64 {
+    let step = stride.max(1);
     let mut hash: u64 = 0xcbf2_9ce4_8422_2325;
-    for byte in bytes.iter().step_by(64).copied() {
+    for byte in bytes.iter().step_by(step).copied() {
         hash ^= u64::from(byte);
         hash = hash.wrapping_mul(0x0100_0000_01b3);
     }
@@ -143,8 +176,9 @@ unsafe fn capture_bgr_scaled_gdi(max_width: i32) -> Option<(i32, i32, Vec<u8>)> 
     if screen_width <= 0 || screen_height <= 0 {
         return None;
     }
-    let target_width = screen_width.min(max_width);
-    let target_height = ((screen_height as i64 * target_width as i64) / screen_width as i64).max(1) as i32;
+    let target_width = session_core::align_h264_dimension(screen_width.min(max_width));
+    let raw_height = ((screen_height as i64 * target_width as i64) / screen_width as i64).max(1) as i32;
+    let target_height = session_core::align_h264_dimension(raw_height);
     let screen_dc = GetDC(None);
     if screen_dc.is_invalid() {
         return None;
@@ -230,12 +264,34 @@ mod tests {
             prefer_dxgi: false,
             h264: None,
             bitrate_kbps: 900,
+            max_width: 960,
+            uncapped_resolution: false,
         };
         grabber.set_bitrate_kbps(Some(4_000));
         assert_eq!(grabber.bitrate_kbps(), 4_000);
+        assert_eq!(grabber.max_width(), 1920);
         assert_eq!(grabber.last_hash, 0);
         grabber.set_bitrate_kbps(Some(4_000));
         assert_eq!(grabber.bitrate_kbps(), 4_000);
+        assert_eq!(grabber.max_width(), 1920);
+    }
+
+    #[test]
+    fn intranet_keeps_native_cap_after_bitrate_change() {
+        let mut grabber = ScreenGrabber::new(Some(900), true);
+        assert_eq!(grabber.max_width(), crate::encode_bitrate::INTRANET_CAPTURE_WIDTH_CAP);
+        grabber.set_bitrate_kbps(Some(4_000));
+        assert_eq!(grabber.max_width(), crate::encode_bitrate::INTRANET_CAPTURE_WIDTH_CAP);
+    }
+
+    #[test]
+    fn peer_direct_lifts_width_cap() {
+        let mut grabber = ScreenGrabber::new(Some(4_000), false);
+        assert_eq!(grabber.max_width(), 1920);
+        grabber.enable_peer_native_resolution();
+        assert_eq!(grabber.max_width(), crate::encode_bitrate::INTRANET_CAPTURE_WIDTH_CAP);
+        grabber.set_bitrate_kbps(Some(900));
+        assert_eq!(grabber.max_width(), crate::encode_bitrate::INTRANET_CAPTURE_WIDTH_CAP);
     }
 }
 

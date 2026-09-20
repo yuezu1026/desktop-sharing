@@ -1,0 +1,113 @@
+/* 远程桌面 · 高保真 Design Tokens
+   语义色板对齐穿梭 fst-3end-ui-design（双主题 + surface/icon 分层）。
+   不在这里写产品文案，也不改额度、价格、流程。
+
+   产品语义映射：
+   - 品牌强调 / 链接 / 软底 → --brand*
+   - 直连、在线、「重新尝试直连」 → --ok*
+   - 中继事实（非警报） → --warn*
+   - 注销 / 删除 → --err*
+   - 购买主动作、「拒绝」实心 → --text 中性实心
+   - 侧栏 / 导航 → --surface2 / --surface3
+*/
+
+:root {
+  --brand: #2f6fed;
+  --brand-h: #1e5bd0;
+  --brand-soft: #e7effd;
+  --brand-soft2: #d5e3fb;
+
+  --ok: #15966f;
+  --ok-soft: #e2f4ed;
+  --warn: #c77e0a;
+  --warn-soft: #faefdc;
+  --err: #d43c3c;
+  --err-soft: #fbe7e7;
+  --info: #5b6b82;
+  --info-soft: #edf0f5;
+
+  --bg: #eef2f8;
+  --bg2: #e6ebf4;
+  --surface: #ffffff;
+  --surface2: #f3f6fc;
+  --surface3: #e9eef8;
+
+  --text: #14213a;
+  --text2: #5a6a83;
+  --text3: #8e9bae;
+
+  --icon: #5f6f8e;
+  --icon-strong: #33415a;
+  --icon-soft: #93a0b6;
+
+  --line: #e1e7f1;
+  --line2: #c9d3e4;
+
+  --shadow: 0 1px 2px rgba(20, 33, 58, 0.05), 0 4px 14px rgba(20, 33, 58, 0.06);
+  --shadow-lg: 0 8px 30px rgba(16, 26, 46, 0.16);
+
+  --r-s: 6px;
+  --r-m: 10px;
+  --r-l: 14px;
+  --r-xl: 20px;
+  --r-pill: 999px;
+
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", Roboto, sans-serif;
+  --mono: "SF Mono", "JetBrains Mono", Consolas, "Courier New", monospace;
+
+  --ring: 0 0 0 3px rgba(47, 111, 237, 0.22);
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  --ease: 160ms ease;
+}
+
+:root[data-theme="dark"] {
+  --brand: #6c9bff;
+  --brand-h: #8cb0ff;
+  --brand-soft: #1b2a4c;
+  --brand-soft2: #22345e;
+
+  --ok: #37c795;
+  --ok-soft: #123b2d;
+  --warn: #edae3f;
+  --warn-soft: #3b2e13;
+  --err: #f06d6d;
+  --err-soft: #421f1f;
+  --info: #a8b4c8;
+  --info-soft: #242c3c;
+
+  --bg: #0b101e;
+  --bg2: #0d1424;
+  --surface: #151e31;
+  --surface2: #1b2740;
+  --surface3: #21304c;
+
+  --text: #eaf0fa;
+  --text2: #a0aec4;
+  --text3: #6d7b94;
+
+  --icon: #a3b1c9;
+  --icon-strong: #cbd6e8;
+  --icon-soft: #71809c;
+
+  --line: #283650;
+  --line2: #3a4a68;
+
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 14px rgba(0, 0, 0, 0.28);
+  --shadow-lg: 0 10px 34px rgba(0, 0, 0, 0.5);
+
+  --ring: 0 0 0 3px rgba(108, 155, 255, 0.3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --ease: 0ms;
+  }
+}

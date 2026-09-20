@@ -1,6 +1,7 @@
 package com.mobilescaffold
 
 import android.util.Base64
+import android.view.Surface
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
@@ -23,8 +24,8 @@ import javax.net.ssl.X509TrustManager
 import kotlin.concurrent.thread
 
 /**
- * 控制端进中继：TLS + hello + RDS1。本刀先把 JPEG 帧以 base64 回传给 JS。
- * 本地自签证书在调试构建里信任；上线要换成系统信任链。
+ * 控制端进中继：TLS + hello + RDS1。
+ * H264 优先画到 RemoteFrameView 的 Surface；无 Surface 时 JPEG base64 回传 JS。
  */
 class SessionRelayModule(private val reactContext: ReactApplicationContext) :
   ReactContextBaseJavaModule(reactContext) {
@@ -35,12 +36,35 @@ class SessionRelayModule(private val reactContext: ReactApplicationContext) :
   @Volatile private var socket: SSLSocket? = null
   @Volatile private var output: DataOutputStream? = null
   private var h264Decoder: H264ToJpegDecoder? = null
+  @Volatile private var framesSinceKeyframeAsk = 0
+
+  companion object {
+    @Volatile private var sharedSurface: Surface? = null
+    @Volatile private var activeModule: SessionRelayModule? = null
+
+    fun attachOutputSurface(surface: Surface) {
+      sharedSurface = surface
+      activeModule?.applySurface(surface)
+    }
+
+    fun detachOutputSurface() {
+      sharedSurface = null
+      activeModule?.applySurface(null)
+    }
+  }
 
   override fun getName(): String = "SessionRelay"
+
+  private fun applySurface(surface: Surface?) {
+    h264Decoder?.setOutputSurface(surface)
+    // 换 Surface 后尽快再要关键帧
+    framesSinceKeyframeAsk = 15
+  }
 
   @ReactMethod
   fun connect(address: String, ticket: String, fingerprint: String) {
     stopInternal()
+    activeModule = this
     running.set(true)
     emit("connecting", null)
     worker = thread(name = "session-relay", isDaemon = true) {
@@ -55,6 +79,7 @@ class SessionRelayModule(private val reactContext: ReactApplicationContext) :
         closeSocket()
         h264Decoder?.close()
         h264Decoder = null
+        if (activeModule === this) activeModule = null
         emit("closed", null)
       }
     }
@@ -144,7 +169,9 @@ class SessionRelayModule(private val reactContext: ReactApplicationContext) :
     }
     emit("connected", null)
 
-    h264Decoder = H264ToJpegDecoder()
+    h264Decoder = H264ToJpegDecoder().also { decoder ->
+      sharedSurface?.let { decoder.setOutputSurface(it) }
+    }
     val input = DataInputStream(ssl.inputStream)
     val pending = ByteArrayOutputStream()
     val chunk = ByteArray(16 * 1024)
@@ -217,14 +244,37 @@ class SessionRelayModule(private val reactContext: ReactApplicationContext) :
       null
     }
     if (decoded == null) {
+      framesSinceKeyframeAsk += 1
+      if (decoder.needsKeyframe() && framesSinceKeyframeAsk >= 15) {
+        framesSinceKeyframeAsk = 0
+        synchronized(writeLock) {
+          try {
+            output?.write(encodeControlKeyframe())
+            output?.flush()
+          } catch (_: Exception) {
+          }
+        }
+      }
       emit("h264", null)
       return
     }
-    val map = Arguments.createMap()
-    map.putInt("width", decoded.first)
-    map.putInt("height", decoded.second)
-    map.putString("jpegBase64", H264ToJpegDecoder.toBase64(decoded.third))
-    emit("frame", map)
+    framesSinceKeyframeAsk = 0
+    when (decoded) {
+      is H264DecodeResult.SurfaceFrame -> {
+        val map = Arguments.createMap()
+        map.putInt("width", decoded.width)
+        map.putInt("height", decoded.height)
+        map.putBoolean("surface", true)
+        emit("frame", map)
+      }
+      is H264DecodeResult.JpegFrame -> {
+        val map = Arguments.createMap()
+        map.putInt("width", decoded.width)
+        map.putInt("height", decoded.height)
+        map.putString("jpegBase64", H264ToJpegDecoder.toBase64(decoded.jpeg))
+        emit("frame", map)
+      }
+    }
   }
 
   private fun encodeControlKeyframe(): ByteArray {

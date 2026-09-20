@@ -38,6 +38,12 @@ mod inject;
 mod keyframe_schedule;
 
 #[cfg(windows)]
+mod ui_theme;
+
+#[cfg(windows)]
+mod ui_chrome;
+
+#[cfg(windows)]
 mod mf_async_credits;
 
 #[cfg(windows)]
@@ -56,9 +62,9 @@ mod windows_host {
     use windows::core::{w, PCWSTR};
     use windows::Win32::Foundation::{HANDLE, HWND, LPARAM, LRESULT, POINT, WPARAM};
     use windows::Win32::Graphics::Gdi::{
-        BeginPaint, CreateFontW, DeleteObject, DrawTextW, EndPaint, InvalidateRect, SelectObject, SetBkMode, CLIP_DEFAULT_PRECIS,
-        HGDIOBJ,
-        DEFAULT_CHARSET, DEFAULT_QUALITY, DT_LEFT, DT_WORDBREAK, OUT_DEFAULT_PRECIS, PAINTSTRUCT, TRANSPARENT,
+        BeginPaint, CreateFontW, DeleteObject, DrawTextW, EndPaint, InvalidateRect, SelectObject, SetBkMode,
+        CLIP_DEFAULT_PRECIS, HGDIOBJ, DEFAULT_CHARSET, DEFAULT_QUALITY, DT_LEFT, DT_WORDBREAK, OUT_DEFAULT_PRECIS,
+        PAINTSTRUCT, TRANSPARENT,
     };
     use windows::Win32::System::DataExchange::{CloseClipboard, EmptyClipboard, OpenClipboard, SetClipboardData};
     use windows::Win32::System::LibraryLoader::GetModuleHandleW;
@@ -69,20 +75,22 @@ mod windows_host {
     use windows::Win32::UI::WindowsAndMessaging::{
         AppendMenuW, CreatePopupMenu, CreateWindowExW, DefWindowProcW, DestroyWindow, DispatchMessageW, GetCursorPos,
         GetMessageW, LoadIconW, PostQuitMessage, RegisterClassW, SetForegroundWindow, SetTimer,
-        ShowWindow, TrackPopupMenu, TranslateMessage, BS_DEFPUSHBUTTON, BS_PUSHBUTTON, CW_USEDEFAULT, HICON, HMENU,
-        IDI_APPLICATION, MF_GRAYED, MF_STRING, MSG, SW_SHOW, TPM_RIGHTALIGN, WINDOW_EX_STYLE, WINDOW_STYLE, WM_CLOSE,
-        WM_COMMAND, WM_CREATE, WM_DESTROY, WM_KEYDOWN, WM_PAINT, WM_RBUTTONUP, WM_TIMER, WNDCLASSW, WS_CAPTION, WS_CHILD,
-        WS_EX_TOPMOST, WS_OVERLAPPED, WS_SYSMENU, WS_VISIBLE,
+        ShowWindow, TrackPopupMenu, TranslateMessage, BS_DEFPUSHBUTTON, BS_PUSHBUTTON,
+        CW_USEDEFAULT, HICON, HMENU, IDI_APPLICATION, MF_GRAYED, MF_STRING, MSG, SW_SHOW, TPM_RIGHTALIGN,
+        WINDOW_EX_STYLE, WINDOW_STYLE, WM_CLOSE, WM_COMMAND, WM_CREATE, WM_DESTROY, WM_KEYDOWN, WM_LBUTTONDOWN, WM_PAINT,
+        WM_RBUTTONUP, WM_TIMER, WNDCLASSW, WS_CAPTION, WS_CHILD, WS_EX_TOPMOST, WS_OVERLAPPED, WS_SYSMENU, WS_VISIBLE,
     };
+    use crate::ui_chrome::{
+        create_brand_icon, hit_accept_switch, hit_confirm_allow, hit_confirm_refuse, paint_accept_switch,
+        paint_confirm_buttons,
+    };
+    use crate::ui_theme::DESKTOP_MIN_PX;
 
     const COPY_CODE: i32 = 101;
     const ROTATE_PASSWORD: i32 = 102;
-    const TOGGLE_ACCEPT: i32 = 103;
     const STOP_CONTROL: i32 = 104;
     const REVOKE_INPUT: i32 = 105;
     const RESTORE_INPUT: i32 = 106;
-    const ALLOW_ONCE: i32 = 201;
-    const REFUSE: i32 = 202;
     const TRAY_OPEN: i32 = 301;
     const TRAY_EXIT: i32 = 302;
     const TRAY_MESSAGE: u32 = 0x8001;
@@ -146,17 +154,19 @@ mod windows_host {
         let instance = GetModuleHandleW(None)?;
         let class_name = w!("DesktopHostWindow");
         let confirm_class = w!("DesktopHostConfirm");
+        let brand_icon = create_brand_icon(32).unwrap_or_else(|_| LoadIconW(None, IDI_APPLICATION).unwrap_or_default());
         let main_class = WNDCLASSW {
             lpfnWndProc: Some(main_proc),
             hInstance: instance.into(),
             lpszClassName: class_name,
-            hIcon: LoadIconW(None, IDI_APPLICATION)?,
+            hIcon: brand_icon,
             ..Default::default()
         };
         let confirm = WNDCLASSW {
             lpfnWndProc: Some(confirm_proc),
             hInstance: instance.into(),
             lpszClassName: confirm_class,
+            hIcon: brand_icon,
             ..Default::default()
         };
         RegisterClassW(&main_class);
@@ -200,7 +210,6 @@ mod windows_host {
                 match (wparam.0 & 0xffff) as i32 {
                     COPY_CODE => copy_code(),
                     ROTATE_PASSWORD => rotate_password(),
-                    TOGGLE_ACCEPT => toggle_accept(),
                     STOP_CONTROL => stop_now(),
                     REVOKE_INPUT => set_session_input(false),
                     RESTORE_INPUT => set_session_input(true),
@@ -214,6 +223,15 @@ mod windows_host {
                     _ => {}
                 }
                 refresh();
+                LRESULT(0)
+            }
+            WM_LBUTTONDOWN => {
+                let click_x = (lparam.0 & 0xffff) as i16 as i32;
+                let click_y = ((lparam.0 >> 16) & 0xffff) as i16 as i32;
+                if hit_accept_switch(click_x, click_y) {
+                    toggle_accept();
+                    refresh();
+                }
                 LRESULT(0)
             }
             WM_TIMER => {
@@ -248,8 +266,6 @@ mod windows_host {
     unsafe extern "system" fn confirm_proc(window: HWND, message: u32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
         match message {
             WM_CREATE => {
-                create_button(window, "拒绝", 360, 280, 140, 36, REFUSE, true);
-                create_button(window, "允许本次", 40, 280, 140, 36, ALLOW_ONCE, false);
                 let _ = SetForegroundWindow(window);
                 LRESULT(0)
             }
@@ -260,11 +276,13 @@ mod windows_host {
                 }
                 LRESULT(0)
             }
-            WM_COMMAND => {
-                match (wparam.0 & 0xffff) as i32 {
-                    ALLOW_ONCE => allow_once(),
-                    REFUSE => refuse(),
-                    _ => {}
+            WM_LBUTTONDOWN => {
+                let click_x = (lparam.0 & 0xffff) as i16 as i32;
+                let click_y = ((lparam.0 >> 16) & 0xffff) as i16 as i32;
+                if hit_confirm_refuse(click_x, click_y) {
+                    refuse();
+                } else if hit_confirm_allow(click_x, click_y) {
+                    allow_once();
                 }
                 LRESULT(0)
             }
@@ -281,12 +299,11 @@ mod windows_host {
     }
 
     unsafe fn create_buttons(window: HWND) {
-        create_button(window, "复制", 430, 78, 120, 32, COPY_CODE, false);
-        create_button(window, "换一个", 430, 168, 120, 32, ROTATE_PASSWORD, false);
-        create_button(window, "允许被连接", 430, 230, 120, 32, TOGGLE_ACCEPT, false);
-        create_button(window, "停止被控", 430, 300, 120, 32, STOP_CONTROL, false);
-        create_button(window, "仅查看（停键鼠）", 430, 340, 160, 32, REVOKE_INPUT, false);
-        create_button(window, "恢复键鼠", 430, 380, 120, 32, RESTORE_INPUT, false);
+        create_button(window, "复制", 430, 78, 120, DESKTOP_MIN_PX, COPY_CODE, false);
+        create_button(window, "换一个", 430, 168, 120, DESKTOP_MIN_PX, ROTATE_PASSWORD, false);
+        create_button(window, "停止被控", 430, 300, 120, DESKTOP_MIN_PX, STOP_CONTROL, false);
+        create_button(window, "仅查看（停键鼠）", 430, 340, 160, DESKTOP_MIN_PX, REVOKE_INPUT, false);
+        create_button(window, "恢复键鼠", 430, 380, 120, DESKTOP_MIN_PX, RESTORE_INPUT, false);
     }
 
     unsafe fn create_button(parent: HWND, label: &str, left: i32, top: i32, width: i32, height: i32, command_id: i32, primary: bool) {
@@ -325,7 +342,7 @@ mod windows_host {
         if let Some((code_text, password_text, accepting, status_line, input_allowed)) = snapshot {
             let code = wide_chars(&format!("本机识别码    {code_text}"));
             let password = wide_chars(&format!("临时密码    {password_text}"));
-            let accept = wide_chars(if accepting { "● 允许被连接" } else { "不允许被连接" });
+            let accept_label = wide_chars("允许被连接");
             let status = wide_chars(&format!("当前状态    {status_line}"));
             let input = wide_chars(if input_allowed {
                 "键鼠    对方可操作"
@@ -335,7 +352,8 @@ mod windows_host {
             let safety = wide_chars("安全提示：只把识别码与密码告诉你信任的人。任何人以「客服/公检法需要看屏幕」为由索要，都是诈骗。");
             draw_code(device_context, &code, 24, 70, 390, 40);
             draw_line(device_context, &password, 24, 160, 390, 36);
-            draw_line(device_context, &accept, 24, 230, 360, 28);
+            paint_accept_switch(device_context, accepting);
+            draw_line(device_context, &accept_label, 84, 234, 200, 28);
             draw_line(device_context, &status, 24, 300, 360, 28);
             draw_line(device_context, &input, 24, 330, 390, 28);
             draw_line(device_context, &safety, 24, 380, 680, 64);
@@ -360,6 +378,7 @@ mod windows_host {
         draw_line(device_context, &line1, 24, 180, 500, 24);
         draw_line(device_context, &line2, 24, 206, 500, 24);
         draw_line(device_context, &line3, 24, 232, 500, 40);
+        paint_confirm_buttons(device_context);
         let _ = EndPaint(window, &paint);
     }
 
@@ -403,7 +422,7 @@ mod windows_host {
         let label = wide_string("远程桌面（本机）");
         let copy_len = label.len().min(127);
         tip[..copy_len].copy_from_slice(&label[..copy_len]);
-        let icon = LoadIconW(None, IDI_APPLICATION).unwrap_or(HICON(std::ptr::null_mut()));
+        let icon = create_brand_icon(16).unwrap_or_else(|_| LoadIconW(None, IDI_APPLICATION).unwrap_or(HICON(std::ptr::null_mut())));
         let data = NOTIFYICONDATAW {
             cbSize: std::mem::size_of::<NOTIFYICONDATAW>() as u32,
             hWnd: window,
@@ -705,6 +724,7 @@ mod windows_host {
         encode_bitrate_kbps: Option<u32>,
     ) {
         let address = std::env::var("RELAY_ADDR").unwrap_or_else(|_| "127.0.0.1:8443".to_string());
+        let intranet = crate::encode_bitrate::relay_address_is_intranet(&address);
         let Ok(mut session) = relay_client::RelaySession::connect(
             &address,
             &ticket,
@@ -742,7 +762,7 @@ mod windows_host {
                 }
             });
         }
-        let mut grabber = crate::capture::ScreenGrabber::new(encode_bitrate_kbps);
+        let mut grabber = crate::capture::ScreenGrabber::new(encode_bitrate_kbps, intranet);
         let mut frame_width = 640;
         let mut frame_height = 360;
         let mut next_bitrate_poll = std::time::Instant::now();
@@ -799,7 +819,17 @@ mod windows_host {
                     Err(_) => break 'relay,
                 }
             }
-            std::thread::sleep(std::time::Duration::from_millis(if saw_input { 5 } else { 30 }));
+            std::thread::sleep(std::time::Duration::from_millis(if saw_input {
+                5
+            } else if std::env::var("DESKTOP_HOST_FORCE_JPEG")
+                .map(|value| value == "1" || value.eq_ignore_ascii_case("true"))
+                .unwrap_or(false)
+            {
+                // JPEG 联调略加快采样，降低「跟手慢」的体感。
+                16
+            } else {
+                30
+            }));
         }
         crate::inject::set_input_allowed(false);
         finish_host_relay();
@@ -814,6 +844,8 @@ mod windows_host {
         token: String,
         remote_session_id: String,
     ) {
+        // 点对点不按公网中继码率档限分辨率。
+        grabber.enable_peer_native_resolution();
         if let Some(model) = lock_model().as_mut() {
             model.status_line = "已升直连".to_string();
         }
@@ -859,7 +891,17 @@ mod windows_host {
                     }
                 }
             }
-            std::thread::sleep(std::time::Duration::from_millis(if saw_input { 5 } else { 30 }));
+            std::thread::sleep(std::time::Duration::from_millis(if saw_input {
+                5
+            } else if std::env::var("DESKTOP_HOST_FORCE_JPEG")
+                .map(|value| value == "1" || value.eq_ignore_ascii_case("true"))
+                .unwrap_or(false)
+            {
+                // JPEG 联调略加快采样，降低「跟手慢」的体感。
+                16
+            } else {
+                30
+            }));
         }
         report_direct_stop(&origin, &token, &remote_session_id);
         crate::inject::set_input_allowed(false);
@@ -1055,6 +1097,14 @@ mod windows_host {
         }
         let _ = post_json(&origin, &format!("/v1/host-devices/{host_device_id}/confirm"), &token, r#"{"confirmedOnHost":true}"#);
         let _ = post_json(&origin, &format!("/v1/host-devices/{host_device_id}/presence"), &token, r#"{"state":"online"}"#);
+        // 本机默认「允许被连接」；若上次点过「停止被控」，服务端仍为 false，必须启动时回写，否则手机连上会报「不允许被连接」。
+        let accepting = lock_model().as_ref().map(|model| model.accepting).unwrap_or(true);
+        let _ = post_json(
+            &origin,
+            &format!("/v1/host-devices/{host_device_id}/accepting"),
+            &token,
+            &serde_json::json!({ "accepting": accepting }).to_string(),
+        );
     }
 
     fn refresh() {

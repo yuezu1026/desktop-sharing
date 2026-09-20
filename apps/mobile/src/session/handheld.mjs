@@ -53,6 +53,7 @@ export function createSession() {
     meterOpen: false,
     showBalance: false,
     displayMinutes: null,
+    footnote: "",
     notice: "",
     subscriptionBadge: "",
     realNameMessage: "",
@@ -65,6 +66,7 @@ export function createSession() {
     ticket: "",
     relayAttached: false,
     frameUri: "",
+    surfaceVideo: false,
     cursorX: 0,
     cursorY: 0,
   };
@@ -123,10 +125,19 @@ export function applyRemoteSessionState(session, body) {
   const ticket = typeof body?.ticket === "string" ? body.ticket : session.ticket || "";
   let notice = session.notice;
   let viewOnly = session.viewOnly;
+  const keepRelayNotice =
+    notice === "正在进中继" ||
+    notice === "中继已接通" ||
+    notice === "正在解 H264" ||
+    notice === "已收到画面" ||
+    notice === "中继未接通" ||
+    notice === "会话已断开";
   if (state === "awaiting_host_consent") notice = "等待被控端确认";
   else if (state === "rejected") notice = "被控端已拒绝";
   else if (state === "active" || state === "relay_stopped") {
-    notice = ticket.length >= 20 ? "中继票已就绪" : "中继票未就绪";
+    if (!keepRelayNotice) {
+      notice = ticket.length >= 20 ? "中继票已就绪" : "中继票未就绪";
+    }
     if (state === "relay_stopped") viewOnly = "resource";
   }
   return {
@@ -156,7 +167,7 @@ export function shouldAttachRelay(session) {
 /**
  * 原生中继事件回写到会话。
  * @param {ReturnType<typeof createSession>} session
- * @param {{ type?: string, message?: string, width?: number, height?: number, jpegBase64?: string }} event
+ * @param {{ type?: string, message?: string, width?: number, height?: number, jpegBase64?: string, surface?: boolean }} event
  */
 export function applyNativeRelayEvent(session, event) {
   const type = event?.type ?? "";
@@ -165,6 +176,23 @@ export function applyNativeRelayEvent(session, event) {
   }
   if (type === "connected") {
     return { ...session, relayAttached: true, notice: "中继已接通", linkMode: "relay" };
+  }
+  if (type === "frame" && event.surface === true) {
+    const width = Number.isFinite(event.width) && event.width > 0 ? event.width : session.pictureWidth;
+    const height = Number.isFinite(event.height) && event.height > 0 ? event.height : session.pictureHeight;
+    const cursorX = session.cursorX > 0 ? session.cursorX : Math.floor(width / 2);
+    const cursorY = session.cursorY > 0 ? session.cursorY : Math.floor(height / 2);
+    return {
+      ...session,
+      relayAttached: true,
+      notice: "已收到画面",
+      pictureWidth: width,
+      pictureHeight: height,
+      cursorX,
+      cursorY,
+      frameUri: "",
+      surfaceVideo: true,
+    };
   }
   if (type === "frame" && typeof event.jpegBase64 === "string" && event.jpegBase64.length > 0) {
     const width = Number.isFinite(event.width) && event.width > 0 ? event.width : session.pictureWidth;
@@ -180,6 +208,7 @@ export function applyNativeRelayEvent(session, event) {
       cursorX,
       cursorY,
       frameUri: `data:image/jpeg;base64,${event.jpegBase64}`,
+      surfaceVideo: false,
     };
   }
   if (type === "h264") {
@@ -329,17 +358,21 @@ export function touchSample(mapped) {
 }
 
 export function applyBalance(session, body) {
-  const viewOnly = body?.viewOnly === "resource" || body?.viewOnly === "permission" ? body.viewOnly : "";
   const wayTitles = Array.isArray(body?.ways)
     ? body.ways.map((item) => item?.title).filter((title) => typeof title === "string")
-    : [];
+    : session.wayTitles;
+  let viewOnly = session.viewOnly;
+  if (body?.viewOnly === "resource" || body?.viewOnly === "permission") viewOnly = body.viewOnly;
+  else if (body && Object.prototype.hasOwnProperty.call(body, "viewOnly") && body.viewOnly === "") viewOnly = "";
   return {
     ...session,
     showBalance: body?.showBalance === true,
-    displayMinutes: Number.isInteger(body?.displayMinutes) ? body.displayMinutes : null,
-    notice: typeof body?.notice === "string" ? body.notice : "",
-    subscriptionBadge: typeof body?.subscriptionBadge === "string" ? body.subscriptionBadge : "",
-    realNameMessage: typeof body?.realName?.message === "string" ? body.realName.message : "",
+    displayMinutes: Number.isInteger(body?.displayMinutes) ? body.displayMinutes : session.displayMinutes,
+    footnote: typeof body?.footnote === "string" ? body.footnote : session.footnote,
+    // 额度接口常不带 notice；不能清掉「等待被控端确认 / 正在解 H264」等会话文案。
+    notice: typeof body?.notice === "string" ? body.notice : session.notice,
+    subscriptionBadge: typeof body?.subscriptionBadge === "string" ? body.subscriptionBadge : session.subscriptionBadge,
+    realNameMessage: typeof body?.realName?.message === "string" ? body.realName.message : session.realNameMessage,
     viewOnly,
     wayTitles,
     waysOpen: viewOnly === "resource" ? session.waysOpen : false,
@@ -363,7 +396,9 @@ export function askControl(session) {
 }
 
 export function sessionChrome(session) {
-  const quotaNumber = session.meterOpen && session.showBalance ? session.displayMinutes : null;
+  // 八成后由服务端 showBalance 拉开数字；meterOpen 只是用户提前点开明细。
+  const quotaNumber = session.showBalance || session.meterOpen ? session.displayMinutes : null;
+  const quotaFootnote = quotaNumber !== null && session.footnote ? session.footnote : "";
   let viewOnly = null;
   if (session.viewOnly === "resource") {
     viewOnly = {
@@ -384,8 +419,10 @@ export function sessionChrome(session) {
     badgeVisible: true,
     deviceName: session.deviceName,
     quotaNumber,
+    quotaFootnote,
     waiting: session.notice && session.notice.length > 0 ? session.notice : "等待画面",
     frameUri: typeof session.frameUri === "string" ? session.frameUri : "",
+    surfaceVideo: session.surfaceVideo === true,
     viewOnly,
     pointerMode: session.pointerMode,
     magnifier: session.magnifier,

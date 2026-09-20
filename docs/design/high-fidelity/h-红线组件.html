@@ -10,12 +10,15 @@
   <body>
     <nav class="site-nav">
       <a href="index.html">视觉系统</a>
+      <a href="h0-品牌图标.html">品牌图标</a>
       <a href="h1-控制端.html">控制端</a>
       <a href="h2-被控端.html">被控端</a>
+      <a href="h3-账号.html">账号</a>
       <a href="h4-计费.html">计费</a>
       <a href="h6-移动端.html">移动端</a>
       <a href="h-红线组件.html" aria-current="page">红线组件</a>
       <a href="../wireframe/index.html">返回低保真</a>
+      <button type="button" class="theme-btn" data-theme-toggle><span data-theme-label>暗色</span></button>
     </nav>
 
     <main class="wrap">
@@ -48,7 +51,7 @@
             <div class="banner banner-direct">
               <b>中继已暂停 · 已切换为直连</b>
               <span class="spacer"></span>
-              <span class="pill pill-on">直连</span>
+              <span class="pill pill-ok">直连</span>
             </div>
           </article>
           <article class="window">
@@ -72,7 +75,7 @@
               </div>
             </div>
             <div class="tools">
-              <span class="btn btn-ink">继续以「仅查看」保持</span>
+              <span class="btn">继续以「仅查看」保持</span>
               <span class="btn btn-exit">立即结束</span>
             </div>
           </article>
@@ -103,7 +106,7 @@
           <article class="window">
             <div class="chrome"><span class="title">权限式 · 画面还在动</span></div>
             <div class="fact fact-relay">
-              <span class="dot dot-amber" aria-hidden="true"></span>
+              <span class="dot dot-warn" aria-hidden="true"></span>
               <b>本次连接：中继</b>
               <span>在消耗免费中继时长</span>
               <span class="spacer"></span>
@@ -115,7 +118,7 @@
                 <b>对方收回了操作权</b>
                 <p>画面仍在实时更新，只是你的键盘和鼠标不再送到对方电脑。</p>
                 <div class="card-actions" style="justify-content: center; margin-top: 12px">
-                  <span class="btn btn-ink">请求恢复控制</span>
+                  <span class="btn">请求恢复控制</span>
                   <span class="btn btn-exit">断开</span>
                 </div>
               </div>
@@ -157,7 +160,7 @@
               <p class="hint-inline">订单号已锁定。重复下单会被拦住。已等待 xx:xx。这是正常的中间状态，不是出错。</p>
             </div>
             <div class="card-actions">
-              <span class="btn btn-ink">我已付款 · 继续等待</span>
+              <span class="btn">我已付款 · 继续等待</span>
               <span class="btn">返回设备列表</span>
             </div>
           </div>
@@ -179,19 +182,19 @@
             </div>
             <div class="panel" style="padding: 0">
               <div class="path">
-                <span class="pill pill-on">免费</span>
+                <span class="free-tag">免费</span>
                 <span><b>直连</b><br /><span class="hint-inline">不限时长。双方网络能通时走这条，不经过服务器。</span></span>
                 <span class="spacer"></span>
                 <span class="btn btn-primary">重试直连</span>
               </div>
               <div class="path">
-                <span class="pill pill-on">免费</span>
+                <span class="free-tag">免费</span>
                 <span><b>局域网直连</b><br /><span class="hint-inline">同一 Wi-Fi 或同一办公室，不经互联网。</span></span>
                 <span class="spacer"></span>
                 <span class="btn">查看如何同网</span>
               </div>
               <div class="path">
-                <span class="pill pill-on">免费</span>
+                <span class="free-tag">免费</span>
                 <span><b>让对方来连你</b><br /><span class="hint-inline">他看你的屏幕不消耗你的时长。手机被控也免费。</span></span>
                 <span class="spacer"></span>
                 <span class="btn">复制识别码给他</span>
@@ -206,9 +209,10 @@
           </div>
         </div>
         <p class="note">
-          这页从「还有什么办法」点进来，不是断线瞬间弹出来的。三条免费路必须在购买前面。购买按钮不用青绿，也不能排到第一。
+          这页从「还有什么办法」点进来，不是断线瞬间弹出来的。三条免费路必须在购买前面。购买按钮不用直连绿，也不能排到第一。
         </p>
       </section>
     </main>
+      <script src="theme.js"></script>
   </body>
 </html>
