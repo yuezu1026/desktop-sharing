@@ -74,6 +74,9 @@ mod windows_controller {
         way_titles: Vec<(String, bool)>,
         subscription_badge: String,
         real_name_message: String,
+        picture_bgr: Option<Vec<u8>>,
+        picture_width: i32,
+        picture_height: i32,
     }
 
     unsafe impl Send for Model {}
@@ -98,6 +101,9 @@ mod windows_controller {
             way_titles: Vec::new(),
             subscription_badge: String::new(),
             real_name_message: String::new(),
+            picture_bgr: None,
+            picture_width: PICTURE_WIDTH,
+            picture_height: PICTURE_HEIGHT,
         });
         unsafe { message_loop() }
     }
@@ -298,18 +304,32 @@ mod windows_controller {
         if GetClientRect(window, &mut client).is_ok() {
             let client_width = client.right - client.left;
             let client_height = client.bottom - client.top;
-            let (toolbar_visible, link_direct, subscription_badge) = lock_model()
-                .as_ref()
-                .map(|model| (model.toolbar_visible, model.link_direct, model.subscription_badge.clone()))
-                .unwrap_or((true, false, String::new()));
+            let (toolbar_visible, link_direct, subscription_badge, picture_bgr, picture_width, picture_height) =
+                lock_model()
+                    .as_ref()
+                    .map(|model| {
+                        (
+                            model.toolbar_visible,
+                            model.link_direct,
+                            model.subscription_badge.clone(),
+                            model.picture_bgr.clone(),
+                            model.picture_width,
+                            model.picture_height,
+                        )
+                    })
+                    .unwrap_or((true, false, String::new(), None, PICTURE_WIDTH, PICTURE_HEIGHT));
             let picture_bottom = if toolbar_visible { client_height - TOOLBAR_HEIGHT } else { client_height };
             fill(&client, device_context, COLOR_BLACK);
-            let picture = letterbox(client_width, picture_bottom.max(0), PICTURE_WIDTH, PICTURE_HEIGHT);
-            fill_frame(&picture, device_context, COLOR_PICTURE);
-            SetBkMode(device_context, TRANSPARENT);
-            let _ = SetTextColor(device_context, COLORREF(0x00E7_EFF3));
-            let waiting = wide_chars("等待画面");
-            draw_text(device_context, &waiting, picture.left, picture.top, picture.width, picture.height, true);
+            let picture = letterbox(client_width, picture_bottom.max(0), picture_width, picture_height);
+            if let Some(pixels) = picture_bgr.as_ref() {
+                paint_picture(device_context, &picture, picture_width, picture_height, pixels);
+            } else {
+                fill_frame(&picture, device_context, COLOR_PICTURE);
+                SetBkMode(device_context, TRANSPARENT);
+                let _ = SetTextColor(device_context, COLORREF(0x00E7_EFF3));
+                let waiting = wide_chars("等待画面");
+                draw_text(device_context, &waiting, picture.left, picture.top, picture.width, picture.height, true);
+            }
             paint_badge(device_context, client_width, link_direct);
             if !subscription_badge.is_empty() {
                 paint_subscription_badge(device_context, client_width, &subscription_badge);
@@ -333,6 +353,74 @@ mod windows_controller {
             paint_meter(device_context, client_width);
         }
         let _ = EndPaint(window, &paint_struct);
+    }
+
+    unsafe fn paint_picture(
+        device_context: windows::Win32::Graphics::Gdi::HDC,
+        target: &FrameRect,
+        width: i32,
+        height: i32,
+        bgr: &[u8],
+    ) {
+        use std::mem::size_of;
+        use windows::Win32::Graphics::Gdi::{SetDIBitsToDevice, StretchDIBits, BITMAPINFO, BITMAPINFOHEADER, BI_RGB, DIB_RGB_COLORS, SRCCOPY};
+        let info = BITMAPINFO {
+            bmiHeader: BITMAPINFOHEADER {
+                biSize: size_of::<BITMAPINFOHEADER>() as u32,
+                biWidth: width,
+                biHeight: -height,
+                biPlanes: 1,
+                biBitCount: 24,
+                biCompression: BI_RGB.0 as u32,
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+        let stride = ((width * 3 + 3) & !3) as usize;
+        let mut padded = if stride == width as usize * 3 {
+            bgr.to_vec()
+        } else {
+            let mut bytes = vec![0u8; stride * height as usize];
+            for row in 0..height as usize {
+                let source = row * width as usize * 3;
+                let destination = row * stride;
+                bytes[destination..destination + width as usize * 3]
+                    .copy_from_slice(&bgr[source..source + width as usize * 3]);
+            }
+            bytes
+        };
+        if target.width == width && target.height == height {
+            let _ = SetDIBitsToDevice(
+                device_context,
+                target.left,
+                target.top,
+                width as u32,
+                height as u32,
+                0,
+                0,
+                0,
+                height as u32,
+                padded.as_ptr().cast(),
+                &info,
+                DIB_RGB_COLORS,
+            );
+        } else {
+            let _ = StretchDIBits(
+                device_context,
+                target.left,
+                target.top,
+                target.width,
+                target.height,
+                0,
+                0,
+                width,
+                height,
+                Some(padded.as_mut_ptr().cast()),
+                &info,
+                DIB_RGB_COLORS,
+                SRCCOPY,
+            );
+        }
     }
 
     unsafe fn paint_badge(device_context: windows::Win32::Graphics::Gdi::HDC, client_width: i32, link_direct: bool) {
@@ -700,11 +788,7 @@ mod windows_controller {
         loop {
             match session.try_recv_frame() {
                 Ok(Some(frame)) if frame.kind == session_core::FrameKind::Video => {
-                    if let Some(model) = lock_model().as_mut() {
-                        if !model.link_direct && model.notice != "已升直连" {
-                            model.notice = "已收到画面".to_string();
-                        }
-                    }
+                    apply_video_frame(&frame.payload);
                 }
                 Ok(Some(_)) => {}
                 Ok(None) => std::thread::sleep(std::time::Duration::from_millis(50)),
@@ -713,6 +797,37 @@ mod windows_controller {
         }
         if let Some(model) = lock_model().as_mut() {
             model.notice = "中继已断开".to_string();
+        }
+    }
+
+    fn apply_video_frame(payload: &[u8]) {
+        let Ok((width, height, _codec, jpeg)) = session_core::unpack_video(payload) else { return };
+        if jpeg.is_empty() {
+            return;
+        }
+        let Ok(decoded) = image::load_from_memory(jpeg) else { return };
+        let rgb = decoded.to_rgb8();
+        let mut bgr = Vec::with_capacity(rgb.len());
+        for pixel in rgb.chunks_exact(3) {
+            bgr.push(pixel[2]);
+            bgr.push(pixel[1]);
+            bgr.push(pixel[0]);
+        }
+        let window = {
+            let mut guard = lock_model();
+            let Some(model) = guard.as_mut() else { return };
+            model.picture_width = width as i32;
+            model.picture_height = height as i32;
+            model.picture_bgr = Some(bgr);
+            if !model.link_direct && model.notice != "已升直连" {
+                model.notice = "已收到画面".to_string();
+            }
+            model.main_window
+        };
+        if !window.is_invalid() {
+            unsafe {
+                let _ = windows::Win32::Graphics::Gdi::InvalidateRect(Some(window), None, false);
+            }
         }
     }
 

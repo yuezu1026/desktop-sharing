@@ -16,6 +16,9 @@ fn main() {
 }
 
 #[cfg(windows)]
+mod capture;
+
+#[cfg(windows)]
 mod windows_host {
     use std::sync::Mutex;
 
@@ -633,9 +636,12 @@ mod windows_host {
                 );
             });
         }
+        let mut grabber = crate::capture::ScreenGrabber::new();
         loop {
-            if session.send_placeholder_video().is_err() {
-                break;
+            if let Some(frame) = grabber.grab_jpeg_frame() {
+                if session.send_frame(&frame).is_err() {
+                    break;
+                }
             }
             match session.try_recv_frame() {
                 Ok(Some(frame)) if frame.kind == session_core::FrameKind::Input => {}
