@@ -8,7 +8,9 @@ use windows::Win32::Graphics::Gdi::{
     DEFAULT_QUALITY, DT_CENTER, DT_LEFT, DT_SINGLELINE, DT_VCENTER, DT_WORDBREAK, HDC, HGDIOBJ, OUT_DEFAULT_PRECIS,
     TRANSPARENT,
 };
-use windows::Win32::UI::WindowsAndMessaging::{CreateIconIndirect, HICON, ICONINFO};
+use windows::Win32::UI::WindowsAndMessaging::{
+    AdjustWindowRectEx, CreateIconIndirect, HICON, ICONINFO, WINDOW_EX_STYLE, WINDOW_STYLE,
+};
 use windows::core::PCWSTR;
 
 use crate::host_hf::{self, HostConfirmView, HostMainView};
@@ -22,6 +24,23 @@ const COLOR_THUMB: u32 = COLOR_ON_SOLID;
 const COLOR_BRAND_SOFT: u32 = 0x00FDEFE7;
 
 pub use host_layout::{CONFIRM_HEIGHT, CONFIRM_WIDTH, MAIN_HEIGHT, MAIN_WIDTH};
+
+/// CreateWindow 的宽高是外框；布局常量是客户区。换算后再开窗，避免底部按钮被裁切。
+pub fn outer_size_for_client(
+    client_width: i32,
+    client_height: i32,
+    style: WINDOW_STYLE,
+    ex_style: WINDOW_EX_STYLE,
+) -> (i32, i32) {
+    let mut rect = RECT {
+        left: 0,
+        top: 0,
+        right: client_width,
+        bottom: client_height,
+    };
+    let _ = unsafe { AdjustWindowRectEx(&mut rect, style, false, ex_style) };
+    (rect.right - rect.left, rect.bottom - rect.top)
+}
 
 fn to_gdi(rect: LayoutRect) -> RECT {
     RECT {
@@ -408,8 +427,9 @@ fn wide_z(text: &str) -> Vec<u16> {
 
 #[cfg(test)]
 mod tests {
-    use super::{hit_accept_switch, hit_confirm_allow, hit_confirm_refuse};
+    use super::{hit_accept_switch, hit_confirm_allow, hit_confirm_refuse, outer_size_for_client};
     use crate::host_layout;
+    use windows::Win32::UI::WindowsAndMessaging::{WINDOW_EX_STYLE, WS_CAPTION, WS_OVERLAPPED, WS_SYSMENU};
 
     #[test]
     fn 开关命中含轨道与标签() {
@@ -430,5 +450,22 @@ mod tests {
         assert!(hit_confirm_allow(allow.left + 10, allow.top + 10));
         assert!(!hit_confirm_refuse(allow.left + 10, allow.top + 10));
         assert!(!hit_confirm_allow(refuse.left + 10, refuse.bottom + 2));
+    }
+
+    #[test]
+    fn 外框尺寸大于客户区() {
+        let style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU;
+        let (outer_width, outer_height) =
+            outer_size_for_client(host_layout::MAIN_WIDTH, host_layout::MAIN_HEIGHT, style, WINDOW_EX_STYLE::default());
+        assert!(outer_width >= host_layout::MAIN_WIDTH);
+        assert!(outer_height > host_layout::MAIN_HEIGHT);
+        let (confirm_width, confirm_height) = outer_size_for_client(
+            host_layout::CONFIRM_WIDTH,
+            host_layout::CONFIRM_HEIGHT,
+            style,
+            WINDOW_EX_STYLE::default(),
+        );
+        assert!(confirm_width >= host_layout::CONFIRM_WIDTH);
+        assert!(confirm_height > host_layout::CONFIRM_HEIGHT);
     }
 }

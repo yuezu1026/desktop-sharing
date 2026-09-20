@@ -85,8 +85,8 @@ mod windows_host {
     use crate::host_hf;
     use crate::host_layout;
     use crate::ui_chrome::{
-        create_brand_icon, hit_accept_switch, hit_confirm_allow, hit_confirm_refuse, paint_confirm_shell,
-        paint_main_shell, CONFIRM_HEIGHT, CONFIRM_WIDTH, MAIN_HEIGHT, MAIN_WIDTH,
+        create_brand_icon, hit_accept_switch, hit_confirm_allow, hit_confirm_refuse, outer_size_for_client,
+        paint_confirm_shell, paint_main_shell, CONFIRM_HEIGHT, CONFIRM_WIDTH, MAIN_HEIGHT, MAIN_WIDTH,
     };
 
     const COPY_CODE: i32 = 101;
@@ -179,15 +179,18 @@ mod windows_host {
         RegisterClassW(&main_class);
         RegisterClassW(&confirm);
         let window_title = wide_string(host_hf::WINDOW_TITLE);
+        let main_style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_VISIBLE;
+        let (outer_width, outer_height) =
+            outer_size_for_client(MAIN_WIDTH, MAIN_HEIGHT, main_style, WINDOW_EX_STYLE::default());
         let window = CreateWindowExW(
             WINDOW_EX_STYLE::default(),
             class_name,
             PCWSTR(window_title.as_ptr()),
-            WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_VISIBLE,
+            main_style,
             CW_USEDEFAULT,
             CW_USEDEFAULT,
-            MAIN_WIDTH,
-            MAIN_HEIGHT,
+            outer_width,
+            outer_height,
             None,
             None,
             Some(instance.into()),
@@ -995,15 +998,18 @@ mod windows_host {
     unsafe fn open_confirm(parent: HWND) {
         let instance = GetModuleHandleW(None).unwrap_or_default();
         let window_title = wide_string(host_hf::WINDOW_TITLE);
+        let confirm_style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_VISIBLE;
+        let (outer_width, outer_height) =
+            outer_size_for_client(CONFIRM_WIDTH, CONFIRM_HEIGHT, confirm_style, WS_EX_TOPMOST);
         let window = CreateWindowExW(
             WS_EX_TOPMOST,
             w!("DesktopHostConfirm"),
             PCWSTR(window_title.as_ptr()),
-            WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_VISIBLE,
+            confirm_style,
             CW_USEDEFAULT,
             CW_USEDEFAULT,
-            CONFIRM_WIDTH,
-            CONFIRM_HEIGHT,
+            outer_width,
+            outer_height,
             Some(parent),
             None,
             Some(instance.into()),
