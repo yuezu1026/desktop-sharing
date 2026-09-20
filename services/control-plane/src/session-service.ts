@@ -230,9 +230,10 @@ export class SessionService {
         expires_at: Date;
         controller_fingerprint: string;
         host_fingerprint: string;
+        bitrate_kbps: number;
       }>(
         `SELECT s.remote_session_id, t.relay_ticket_id, t.secret_once, t.expires_at,
-                s.controller_fingerprint, s.host_fingerprint
+                s.controller_fingerprint, s.host_fingerprint, s.bitrate_kbps
            FROM remote_sessions s
            JOIN relay_tickets t ON t.remote_session_id = s.remote_session_id
           WHERE s.host_account_id = $1
@@ -254,6 +255,7 @@ export class SessionService {
         remoteSessionId: row.remote_session_id,
         ticket: row.secret_once,
         ticketExpiresAt: row.expires_at.toISOString(),
+        bitrateKbps: row.bitrate_kbps,
         controllerFingerprint: row.controller_fingerprint,
         hostFingerprint: row.host_fingerprint,
       };

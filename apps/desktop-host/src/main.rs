@@ -25,6 +25,9 @@ mod color_nv12;
 mod dxgi;
 
 #[cfg(windows)]
+mod encode_bitrate;
+
+#[cfg(windows)]
 mod h264_encode;
 
 #[cfg(windows)]
@@ -99,6 +102,7 @@ mod windows_host {
         origin: String,
         host_device_id: Option<String>,
         relay_ticket: Option<String>,
+        encode_bitrate_kbps: Option<u32>,
         remote_session_id: Option<String>,
         input_allowed: bool,
     }
@@ -124,6 +128,7 @@ mod windows_host {
             origin,
             host_device_id: None,
             relay_ticket: None,
+            encode_bitrate_kbps: None,
             remote_session_id: None,
             input_allowed: true,
         });
@@ -573,7 +578,7 @@ mod windows_host {
                 r#"{"confirmedOnHost":true}"#,
             ) {
                 if let Ok(parsed) = serde_json::from_str::<RelayTicketBody>(&body) {
-                    remember_relay_ticket(parsed.ticket, parsed.remote_session_id);
+                    remember_relay_ticket(parsed.ticket, parsed.remote_session_id, parsed.bitrate_kbps);
                 }
             }
         }
@@ -645,10 +650,14 @@ mod windows_host {
         };
         let Ok(body) = get_json(&origin, "/v1/remote-sessions/host-attach", &token) else { return };
         let Ok(parsed) = serde_json::from_str::<HostAttachBody>(&body) else { return };
-        remember_relay_ticket(parsed.ticket, parsed.remote_session_id);
+        remember_relay_ticket(parsed.ticket, parsed.remote_session_id, parsed.bitrate_kbps);
     }
 
-    fn remember_relay_ticket(ticket: Option<String>, remote_session_id: Option<String>) {
+    fn remember_relay_ticket(
+        ticket: Option<String>,
+        remote_session_id: Option<String>,
+        bitrate_kbps: Option<u32>,
+    ) {
         let Some(ticket) = ticket.filter(|value| !value.is_empty()) else { return };
         if session_core::ticket_looks_usable(&ticket).is_err() {
             return;
@@ -657,13 +666,14 @@ mod windows_host {
         if session_core::encode_relay_hello(&ticket, session_core::RelayRole::Host, &fingerprint).is_err() {
             return;
         }
-        let (origin, token, session_id) = {
+        let (origin, token, session_id, encode_bitrate_kbps) = {
             let mut guard = lock_model();
             let Some(model) = guard.as_mut() else { return };
             if model.relay_ticket.is_some() {
                 return;
             }
             model.relay_ticket = Some(ticket.clone());
+            model.encode_bitrate_kbps = bitrate_kbps;
             model.input_allowed = true;
             if let Some(session_id) = remote_session_id.clone() {
                 model.remote_session_id = Some(session_id);
@@ -674,15 +684,23 @@ mod windows_host {
                 model.origin.clone(),
                 model.token.clone().unwrap_or_default(),
                 model.remote_session_id.clone().unwrap_or_default(),
+                model.encode_bitrate_kbps,
             )
         };
         refresh();
         std::thread::spawn(move || {
-            run_host_relay(ticket, fingerprint, origin, token, session_id);
+            run_host_relay(ticket, fingerprint, origin, token, session_id, encode_bitrate_kbps);
         });
     }
 
-    fn run_host_relay(ticket: String, fingerprint: String, origin: String, token: String, remote_session_id: String) {
+    fn run_host_relay(
+        ticket: String,
+        fingerprint: String,
+        origin: String,
+        token: String,
+        remote_session_id: String,
+        encode_bitrate_kbps: Option<u32>,
+    ) {
         let address = std::env::var("RELAY_ADDR").unwrap_or_else(|_| "127.0.0.1:8443".to_string());
         let Ok(mut session) = relay_client::RelaySession::connect(
             &address,
@@ -721,7 +739,7 @@ mod windows_host {
                 }
             });
         }
-        let mut grabber = crate::capture::ScreenGrabber::new();
+        let mut grabber = crate::capture::ScreenGrabber::new(encode_bitrate_kbps);
         let mut frame_width = 640;
         let mut frame_height = 360;
         crate::inject::set_input_allowed(true);
@@ -821,6 +839,7 @@ mod windows_host {
         if let Some(model) = lock_model().as_mut() {
             model.status_line = "会话已断开".to_string();
             model.relay_ticket = None;
+            model.encode_bitrate_kbps = None;
             model.input_allowed = true;
         }
         refresh();
@@ -1011,6 +1030,8 @@ mod windows_host {
         ticket: Option<String>,
         #[serde(rename = "remoteSessionId")]
         remote_session_id: Option<String>,
+        #[serde(rename = "bitrateKbps")]
+        bitrate_kbps: Option<u32>,
     }
 
     #[derive(Deserialize)]
@@ -1018,6 +1039,8 @@ mod windows_host {
         ticket: Option<String>,
         #[serde(rename = "remoteSessionId")]
         remote_session_id: Option<String>,
+        #[serde(rename = "bitrateKbps")]
+        bitrate_kbps: Option<u32>,
     }
 
     fn display_code(code: &str) -> String {

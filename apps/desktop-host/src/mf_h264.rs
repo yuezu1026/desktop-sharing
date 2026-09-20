@@ -25,6 +25,7 @@ use windows::Win32::System::Com::{
 use windows::Win32::System::Variant::{VARIANT, VARIANT_0_0, VARIANT_0_0_0, VT_UI4};
 
 use crate::color_nv12::bgr_to_nv12;
+use crate::encode_bitrate::bitrate_bps_from_kbps;
 use crate::keyframe_schedule::KeyframeSchedule;
 use crate::mf_async_credits::AsyncInputCredits;
 
@@ -59,6 +60,7 @@ pub struct MfH264Encoder {
     keyframes: KeyframeSchedule,
     width: u32,
     height: u32,
+    bitrate_kbps: u32,
     frame_index: u64,
     output_provides_samples: bool,
     output_buffer_size: u32,
@@ -66,14 +68,14 @@ pub struct MfH264Encoder {
 }
 
 impl MfH264Encoder {
-    pub fn open(width: u32, height: u32) -> Option<Self> {
+    pub fn open(width: u32, height: u32, bitrate_kbps: u32) -> Option<Self> {
         if !ensure_mf() || width < 16 || height < 16 || width % 2 != 0 || height % 2 != 0 {
             return None;
         }
-        if let Some(encoder) = open_hardware(width, height) {
+        if let Some(encoder) = open_hardware(width, height, bitrate_kbps) {
             return Some(encoder);
         }
-        open_microsoft_software(width, height)
+        open_microsoft_software(width, height, bitrate_kbps)
     }
 
     pub fn is_hardware(&self) -> bool {
@@ -82,7 +84,7 @@ impl MfH264Encoder {
 
     pub fn encode_bgr(&mut self, width: u32, height: u32, bgr: &[u8]) -> Option<Vec<u8>> {
         if width != self.width || height != self.height {
-            *self = Self::open(width, height)?;
+            *self = Self::open(width, height, self.bitrate_kbps)?;
         }
         if self.keyframes.should_force() {
             self.request_keyframe();
@@ -205,22 +207,22 @@ impl MfH264Encoder {
     }
 }
 
-fn open_hardware(width: u32, height: u32) -> Option<MfH264Encoder> {
+fn open_hardware(width: u32, height: u32, bitrate_kbps: u32) -> Option<MfH264Encoder> {
     let activates = enumerate_hardware().ok()?;
     for activate in activates {
-        if let Some(encoder) = activate_encoder(activate, width, height, true) {
+        if let Some(encoder) = activate_encoder(activate, width, height, bitrate_kbps, true) {
             return Some(encoder);
         }
     }
     None
 }
 
-fn open_microsoft_software(width: u32, height: u32) -> Option<MfH264Encoder> {
+fn open_microsoft_software(width: u32, height: u32, bitrate_kbps: u32) -> Option<MfH264Encoder> {
     ensure_mf();
     let transform: IMFTransform =
         unsafe { CoCreateInstance(&CMSH264EncoderMFT, None, CLSCTX_INPROC_SERVER).ok()? };
-    configure_transform(&transform, width, height)?;
-    finish_encoder(transform, width, height, false, false)
+    configure_transform(&transform, width, height, bitrate_kbps)?;
+    finish_encoder(transform, width, height, bitrate_kbps, false, false)
 }
 
 fn enumerate_hardware() -> windows::core::Result<Vec<IMFActivate>> {
@@ -252,11 +254,17 @@ fn enumerate_hardware() -> windows::core::Result<Vec<IMFActivate>> {
     }
 }
 
-fn activate_encoder(activate: IMFActivate, width: u32, height: u32, hardware: bool) -> Option<MfH264Encoder> {
+fn activate_encoder(
+    activate: IMFActivate,
+    width: u32,
+    height: u32,
+    bitrate_kbps: u32,
+    hardware: bool,
+) -> Option<MfH264Encoder> {
     let transform: IMFTransform = unsafe { activate.ActivateObject::<IMFTransform>().ok()? };
     let is_async = unlock_if_async(&transform).ok()?;
-    configure_transform(&transform, width, height)?;
-    finish_encoder(transform, width, height, hardware, is_async)
+    configure_transform(&transform, width, height, bitrate_kbps)?;
+    finish_encoder(transform, width, height, bitrate_kbps, hardware, is_async)
 }
 
 fn unlock_if_async(transform: &IMFTransform) -> windows::core::Result<bool> {
@@ -271,14 +279,16 @@ fn unlock_if_async(transform: &IMFTransform) -> windows::core::Result<bool> {
     Ok(false)
 }
 
-fn configure_transform(transform: &IMFTransform, width: u32, height: u32) -> Option<()> {
+fn configure_transform(transform: &IMFTransform, width: u32, height: u32, bitrate_kbps: u32) -> Option<()> {
     unsafe {
         let output = MFCreateMediaType().ok()?;
         output.SetGUID(&MF_MT_MAJOR_TYPE, &MFMediaType_Video).ok()?;
         output.SetGUID(&MF_MT_SUBTYPE, &MFVideoFormat_H264).ok()?;
         output.SetUINT64(&MF_MT_FRAME_SIZE, pack_u32_pair(width, height)).ok()?;
         output.SetUINT64(&MF_MT_FRAME_RATE, pack_u32_pair(20, 1)).ok()?;
-        output.SetUINT32(&MF_MT_AVG_BITRATE, 900_000).ok()?;
+        output
+            .SetUINT32(&MF_MT_AVG_BITRATE, bitrate_bps_from_kbps(bitrate_kbps))
+            .ok()?;
         output
             .SetUINT32(&MF_MT_INTERLACE_MODE, MFVideoInterlace_Progressive.0 as u32)
             .ok()?;
@@ -311,6 +321,7 @@ fn finish_encoder(
     transform: IMFTransform,
     width: u32,
     height: u32,
+    bitrate_kbps: u32,
     hardware: bool,
     is_async: bool,
 ) -> Option<MfH264Encoder> {
@@ -334,6 +345,7 @@ fn finish_encoder(
         keyframes: KeyframeSchedule::new(KEYFRAME_PERIOD),
         width,
         height,
+        bitrate_kbps,
         frame_index: 0,
         output_provides_samples,
         output_buffer_size: info.cbSize.max(1 << 16),

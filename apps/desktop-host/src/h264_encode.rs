@@ -10,18 +10,21 @@ enum Backend {
 
 pub struct H264Encoder {
     backend: Backend,
+    bitrate_kbps: u32,
 }
 
 impl H264Encoder {
-    pub fn open(width: u32, height: u32) -> Option<Self> {
-        if let Some(mf) = MfH264Encoder::open(width, height) {
+    pub fn open(width: u32, height: u32, bitrate_kbps: u32) -> Option<Self> {
+        if let Some(mf) = MfH264Encoder::open(width, height, bitrate_kbps) {
             return Some(Self {
                 backend: Backend::MediaFoundation(mf),
+                bitrate_kbps,
             });
         }
-        let soft = SoftH264Encoder::open(width, height)?;
+        let soft = SoftH264Encoder::open(width, height, bitrate_kbps)?;
         Some(Self {
             backend: Backend::Software(soft),
+            bitrate_kbps,
         })
     }
 
@@ -37,7 +40,7 @@ impl H264Encoder {
             Backend::MediaFoundation(encoder) => match encoder.encode_bgr(width, height, bgr) {
                 Some(bytes) => Some(bytes),
                 None => {
-                    let mut soft = SoftH264Encoder::open(width, height)?;
+                    let mut soft = SoftH264Encoder::open(width, height, self.bitrate_kbps)?;
                     let bytes = soft.encode_bgr(width, height, bgr)?;
                     self.backend = Backend::Software(soft);
                     Some(bytes)
@@ -57,7 +60,7 @@ mod tests {
     fn prefer_path_emits_annex_b_idr_payload() {
         let width = 64u32;
         let height = 48u32;
-        let mut encoder = H264Encoder::open(width, height).expect("encoder");
+        let mut encoder = H264Encoder::open(width, height, 900).expect("encoder");
         let mut bgr = vec![0u8; (width * height * 3) as usize];
         for pixel in bgr.chunks_exact_mut(3) {
             pixel[0] = 40;
@@ -86,7 +89,7 @@ mod tests {
 
     #[test]
     fn hardware_flag_is_queryable() {
-        let encoder = H264Encoder::open(64, 48).expect("encoder");
+        let encoder = H264Encoder::open(64, 48, 900).expect("encoder");
         let _ = encoder.is_hardware();
     }
 }

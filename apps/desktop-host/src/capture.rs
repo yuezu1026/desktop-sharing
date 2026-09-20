@@ -12,6 +12,7 @@ use windows::Win32::Graphics::Gdi::{
 use windows::Win32::UI::WindowsAndMessaging::{GetSystemMetrics, SM_CXSCREEN, SM_CYSCREEN};
 
 use crate::dxgi::DxgiGrabber;
+use crate::encode_bitrate::resolve_bitrate_kbps;
 use crate::h264_encode::H264Encoder;
 
 const MAX_WIDTH: i32 = 640;
@@ -22,16 +23,18 @@ pub struct ScreenGrabber {
     dxgi: Option<DxgiGrabber>,
     prefer_dxgi: bool,
     h264: Option<H264Encoder>,
+    bitrate_kbps: u32,
 }
 
 impl ScreenGrabber {
-    pub fn new() -> Self {
+    pub fn new(bitrate_kbps: Option<u32>) -> Self {
         let dxgi = DxgiGrabber::open();
         Self {
             last_hash: 0,
             prefer_dxgi: dxgi.is_some(),
             dxgi,
             h264: None,
+            bitrate_kbps: resolve_bitrate_kbps(bitrate_kbps),
         }
     }
 
@@ -57,7 +60,7 @@ impl ScreenGrabber {
 
     fn try_h264_frame(&mut self, width: i32, height: i32, bgr: &[u8]) -> Option<Frame> {
         if self.h264.is_none() {
-            self.h264 = H264Encoder::open(width as u32, height as u32);
+            self.h264 = H264Encoder::open(width as u32, height as u32, self.bitrate_kbps);
         }
         let encoder = self.h264.as_mut()?;
         let annex_b = encoder.encode_bgr(width as u32, height as u32, bgr)?;
