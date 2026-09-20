@@ -128,6 +128,7 @@ dependencies = [
  "serde_json",
  "session-core",
  "sha2",
+ "signal-client",
  "windows",
 ]
 
@@ -412,6 +413,15 @@ name = "shlex"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f8fadd59c855ef2080decdef8ff161eb6661b86933c9d82e5ba29dc602a55aba"
+
+[[package]]
+name = "signal-client"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "session-core",
+]
 
 [[package]]
 name = "subtle"

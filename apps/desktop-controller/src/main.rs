@@ -658,11 +658,52 @@ mod windows_controller {
             model.link_direct = false;
             model.notice = "中继已接通".to_string();
         }
+        let punch_origin = origin.clone();
+        let punch_token = token.clone();
+        let punch_session = remote_session_id.clone();
+        let punch_ticket = ticket.clone();
+        let punch_fingerprint = fingerprint.clone();
+        std::thread::spawn(move || {
+            let signal_origin = std::env::var("SIGNAL_URL").unwrap_or_else(|_| "http://127.0.0.1:8081".to_string());
+            let Ok((socket, candidate)) = signal_client::bind_local_candidate() else { return };
+            let candidates = vec![candidate];
+            let Ok((_session_id, peers)) = signal_client::exchange_candidates(
+                &signal_origin,
+                &punch_ticket,
+                session_core::RelayRole::Controller,
+                &punch_fingerprint,
+                &candidates,
+            ) else {
+                return;
+            };
+            let outcome = signal_client::probe_direct(&socket, &peers);
+            let event = if outcome.reached { "start" } else { "punch" };
+            let payload = serde_json::json!({
+                "event": event,
+                "punchResult": outcome.result,
+                "punchBucket": outcome.bucket,
+            })
+            .to_string();
+            let _ = post_json(
+                &punch_origin,
+                &format!("/v1/remote-sessions/{punch_session}/direct"),
+                &punch_token,
+                &payload,
+            );
+            if outcome.reached {
+                if let Some(model) = lock_model().as_mut() {
+                    model.link_direct = true;
+                    model.notice = "已升直连".to_string();
+                }
+            }
+        });
         loop {
             match session.try_recv_frame() {
                 Ok(Some(frame)) if frame.kind == session_core::FrameKind::Video => {
                     if let Some(model) = lock_model().as_mut() {
-                        model.notice = "已收到画面".to_string();
+                        if !model.link_direct && model.notice != "已升直连" {
+                            model.notice = "已收到画面".to_string();
+                        }
                     }
                 }
                 Ok(Some(_)) => {}

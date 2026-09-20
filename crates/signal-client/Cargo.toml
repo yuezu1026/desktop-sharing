@@ -1,0 +1,10 @@
+[package]
+name = "signal-client"
+version = "0.1.0"
+edition = "2021"
+description = "向信令交换候选地址，并在后台做短时 UDP 探测。失败不打断中继。"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+session-core = { path = "../session-core" }

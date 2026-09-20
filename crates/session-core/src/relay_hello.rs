@@ -4,7 +4,7 @@ use crate::ticket::{ticket_looks_usable, TicketError};
 
 const HELLO_LIMIT: usize = 4096;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RelayRole {
     Controller,
     Host,

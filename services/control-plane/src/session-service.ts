@@ -543,7 +543,9 @@ export class SessionService {
     input: { event: string; punchResult: string | null; punchBucket: string | null; bitrateKbps: number | null },
   ): Promise<Record<string, unknown> | Failure> {
     if (!isUuid(remoteSessionId)) return fail(400, "session_invalid", "会话不正确");
-    if (input.event !== "start" && input.event !== "stop") return fail(400, "direct_event_invalid", "直连事件只能是开始或结束");
+    if (input.event !== "start" && input.event !== "stop" && input.event !== "punch") {
+      return fail(400, "direct_event_invalid", "直连事件只能是开始、结束或打洞结果");
+    }
     if (input.punchResult && input.punchResult.trim().length > 40) return fail(400, "punch_invalid", "打洞结果不正确");
     const punchBucket = normalizePunchBucket(input.punchBucket);
     if (punchBucket && typeof punchBucket !== "string") return punchBucket;

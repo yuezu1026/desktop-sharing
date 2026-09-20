@@ -72,6 +72,7 @@ mod windows_host {
         origin: String,
         host_device_id: Option<String>,
         relay_ticket: Option<String>,
+        remote_session_id: Option<String>,
     }
 
     // 窗口句柄只在界面线程使用。HWND 本身不是 Send，模型不会跨线程。
@@ -95,6 +96,7 @@ mod windows_host {
             origin,
             host_device_id: None,
             relay_ticket: None,
+            remote_session_id: None,
         });
         unsafe { message_loop() }
     }
@@ -489,7 +491,7 @@ mod windows_host {
                 r#"{"confirmedOnHost":true}"#,
             ) {
                 if let Ok(parsed) = serde_json::from_str::<RelayTicketBody>(&body) {
-                    remember_relay_ticket(parsed.ticket);
+                    remember_relay_ticket(parsed.ticket, parsed.remote_session_id);
                 }
             }
         }
@@ -561,10 +563,10 @@ mod windows_host {
         };
         let Ok(body) = get_json(&origin, "/v1/remote-sessions/host-attach", &token) else { return };
         let Ok(parsed) = serde_json::from_str::<HostAttachBody>(&body) else { return };
-        remember_relay_ticket(parsed.ticket);
+        remember_relay_ticket(parsed.ticket, parsed.remote_session_id);
     }
 
-    fn remember_relay_ticket(ticket: Option<String>) {
+    fn remember_relay_ticket(ticket: Option<String>, remote_session_id: Option<String>) {
         let Some(ticket) = ticket.filter(|value| !value.is_empty()) else { return };
         if session_core::ticket_looks_usable(&ticket).is_err() {
             return;
@@ -573,27 +575,30 @@ mod windows_host {
         if session_core::encode_relay_hello(&ticket, session_core::RelayRole::Host, &fingerprint).is_err() {
             return;
         }
-        let already = {
+        let (origin, token, session_id) = {
             let mut guard = lock_model();
             let Some(model) = guard.as_mut() else { return };
             if model.relay_ticket.is_some() {
-                true
-            } else {
-                model.relay_ticket = Some(ticket.clone());
-                model.status_line = "中继票已就绪".to_string();
-                false
+                return;
             }
+            model.relay_ticket = Some(ticket.clone());
+            if let Some(session_id) = remote_session_id.clone() {
+                model.remote_session_id = Some(session_id);
+            }
+            model.status_line = "中继票已就绪".to_string();
+            (
+                model.origin.clone(),
+                model.token.clone().unwrap_or_default(),
+                model.remote_session_id.clone().unwrap_or_default(),
+            )
         };
-        if already {
-            return;
-        }
         refresh();
         std::thread::spawn(move || {
-            run_host_relay(ticket, fingerprint);
+            run_host_relay(ticket, fingerprint, origin, token, session_id);
         });
     }
 
-    fn run_host_relay(ticket: String, fingerprint: String) {
+    fn run_host_relay(ticket: String, fingerprint: String, origin: String, token: String, remote_session_id: String) {
         let address = std::env::var("RELAY_ADDR").unwrap_or_else(|_| "127.0.0.1:8443".to_string());
         let Ok(mut session) = relay_client::RelaySession::connect(
             &address,
@@ -611,14 +616,29 @@ mod windows_host {
             model.status_line = "中继已接通".to_string();
         }
         refresh();
+        if !remote_session_id.is_empty() && !token.is_empty() {
+            let punch_ticket = ticket.clone();
+            let punch_fingerprint = fingerprint.clone();
+            let punch_origin = origin.clone();
+            let punch_token = token.clone();
+            let punch_session = remote_session_id.clone();
+            std::thread::spawn(move || {
+                probe_direct_quiet(
+                    punch_origin,
+                    punch_token,
+                    punch_session,
+                    punch_ticket,
+                    session_core::RelayRole::Host,
+                    punch_fingerprint,
+                );
+            });
+        }
         loop {
             if session.send_placeholder_video().is_err() {
                 break;
             }
             match session.try_recv_frame() {
-                Ok(Some(frame)) if frame.kind == session_core::FrameKind::Input => {
-                    // 权限式仅查看时由后续刀丢弃输入；这一刀只保持通路。
-                }
+                Ok(Some(frame)) if frame.kind == session_core::FrameKind::Input => {}
                 Ok(_) => {}
                 Err(_) => break,
             }
@@ -629,6 +649,39 @@ mod windows_host {
             model.relay_ticket = None;
         }
         refresh();
+    }
+
+    /// 后台打洞。失败只上报分桶，不改状态文案，不弹窗，不停中继。
+    fn probe_direct_quiet(
+        origin: String,
+        token: String,
+        remote_session_id: String,
+        ticket: String,
+        role: session_core::RelayRole,
+        fingerprint: String,
+    ) {
+        let signal_origin = std::env::var("SIGNAL_URL").unwrap_or_else(|_| "http://127.0.0.1:8081".to_string());
+        let Ok((socket, candidate)) = signal_client::bind_local_candidate() else { return };
+        let candidates = vec![candidate];
+        let Ok((_session_id, peers)) =
+            signal_client::exchange_candidates(&signal_origin, &ticket, role, &fingerprint, &candidates)
+        else {
+            return;
+        };
+        let outcome = signal_client::probe_direct(&socket, &peers);
+        let event = if outcome.reached { "start" } else { "punch" };
+        let payload = serde_json::json!({
+            "event": event,
+            "punchResult": outcome.result,
+            "punchBucket": outcome.bucket,
+        })
+        .to_string();
+        let _ = post_json(
+            &origin,
+            &format!("/v1/remote-sessions/{remote_session_id}/direct"),
+            &token,
+            &payload,
+        );
     }
 
     unsafe fn open_confirm(parent: HWND) {
@@ -735,11 +788,15 @@ mod windows_host {
     #[derive(Deserialize)]
     struct RelayTicketBody {
         ticket: Option<String>,
+        #[serde(rename = "remoteSessionId")]
+        remote_session_id: Option<String>,
     }
 
     #[derive(Deserialize)]
     struct HostAttachBody {
         ticket: Option<String>,
+        #[serde(rename = "remoteSessionId")]
+        remote_session_id: Option<String>,
     }
 
     fn display_code(code: &str) -> String {
