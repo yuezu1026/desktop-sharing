@@ -19,6 +19,9 @@ fn main() {
 mod capture;
 
 #[cfg(windows)]
+mod inject;
+
+#[cfg(windows)]
 mod windows_host {
     use std::sync::Mutex;
 
@@ -637,19 +640,40 @@ mod windows_host {
             });
         }
         let mut grabber = crate::capture::ScreenGrabber::new();
-        loop {
+        let mut frame_width = 640;
+        let mut frame_height = 360;
+        crate::inject::set_input_allowed(true);
+        'relay: loop {
             if let Some(frame) = grabber.grab_jpeg_frame() {
+                if let Ok((width, height, _, _)) = session_core::unpack_video(&frame.payload) {
+                    frame_width = width as i32;
+                    frame_height = height as i32;
+                }
                 if session.send_frame(&frame).is_err() {
                     break;
                 }
             }
-            match session.try_recv_frame() {
-                Ok(Some(frame)) if frame.kind == session_core::FrameKind::Input => {}
-                Ok(_) => {}
-                Err(_) => break,
+            let mut saw_input = false;
+            loop {
+                match session.try_recv_frame() {
+                    Ok(Some(frame)) if frame.kind == session_core::FrameKind::Input => {
+                        saw_input = true;
+                        if let Ok(event) = session_core::decode_input(&frame.payload) {
+                            crate::inject::apply_input(&event, frame_width, frame_height);
+                        }
+                    }
+                    Ok(Some(_)) => {}
+                    Ok(None) => break,
+                    Err(_) => break 'relay,
+                }
             }
-            std::thread::sleep(std::time::Duration::from_millis(100));
+            std::thread::sleep(std::time::Duration::from_millis(if saw_input { 5 } else { 30 }));
         }
+        crate::inject::set_input_allowed(false);
+        finish_host_relay();
+    }
+
+    fn finish_host_relay() {
         if let Some(model) = lock_model().as_mut() {
             model.status_line = "中继已断开".to_string();
             model.relay_ticket = None;

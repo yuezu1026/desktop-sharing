@@ -18,6 +18,7 @@ fn main() {
 
 #[cfg(windows)]
 mod windows_controller {
+    use std::sync::mpsc::{self, Sender};
     use std::sync::Mutex;
 
     use windows::core::w;
@@ -32,9 +33,9 @@ mod windows_controller {
         CreateWindowExW, DefWindowProcW, DispatchMessageW, GetClientRect, GetMessageW, GetWindowLongPtrW,
         GetWindowPlacement, LoadIconW, PostQuitMessage, RegisterClassW, SetWindowLongPtrW, SetWindowPlacement,
         SetWindowPos, ShowWindow, TranslateMessage, CW_USEDEFAULT, GWL_STYLE, HWND_TOP, IDI_APPLICATION, MSG, SW_SHOW,
-        SWP_FRAMECHANGED, SWP_SHOWWINDOW, WINDOW_EX_STYLE, WINDOWPLACEMENT, WINDOWPLACEMENT_FLAGS, WM_CREATE, WM_DESTROY, WM_KEYDOWN,
-        WM_LBUTTONUP, WM_MOUSEMOVE, WM_PAINT, WM_SIZE, WM_TIMER, WNDCLASSW, WS_OVERLAPPEDWINDOW, WS_POPUP,
-        WS_VISIBLE,
+        SWP_FRAMECHANGED, SWP_SHOWWINDOW, WINDOW_EX_STYLE, WINDOWPLACEMENT, WINDOWPLACEMENT_FLAGS, WM_CREATE, WM_DESTROY,
+        WM_KEYDOWN, WM_KEYUP, WM_LBUTTONDOWN, WM_LBUTTONUP, WM_MBUTTONDOWN, WM_MBUTTONUP, WM_MOUSEMOVE, WM_MOUSEWHEEL,
+        WM_PAINT, WM_RBUTTONDOWN, WM_RBUTTONUP, WM_SIZE, WM_TIMER, WNDCLASSW, WS_OVERLAPPEDWINDOW, WS_POPUP, WS_VISIBLE,
     };
 
     const PICTURE_WIDTH: i32 = 16;
@@ -82,6 +83,7 @@ mod windows_controller {
     unsafe impl Send for Model {}
 
     static MODEL: Mutex<Option<Model>> = Mutex::new(None);
+    static INPUT_TX: Mutex<Option<Sender<session_core::InputEvent>>> = Mutex::new(None);
 
     pub fn run() -> windows::core::Result<()> {
         let link_direct = std::env::var("CONTROLLER_LINK").ok().as_deref() == Some("direct");
@@ -162,6 +164,7 @@ mod windows_controller {
             WM_SIZE | WM_MOUSEMOVE => {
                 if message == WM_MOUSEMOVE {
                     reveal_toolbar(window);
+                    queue_pointer(window, lparam, PointerAction::Move);
                 }
                 let _ = InvalidateRect(Some(window), None, false);
                 LRESULT(0)
@@ -177,6 +180,18 @@ mod windows_controller {
                 }
                 LRESULT(0)
             }
+            WM_LBUTTONDOWN => {
+                queue_pointer(window, lparam, PointerAction::Down(0));
+                LRESULT(0)
+            }
+            WM_RBUTTONDOWN => {
+                queue_pointer(window, lparam, PointerAction::Down(1));
+                LRESULT(0)
+            }
+            WM_MBUTTONDOWN => {
+                queue_pointer(window, lparam, PointerAction::Down(2));
+                LRESULT(0)
+            }
             WM_LBUTTONUP => {
                 let packed = lparam.0 as u32;
                 let click_x = (packed & 0xffff) as i16 as i32;
@@ -189,13 +204,36 @@ mod windows_controller {
                             model.ways_open = !model.ways_open;
                         }
                     }
+                } else {
+                    queue_pointer(window, lparam, PointerAction::Up(0));
                 }
+                LRESULT(0)
+            }
+            WM_RBUTTONUP => {
+                queue_pointer(window, lparam, PointerAction::Up(1));
+                LRESULT(0)
+            }
+            WM_MBUTTONUP => {
+                queue_pointer(window, lparam, PointerAction::Up(2));
+                LRESULT(0)
+            }
+            WM_MOUSEWHEEL => {
+                queue_wheel(window, wparam, lparam);
                 LRESULT(0)
             }
             WM_KEYDOWN => {
                 if wparam.0 as u16 == KEY_ESCAPE {
-                    exit_fullscreen(window);
+                    let fullscreen = lock_model().as_ref().map(|model| model.fullscreen).unwrap_or(false);
+                    if fullscreen {
+                        exit_fullscreen(window);
+                        return LRESULT(0);
+                    }
                 }
+                queue_key(wparam.0 as u32, true);
+                LRESULT(0)
+            }
+            WM_KEYUP => {
+                queue_key(wparam.0 as u32, false);
                 LRESULT(0)
             }
             WM_PAINT => {
@@ -208,6 +246,133 @@ mod windows_controller {
             }
             _ => DefWindowProcW(window, message, wparam, lparam),
         }
+    }
+
+    enum PointerAction {
+        Move,
+        Down(u8),
+        Up(u8),
+    }
+
+    fn input_blocked() -> bool {
+        lock_model()
+            .as_ref()
+            .map(|model| model.view_only == "resource" || model.view_only == "permission")
+            .unwrap_or(false)
+    }
+
+    fn queue_input(event: session_core::InputEvent) {
+        if input_blocked() {
+            return;
+        }
+        if let Ok(guard) = INPUT_TX.lock() {
+            if let Some(sender) = guard.as_ref() {
+                let _ = sender.send(event);
+            }
+        }
+    }
+
+    fn queue_key(key_code: u32, down: bool) {
+        if down {
+            queue_input(session_core::InputEvent::KeyDown { key_code });
+        } else {
+            queue_input(session_core::InputEvent::KeyUp { key_code });
+        }
+    }
+
+    fn queue_pointer(window: HWND, lparam: LPARAM, action: PointerAction) {
+        let packed = lparam.0 as u32;
+        let click_x = (packed & 0xffff) as i16 as i32;
+        let click_y = ((packed >> 16) & 0xffff) as i16 as i32;
+        if toolbar_hit(window, click_x, click_y) {
+            return;
+        }
+        let view_only = lock_model()
+            .as_ref()
+            .map(|model| model.view_only.clone())
+            .unwrap_or_default();
+        if view_only == "resource" && ways_hit(click_x, click_y) {
+            return;
+        }
+        let Some((picture_x, picture_y)) = client_to_picture(window, click_x, click_y) else {
+            return;
+        };
+        let event = match action {
+            PointerAction::Move => session_core::InputEvent::PointerMove {
+                x: picture_x,
+                y: picture_y,
+            },
+            PointerAction::Down(button) => session_core::InputEvent::PointerDown {
+                x: picture_x,
+                y: picture_y,
+                button,
+            },
+            PointerAction::Up(button) => session_core::InputEvent::PointerUp {
+                x: picture_x,
+                y: picture_y,
+                button,
+            },
+        };
+        queue_input(event);
+    }
+
+    fn queue_wheel(window: HWND, wparam: WPARAM, lparam: LPARAM) {
+        let delta = (wparam.0 as u32 >> 16) as i16;
+        let screen_x = (lparam.0 as u32 & 0xffff) as i16 as i32;
+        let screen_y = ((lparam.0 as u32 >> 16) & 0xffff) as i16 as i32;
+        let mut point = POINT {
+            x: screen_x,
+            y: screen_y,
+        };
+        unsafe {
+            let _ = windows::Win32::Graphics::Gdi::ScreenToClient(window, &mut point);
+        }
+        let Some((picture_x, picture_y)) = client_to_picture(window, point.x, point.y) else {
+            return;
+        };
+        queue_input(session_core::InputEvent::Wheel {
+            x: picture_x,
+            y: picture_y,
+            delta,
+        });
+    }
+
+    fn client_to_picture(window: HWND, client_x: i32, client_y: i32) -> Option<(i32, i32)> {
+        let mut client = RECT::default();
+        let Ok(()) = (unsafe { GetClientRect(window, &mut client) }) else {
+            return None;
+        };
+        let (toolbar_visible, picture_width, picture_height) = lock_model()
+            .as_ref()
+            .map(|model| (model.toolbar_visible, model.picture_width, model.picture_height))
+            .unwrap_or((true, PICTURE_WIDTH, PICTURE_HEIGHT));
+        if picture_width <= 0 || picture_height <= 0 {
+            return None;
+        }
+        let client_width = client.right - client.left;
+        let client_height = client.bottom - client.top;
+        let picture_bottom = if toolbar_visible {
+            client_height - TOOLBAR_HEIGHT
+        } else {
+            client_height
+        };
+        let picture = letterbox(client_width, picture_bottom.max(0), picture_width, picture_height);
+        if picture.width <= 0 || picture.height <= 0 {
+            return None;
+        }
+        if client_x < picture.left
+            || client_y < picture.top
+            || client_x >= picture.left + picture.width
+            || client_y >= picture.top + picture.height
+        {
+            return None;
+        }
+        let picture_x = (client_x - picture.left) * picture_width / picture.width;
+        let picture_y = (client_y - picture.top) * picture_height / picture.height;
+        Some((
+            picture_x.clamp(0, picture_width - 1),
+            picture_y.clamp(0, picture_height - 1),
+        ))
     }
 
     fn reveal_toolbar(window: HWND) {
@@ -746,6 +911,10 @@ mod windows_controller {
             model.link_direct = false;
             model.notice = "中继已接通".to_string();
         }
+        let (input_sender, input_receiver) = mpsc::channel::<session_core::InputEvent>();
+        if let Ok(mut guard) = INPUT_TX.lock() {
+            *guard = Some(input_sender);
+        }
         let punch_origin = origin.clone();
         let punch_token = token.clone();
         let punch_session = remote_session_id.clone();
@@ -786,14 +955,35 @@ mod windows_controller {
             }
         });
         loop {
+            let mut send_failed = false;
+            while let Ok(event) = input_receiver.try_recv() {
+                let payload = session_core::encode_input(&event);
+                if session
+                    .send_frame(&session_core::Frame {
+                        kind: session_core::FrameKind::Input,
+                        flags: 0,
+                        payload,
+                    })
+                    .is_err()
+                {
+                    send_failed = true;
+                    break;
+                }
+            }
+            if send_failed {
+                break;
+            }
             match session.try_recv_frame() {
                 Ok(Some(frame)) if frame.kind == session_core::FrameKind::Video => {
                     apply_video_frame(&frame.payload);
                 }
                 Ok(Some(_)) => {}
-                Ok(None) => std::thread::sleep(std::time::Duration::from_millis(50)),
+                Ok(None) => std::thread::sleep(std::time::Duration::from_millis(10)),
                 Err(_) => break,
             }
+        }
+        if let Ok(mut guard) = INPUT_TX.lock() {
+            *guard = None;
         }
         if let Some(model) = lock_model().as_mut() {
             model.notice = "中继已断开".to_string();
