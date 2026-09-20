@@ -1,5 +1,6 @@
 //! 信令交换与打洞探测。探测失败只记结果，不弹窗，也不停中继。
 
+mod punch_bucket;
 mod stun;
 
 use std::io::{Read, Write};
@@ -171,13 +172,19 @@ fn join_once(
     ))
 }
 
-/// 对对端候选发短探测。超时记 udp_blocked；本机环回通了记 home_home。
-pub fn probe_direct(socket: &UdpSocket, peer_candidates: &[String]) -> PunchOutcome {
+/// 对对端候选发短探测。成功记 home_home；失败按双方是否有公网候选分桶。
+pub fn probe_direct(
+    socket: &UdpSocket,
+    peer_candidates: &[String],
+    local_candidates: &[String],
+) -> PunchOutcome {
     let peers: Vec<SocketAddr> = peer_candidates.iter().filter_map(|item| parse_candidate(item)).collect();
+    let local_has_public = punch_bucket::any_public_candidate(local_candidates);
+    let peer_has_public = punch_bucket::any_public_candidate(peer_candidates);
     if peers.is_empty() {
         return PunchOutcome {
             reached: false,
-            bucket: "udp_blocked",
+            bucket: punch_bucket::bucket_on_failure(local_has_public, peer_has_public),
             result: "no_peer",
             peer: None,
         };
@@ -193,7 +200,7 @@ pub fn probe_direct(socket: &UdpSocket, peer_candidates: &[String]) -> PunchOutc
                 let _ = socket.send_to(PUNCH_MAGIC, from);
                 return PunchOutcome {
                     reached: true,
-                    bucket: "home_home",
+                    bucket: punch_bucket::bucket_on_success(from),
                     result: "ok",
                     peer: Some(from),
                 };
@@ -214,7 +221,7 @@ pub fn probe_direct(socket: &UdpSocket, peer_candidates: &[String]) -> PunchOutc
     }
     PunchOutcome {
         reached: false,
-        bucket: "udp_blocked",
+        bucket: punch_bucket::bucket_on_failure(local_has_public, peer_has_public),
         result: "timeout",
         peer: None,
     }

@@ -1080,7 +1080,7 @@ mod windows_controller {
         ) else {
             return None;
         };
-        let outcome = signal_client::probe_direct(&socket, &peers);
+        let outcome = signal_client::probe_direct(&socket, &peers, &candidates);
         if !outcome.reached {
             let payload = serde_json::json!({
                 "event": "punch",
