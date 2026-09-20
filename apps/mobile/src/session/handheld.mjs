@@ -63,6 +63,8 @@ export function createSession() {
     pictureHeight: 9,
     remoteSessionId: "",
     ticket: "",
+    relayAttached: false,
+    frameUri: "",
   };
 }
 
@@ -110,9 +112,9 @@ export function connectDevice(session, row) {
 }
 
 /**
- * 根据控制面远程会话状态更新角标文案。真解码另刀。
+ * 根据控制面远程会话状态更新角标文案。
  * @param {ReturnType<typeof createSession>} session
- * @param {{ state?: string | null, ticket?: string | null }} body
+ * @param {{ state?: string | null, ticket?: string | null, remoteSessionId?: string | null }} body
  */
 export function applyRemoteSessionState(session, body) {
   const state = typeof body?.state === "string" ? body.state : "";
@@ -132,6 +134,62 @@ export function applyRemoteSessionState(session, body) {
     ticket,
     remoteSessionId: typeof body?.remoteSessionId === "string" ? body.remoteSessionId : session.remoteSessionId || "",
   };
+}
+
+/**
+ * 有可用中继票且会话已同意（或同账号直接 active）时，应拉起原生中继。
+ * @param {{ ticket?: string, notice?: string, relayAttached?: boolean }} session
+ */
+export function shouldAttachRelay(session) {
+  if (session?.relayAttached === true) return false;
+  const ticket = typeof session?.ticket === "string" ? session.ticket.trim() : "";
+  if (ticket.length < 20) return false;
+  const notice = session?.notice ?? "";
+  if (notice === "被控端已拒绝") return false;
+  if (notice === "等待被控端确认") return false;
+  if (notice === "中继票已就绪" || notice === "中继已接通" || notice === "已收到画面") return true;
+  return false;
+}
+
+/**
+ * 原生中继事件回写到会话。
+ * @param {ReturnType<typeof createSession>} session
+ * @param {{ type?: string, message?: string, width?: number, height?: number, jpegBase64?: string }} event
+ */
+export function applyNativeRelayEvent(session, event) {
+  const type = event?.type ?? "";
+  if (type === "connecting") {
+    return { ...session, relayAttached: true, notice: "正在进中继", frameUri: session.frameUri || "" };
+  }
+  if (type === "connected") {
+    return { ...session, relayAttached: true, notice: "中继已接通", linkMode: "relay" };
+  }
+  if (type === "frame" && typeof event.jpegBase64 === "string" && event.jpegBase64.length > 0) {
+    const width = Number.isFinite(event.width) && event.width > 0 ? event.width : session.pictureWidth;
+    const height = Number.isFinite(event.height) && event.height > 0 ? event.height : session.pictureHeight;
+    return {
+      ...session,
+      relayAttached: true,
+      notice: "已收到画面",
+      pictureWidth: width,
+      pictureHeight: height,
+      frameUri: `data:image/jpeg;base64,${event.jpegBase64}`,
+    };
+  }
+  if (type === "h264") {
+    return { ...session, relayAttached: true, notice: "已收到 H264（软解下一刀）" };
+  }
+  if (type === "error") {
+    return {
+      ...session,
+      relayAttached: false,
+      notice: typeof event.message === "string" && event.message ? event.message : "中继未接通",
+    };
+  }
+  if (type === "closed") {
+    return { ...session, relayAttached: false, notice: "会话已断开" };
+  }
+  return session;
 }
 
 /** 检测到外接显示也不改成桌面布局。这一阶段只有手持。 */
@@ -321,6 +379,7 @@ export function sessionChrome(session) {
     deviceName: session.deviceName,
     quotaNumber,
     waiting: session.notice && session.notice.length > 0 ? session.notice : "等待画面",
+    frameUri: typeof session.frameUri === "string" ? session.frameUri : "",
     viewOnly,
     pointerMode: session.pointerMode,
     magnifier: session.magnifier,

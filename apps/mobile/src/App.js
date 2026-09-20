@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Platform, Pressable, SafeAreaView, Text, TextInput, View } from "react-native";
-import { resolveControlPlaneOrigin } from "./config.mjs";
+import { Image, Platform, Pressable, SafeAreaView, Text, TextInput, View } from "react-native";
+import { resolveControlPlaneOrigin, resolveRelayAddress } from "./config.mjs";
 import {
   acknowledgeDisclosure,
   getRemoteSession,
@@ -11,8 +11,14 @@ import {
   requestRemoteSession,
 } from "./api.mjs";
 import {
+  connectSessionRelay,
+  disconnectSessionRelay,
+  subscribeSessionRelay,
+} from "./native/session-relay.mjs";
+import {
   MIN_HIT_PX,
   applyBalance,
+  applyNativeRelayEvent,
   applyRemoteSessionState,
   askControl,
   connectDevice,
@@ -30,6 +36,7 @@ import {
   sessionChrome,
   setKeyboardOpen,
   setPointerMode,
+  shouldAttachRelay,
   summonFromEdge,
   toggleFocusFollow,
   toggleMagnifier,
@@ -67,6 +74,31 @@ export function App() {
     envOrigin: typeof process !== "undefined" && process.env ? process.env.CONTROL_PLANE_URL : "",
     platformOS: Platform.OS,
   });
+  const relayAddress = resolveRelayAddress({
+    envAddress: typeof process !== "undefined" && process.env ? process.env.RELAY_ADDR : "",
+    platformOS: Platform.OS,
+  });
+
+  useEffect(() => {
+    return subscribeSessionRelay((event) => {
+      setSession((current) => applyNativeRelayEvent(current, event));
+    });
+  }, []);
+
+  useEffect(() => {
+    if (session.screen !== "session") {
+      disconnectSessionRelay();
+      return undefined;
+    }
+    if (!shouldAttachRelay(session)) return undefined;
+    const started = connectSessionRelay(relayAddress, session.ticket, fingerprint);
+    if (!started) {
+      setSession((current) =>
+        applyNativeRelayEvent(current, { type: "error", message: "本机构建未包含原生中继模块" }),
+      );
+    }
+    return undefined;
+  }, [session.screen, session.ticket, session.notice, session.relayAttached, relayAddress, fingerprint]);
 
   useEffect(() => {
     if (!token || !origin || session.screen !== "session") return undefined;
@@ -75,7 +107,7 @@ export function App() {
     const timer = setInterval(() => {
       getRemoteSession(origin, token, remoteSessionId).then((result) => {
         if (!result.ok) return;
-        setSession((current) => applyRemoteSessionState(current, result.body));
+        setSession((current) => applyRemoteSessionState(current, { ...result.body, ticket: current.ticket }));
       });
     }, 800);
     return () => clearInterval(timer);
@@ -213,7 +245,15 @@ export function App() {
             backgroundColor: "#222",
           }}
         >
-          <Text style={{ color: "#ddd" }}>{chrome.waiting}</Text>
+          {chrome.frameUri ? (
+            <Image
+              source={{ uri: chrome.frameUri }}
+              style={{ width: picture.picture.width, height: picture.picture.height }}
+              resizeMode="contain"
+            />
+          ) : (
+            <Text style={{ color: "#ddd" }}>{chrome.waiting}</Text>
+          )}
         </View>
         {chrome.immersive ? (
           <Text style={{ position: "absolute", top: 8, right: 8, color: "#fff" }}>{"● " + chrome.linkLabel}</Text>
@@ -241,7 +281,13 @@ export function App() {
         {chrome.immersive ? <HitButton label="返回" onPress={() => setSession(leaveImmersive(session, "back"))} /> : null}
         <HitButton label="下缘上滑" onPress={() => setSession(summonFromEdge(session, "bottom"))} />
         <HitButton label="横屏" onPress={() => setSession(rotate(session, session.orientation === "landscape" ? "portrait" : "landscape"))} />
-        <HitButton label="断开" onPress={() => setSession(disconnect())} />
+        <HitButton
+          label="断开"
+          onPress={() => {
+            disconnectSessionRelay();
+            setSession(disconnect());
+          }}
+        />
       </View>
       {chrome.ways.map((title) => (
         <Text key={title}>{title}</Text>

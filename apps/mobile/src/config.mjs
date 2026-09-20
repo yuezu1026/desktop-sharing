@@ -19,3 +19,24 @@ export function resolveControlPlaneOrigin(options = {}) {
   }
   return "http://127.0.0.1:8080";
 }
+
+/**
+ * 中继 TLS 地址。模拟器默认 10.0.2.2:443。
+ * @param {{
+ *   envAddress?: string | null,
+ *   platformOS?: string | null,
+ *   androidEmulatorHost?: string | null,
+ * }} [options]
+ */
+export function resolveRelayAddress(options = {}) {
+  const fromEnv = typeof options.envAddress === "string" ? options.envAddress.trim() : "";
+  if (fromEnv.length > 0) return fromEnv.replace(/^\/+|\/+$/g, "");
+  if (options.platformOS === "android") {
+    const host =
+      typeof options.androidEmulatorHost === "string" && options.androidEmulatorHost.trim()
+        ? options.androidEmulatorHost.trim()
+        : "10.0.2.2";
+    return `${host}:443`;
+  }
+  return "127.0.0.1:443";
+}
