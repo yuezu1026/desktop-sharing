@@ -19,6 +19,9 @@ fn main() {
 mod capture;
 
 #[cfg(windows)]
+mod dxgi;
+
+#[cfg(windows)]
 mod inject;
 
 #[cfg(windows)]

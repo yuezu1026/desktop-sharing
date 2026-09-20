@@ -1,4 +1,4 @@
-//! 会话进行中才采集。空闲不占编码器。本阶段用 GDI 缩放 + JPEG，硬编留给后面。
+//! 会话进行中才采集。空闲不占编码器。优先 DXGI 桌面复制，失败回退 GDI。硬编仍留给后面。
 
 use std::mem::size_of;
 
@@ -11,21 +11,30 @@ use windows::Win32::Graphics::Gdi::{
 };
 use windows::Win32::UI::WindowsAndMessaging::{GetSystemMetrics, SM_CXSCREEN, SM_CYSCREEN};
 
+use crate::dxgi::DxgiGrabber;
+
 const MAX_WIDTH: i32 = 640;
 const JPEG_QUALITY: u8 = 50;
 
 pub struct ScreenGrabber {
     last_hash: u64,
+    dxgi: Option<DxgiGrabber>,
+    prefer_dxgi: bool,
 }
 
 impl ScreenGrabber {
     pub fn new() -> Self {
-        Self { last_hash: 0 }
+        let dxgi = DxgiGrabber::open();
+        Self {
+            last_hash: 0,
+            prefer_dxgi: dxgi.is_some(),
+            dxgi,
+        }
     }
 
-    /// 静止画面不重复送。失败时返回 None，调用方继续占位或跳过。
+    /// 静止画面不重复送。失败时返回 None，调用方跳过这一拍。
     pub fn grab_jpeg_frame(&mut self) -> Option<Frame> {
-        let (width, height, bgr) = unsafe { capture_bgr_scaled(MAX_WIDTH)? };
+        let (width, height, bgr) = self.grab_bgr_scaled()?;
         let hash = fnv1a(&bgr);
         if hash == self.last_hash {
             return None;
@@ -38,6 +47,24 @@ impl ScreenGrabber {
             flags: 0,
             payload,
         })
+    }
+
+    fn grab_bgr_scaled(&mut self) -> Option<(i32, i32, Vec<u8>)> {
+        if self.prefer_dxgi {
+            if self.dxgi.is_none() {
+                self.dxgi = DxgiGrabber::open();
+            }
+            if let Some(grabber) = self.dxgi.as_mut() {
+                match grabber.grab_bgr_scaled(MAX_WIDTH) {
+                    Ok(Some(frame)) => return Some(frame),
+                    Ok(None) => return None,
+                    Err(()) => {
+                        self.dxgi = None;
+                    }
+                }
+            }
+        }
+        unsafe { capture_bgr_scaled_gdi(MAX_WIDTH) }
     }
 }
 
@@ -64,7 +91,7 @@ fn fnv1a(bytes: &[u8]) -> u64 {
     hash
 }
 
-unsafe fn capture_bgr_scaled(max_width: i32) -> Option<(i32, i32, Vec<u8>)> {
+unsafe fn capture_bgr_scaled_gdi(max_width: i32) -> Option<(i32, i32, Vec<u8>)> {
     let screen_width = GetSystemMetrics(SM_CXSCREEN);
     let screen_height = GetSystemMetrics(SM_CYSCREEN);
     if screen_width <= 0 || screen_height <= 0 {
