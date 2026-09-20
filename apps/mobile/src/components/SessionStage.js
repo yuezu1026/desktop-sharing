@@ -1,13 +1,17 @@
 import React from "react";
 import { Image, Text, View } from "react-native";
-import { SESSION_HF } from "../session/session-hf.mjs";
+import { SESSION_HF, VIEW_ONLY_HF } from "../session/session-hf.mjs";
 import { linkToneColor } from "../theme.mjs";
 
 /** 会话画面区：黑边 letterbox + 可选沉浸式链路角标。 */
 export function SessionStage(props) {
   const { palette, chrome, picture, panHandlers, RemoteFrameView } = props;
-  const waitingText =
-    chrome.waiting && chrome.waiting !== "等待画面" ? chrome.waiting : SESSION_HF.picturePlaceholder;
+  let waitingText = SESSION_HF.picturePlaceholder;
+  if (chrome.viewOnly && !chrome.viewOnly.frozen) {
+    waitingText = VIEW_ONLY_HF.permissionPictureHint;
+  } else if (chrome.waiting && chrome.waiting !== "等待画面") {
+    waitingText = chrome.waiting;
+  }
   return (
     <View style={{ height: picture.viewHeight, backgroundColor: "#000", overflow: "hidden" }} {...panHandlers}>
       <View

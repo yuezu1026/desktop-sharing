@@ -501,6 +501,7 @@ export function App() {
       onLeaveImmersive={(via) => setSession(leaveImmersive(session, via))}
       onSummonEdge={(edge) => setSession(summonFromEdge(session, edge))}
       onRotate={() => setSession(rotate(session, session.orientation === "landscape" ? "portrait" : "landscape"))}
+      onZoom={() => {}}
     />
   );
 }

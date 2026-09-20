@@ -1,12 +1,18 @@
 import React from "react";
 import { Pressable, SafeAreaView, ScrollView, Text, TextInput, View } from "react-native";
-import { SESSION_HF, sessionDeviceLabel, shouldShowQuotaDigits } from "../session/session-hf.mjs";
+import {
+  SESSION_HF,
+  VIEW_ONLY_HF,
+  sessionDeviceLabel,
+  shouldShowQuotaDigits,
+  viewOnlyBanner,
+} from "../session/session-hf.mjs";
 import { hit, linkToneColor, radius, space } from "../theme.mjs";
 import { HitButton } from "./HitButton.js";
 import { SessionStage } from "./SessionStage.js";
 
 /**
- * 手持会话屏，对齐 W6-02：顶栏链路 / 画面 / 模式条 / 手势说明 / 底栏。
+ * 手持会话屏，对齐 W6-02 / W6-03。
  * 触控与键盘事件由上层注入，本组件不直接碰中继。
  */
 export function SessionScreen(props) {
@@ -33,9 +39,12 @@ export function SessionScreen(props) {
     onLeaveImmersive,
     onSummonEdge,
     onRotate,
+    onZoom,
   } = props;
 
   const showQuota = shouldShowQuotaDigits(chrome.quotaNumber);
+  const viewOnly = chrome.viewOnly;
+  const banner = viewOnlyBanner(viewOnly);
   const tag = (label, selected, onPress) => (
     <Pressable
       key={label}
@@ -56,6 +65,23 @@ export function SessionScreen(props) {
     </Pressable>
   );
 
+  const linkBadge = (
+    <View
+      style={{
+        paddingHorizontal: space["2"],
+        paddingVertical: 4,
+        borderRadius: radius.s,
+        backgroundColor: chrome.linkLabel === "直连" ? palette.okSoft : palette.warnSoft,
+        borderWidth: 1,
+        borderColor: chrome.linkLabel === "直连" ? palette.ok : palette.warn,
+      }}
+    >
+      <Text style={{ color: linkToneColor(chrome.linkLabel, palette), fontWeight: "700", fontSize: 12 }}>
+        {chrome.linkLabel}
+      </Text>
+    </View>
+  );
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: palette.bg }}>
       <View
@@ -70,28 +96,38 @@ export function SessionScreen(props) {
           backgroundColor: palette.surface,
         }}
       >
-        <View
-          style={{
-            paddingHorizontal: space["2"],
-            paddingVertical: 4,
-            borderRadius: radius.s,
-            backgroundColor: chrome.linkLabel === "直连" ? palette.okSoft : palette.warnSoft,
-            borderWidth: 1,
-            borderColor: chrome.linkLabel === "直连" ? palette.ok : palette.warn,
-          }}
-        >
-          <Text style={{ color: linkToneColor(chrome.linkLabel, palette), fontWeight: "700", fontSize: 12 }}>
-            {chrome.linkLabel}
-          </Text>
-        </View>
-        <Text style={{ color: palette.text2, fontSize: 13, flex: 1 }} numberOfLines={1}>
-          {sessionDeviceLabel(chrome.deviceName)}
-        </Text>
-        <Pressable onPress={onOpenMeter} hitSlop={8}>
-          <Text style={{ color: palette.text, fontSize: 13, textDecorationLine: "underline" }}>
-            {SESSION_HF.meterLink}
-          </Text>
-        </Pressable>
+        {viewOnly ? (
+          <>
+            <View
+              style={{
+                paddingHorizontal: space["2"],
+                paddingVertical: 4,
+                borderRadius: radius.s,
+                backgroundColor: palette.surface2,
+                borderWidth: 1,
+                borderColor: palette.line,
+              }}
+            >
+              <Text style={{ color: palette.text, fontWeight: "700", fontSize: 12 }}>{VIEW_ONLY_HF.badge}</Text>
+            </View>
+            <Text style={{ color: palette.text2, fontSize: 13, flex: 1 }} numberOfLines={1}>
+              {sessionDeviceLabel(chrome.deviceName)}
+            </Text>
+            {linkBadge}
+          </>
+        ) : (
+          <>
+            {linkBadge}
+            <Text style={{ color: palette.text2, fontSize: 13, flex: 1 }} numberOfLines={1}>
+              {sessionDeviceLabel(chrome.deviceName)}
+            </Text>
+            <Pressable onPress={onOpenMeter} hitSlop={8}>
+              <Text style={{ color: palette.text, fontSize: 13, textDecorationLine: "underline" }}>
+                {SESSION_HF.meterLink}
+              </Text>
+            </Pressable>
+          </>
+        )}
       </View>
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: space["2"], gap: space["2"], paddingBottom: space["4"] }}>
@@ -125,42 +161,47 @@ export function SessionScreen(props) {
         />
 
         {loupe ? <Text style={{ color: palette.text2 }}>{"放大镜取样 " + loupe.sampleSide}</Text> : null}
-        {chrome.viewOnly ? <Text style={{ color: palette.text }}>{chrome.viewOnly.line}</Text> : null}
 
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: space["2"] }}>
-          {tag(SESSION_HF.trackpad, chrome.pointerMode === "trackpad", () => onSetPointerMode("trackpad"))}
-          {tag(SESSION_HF.directTouch, chrome.pointerMode === "direct", () => onSetPointerMode("direct"))}
-          <View style={{ flexGrow: 1, minWidth: 8 }} />
-          {tag(SESSION_HF.focusFollow, chrome.focusFollow, onToggleFocusFollow)}
-          {tag(SESSION_HF.magnifier, chrome.magnifier, onToggleMagnifier)}
-        </View>
+        {banner ? (
+          <View
+            style={{
+              padding: space["3"],
+              borderRadius: radius.m,
+              borderWidth: 1,
+              borderColor: palette.line,
+              backgroundColor: palette.surface2,
+              gap: space["1"],
+            }}
+          >
+            <Text style={{ color: palette.text, fontWeight: "700", fontSize: 13 }}>{banner.title}</Text>
+            <Text style={{ color: palette.text2, fontSize: 12 }}>{banner.body}</Text>
+          </View>
+        ) : (
+          <>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: space["2"] }}>
+              {tag(SESSION_HF.trackpad, chrome.pointerMode === "trackpad", () => onSetPointerMode("trackpad"))}
+              {tag(SESSION_HF.directTouch, chrome.pointerMode === "direct", () => onSetPointerMode("direct"))}
+              <View style={{ flexGrow: 1, minWidth: 8 }} />
+              {tag(SESSION_HF.focusFollow, chrome.focusFollow, onToggleFocusFollow)}
+              {tag(SESSION_HF.magnifier, chrome.magnifier, onToggleMagnifier)}
+            </View>
+            <View
+              style={{
+                padding: space["3"],
+                borderRadius: radius.m,
+                borderWidth: 1,
+                borderColor: palette.line,
+                backgroundColor: palette.surface,
+                gap: space["1"],
+              }}
+            >
+              <Text style={{ color: palette.text, fontWeight: "700", fontSize: 12 }}>{SESSION_HF.gestureTitle}</Text>
+              <Text style={{ color: palette.text2, fontSize: 12 }}>{gestureHint}</Text>
+            </View>
+          </>
+        )}
 
-        <View
-          style={{
-            padding: space["3"],
-            borderRadius: radius.m,
-            borderWidth: 1,
-            borderColor: palette.line,
-            backgroundColor: palette.surface,
-            gap: space["1"],
-          }}
-        >
-          <Text style={{ color: palette.text, fontWeight: "700", fontSize: 12 }}>{SESSION_HF.gestureTitle}</Text>
-          <Text style={{ color: palette.text2, fontSize: 12 }}>{gestureHint}</Text>
-        </View>
-
-        {chrome.viewOnly?.requestControl ? (
-          <HitButton
-            palette={palette}
-            label={chrome.viewOnly.controlAsked ? "等待对方确认" : "请求控制"}
-            onPress={onAskControl}
-          />
-        ) : null}
-        {chrome.viewOnly?.frozen ? (
-          <HitButton palette={palette} label="还有什么办法" onPress={onOpenWays} />
-        ) : null}
-
-        {session.keyboardOpen ? (
+        {session.keyboardOpen && !viewOnly ? (
           <TextInput
             autoFocus
             value=""
@@ -208,15 +249,38 @@ export function SessionScreen(props) {
           backgroundColor: palette.surface,
         }}
       >
-        <HitButton palette={palette} label={SESSION_HF.keyboard} onPress={onToggleKeyboard} />
-        <HitButton palette={palette} label={SESSION_HF.shortcuts} onPress={onOpenWays} />
-        <View style={{ flex: 1 }} />
-        {!chrome.immersive ? (
-          <HitButton palette={palette} label={SESSION_HF.fullscreen} onPress={onEnterImmersive} />
+        {viewOnly ? (
+          <>
+            <HitButton palette={palette} label={SESSION_HF.zoom} onPress={onZoom} />
+            <HitButton palette={palette} label={SESSION_HF.rotate} onPress={onRotate} />
+            <View style={{ flex: 1 }} />
+            {viewOnly.requestControl ? (
+              <HitButton
+                palette={palette}
+                label={viewOnly.controlAsked ? VIEW_ONLY_HF.waitingControl : VIEW_ONLY_HF.askControl}
+                solid={!viewOnly.controlAsked}
+                tone="brand"
+                onPress={onAskControl}
+              />
+            ) : null}
+            {viewOnly.frozen ? (
+              <HitButton palette={palette} label={VIEW_ONLY_HF.openWays} onPress={onOpenWays} />
+            ) : null}
+            <HitButton palette={palette} label={SESSION_HF.disconnect} onPress={onDisconnect} />
+          </>
         ) : (
-          <HitButton palette={palette} label={SESSION_HF.exitImmersive} onPress={() => onLeaveImmersive("bar")} />
+          <>
+            <HitButton palette={palette} label={SESSION_HF.keyboard} onPress={onToggleKeyboard} />
+            <HitButton palette={palette} label={SESSION_HF.shortcuts} onPress={onOpenWays} />
+            <View style={{ flex: 1 }} />
+            {!chrome.immersive ? (
+              <HitButton palette={palette} label={SESSION_HF.fullscreen} onPress={onEnterImmersive} />
+            ) : (
+              <HitButton palette={palette} label={SESSION_HF.exitImmersive} onPress={() => onLeaveImmersive("bar")} />
+            )}
+            <HitButton palette={palette} label={SESSION_HF.disconnect} onPress={onDisconnect} />
+          </>
         )}
-        <HitButton palette={palette} label={SESSION_HF.disconnect} onPress={onDisconnect} />
       </View>
     </SafeAreaView>
   );
