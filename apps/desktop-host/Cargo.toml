@@ -17,6 +17,7 @@ signal-client = { path = "../../crates/signal-client" }
 direct-client = { path = "../../crates/direct-client" }
 sha2 = "0.10"
 image = { version = "0.25", default-features = false, features = ["jpeg"] }
+openh264 = { version = "0.8", features = ["source"] }
 
 [target.'cfg(windows)'.dependencies]
 windows = { version = "0.61", features = [

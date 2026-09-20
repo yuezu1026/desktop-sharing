@@ -22,6 +22,9 @@ mod capture;
 mod dxgi;
 
 #[cfg(windows)]
+mod h264_encode;
+
+#[cfg(windows)]
 mod inject;
 
 #[cfg(windows)]

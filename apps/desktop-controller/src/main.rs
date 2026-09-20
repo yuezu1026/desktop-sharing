@@ -17,6 +17,9 @@ fn main() {
 }
 
 #[cfg(windows)]
+mod h264_decode;
+
+#[cfg(windows)]
 mod windows_controller {
     use std::sync::mpsc::{self, Sender};
     use std::sync::Mutex;
@@ -1117,26 +1120,35 @@ mod windows_controller {
 
     fn apply_video_frame(payload: &[u8]) {
         let Ok((width, height, codec, body)) = session_core::unpack_video(payload) else { return };
-        if codec == session_core::VIDEO_CODEC_H264 {
-            // 协议已认 H264；硬解与硬编同批下一刀，本帧先跳过以免把 Annex-B 当 JPEG。
+        let (picture_width, picture_height, bgr) = if codec == session_core::VIDEO_CODEC_H264 {
+            let Some((decoded_width, decoded_height, pixels)) = crate::h264_decode::decode_annex_b_to_bgr(body) else {
+                return;
+            };
+            (decoded_width as i32, decoded_height as i32, pixels)
+        } else if codec == session_core::VIDEO_CODEC_JPEG {
+            if body.is_empty() {
+                return;
+            }
+            let Ok(decoded) = image::load_from_memory(body) else { return };
+            let rgb = decoded.to_rgb8();
+            let mut pixels = Vec::with_capacity(rgb.len());
+            for pixel in rgb.chunks_exact(3) {
+                pixels.push(pixel[2]);
+                pixels.push(pixel[1]);
+                pixels.push(pixel[0]);
+            }
+            (width as i32, height as i32, pixels)
+        } else {
             return;
-        }
-        if codec != session_core::VIDEO_CODEC_JPEG || body.is_empty() {
+        };
+        if bgr.is_empty() {
             return;
-        }
-        let Ok(decoded) = image::load_from_memory(body) else { return };
-        let rgb = decoded.to_rgb8();
-        let mut bgr = Vec::with_capacity(rgb.len());
-        for pixel in rgb.chunks_exact(3) {
-            bgr.push(pixel[2]);
-            bgr.push(pixel[1]);
-            bgr.push(pixel[0]);
         }
         let window = {
             let mut guard = lock_model();
             let Some(model) = guard.as_mut() else { return };
-            model.picture_width = width as i32;
-            model.picture_height = height as i32;
+            model.picture_width = picture_width;
+            model.picture_height = picture_height;
             model.picture_bgr = Some(bgr);
             if !model.link_direct && model.notice != "已升直连" {
                 model.notice = "已收到画面".to_string();

@@ -1,10 +1,10 @@
-//! 会话进行中才采集。空闲不占编码器。优先 DXGI 桌面复制，失败回退 GDI。硬编仍留给后面。
+//! 会话进行中才采集。空闲不占编码器。优先 DXGI；编码优先 H264 软编，失败回退 JPEG。
 
 use std::mem::size_of;
 
 use image::codecs::jpeg::JpegEncoder;
 use image::{ColorType, ImageEncoder};
-use session_core::{pack_video, Frame, FrameKind, VIDEO_CODEC_JPEG};
+use session_core::{pack_video, Frame, FrameKind, VIDEO_CODEC_H264, VIDEO_CODEC_JPEG};
 use windows::Win32::Graphics::Gdi::{
     BitBlt, CreateCompatibleBitmap, CreateCompatibleDC, DeleteDC, DeleteObject, GetDC, GetDIBits,
     ReleaseDC, SelectObject, StretchBlt, BITMAPINFO, BITMAPINFOHEADER, BI_RGB, DIB_RGB_COLORS, HGDIOBJ, SRCCOPY,
@@ -12,6 +12,7 @@ use windows::Win32::Graphics::Gdi::{
 use windows::Win32::UI::WindowsAndMessaging::{GetSystemMetrics, SM_CXSCREEN, SM_CYSCREEN};
 
 use crate::dxgi::DxgiGrabber;
+use crate::h264_encode::SoftH264Encoder;
 
 const MAX_WIDTH: i32 = 640;
 const JPEG_QUALITY: u8 = 50;
@@ -20,6 +21,7 @@ pub struct ScreenGrabber {
     last_hash: u64,
     dxgi: Option<DxgiGrabber>,
     prefer_dxgi: bool,
+    h264: Option<SoftH264Encoder>,
 }
 
 impl ScreenGrabber {
@@ -29,6 +31,7 @@ impl ScreenGrabber {
             last_hash: 0,
             prefer_dxgi: dxgi.is_some(),
             dxgi,
+            h264: None,
         }
     }
 
@@ -40,8 +43,25 @@ impl ScreenGrabber {
             return None;
         }
         self.last_hash = hash;
+        if let Some(frame) = self.try_h264_frame(width, height, &bgr) {
+            return Some(frame);
+        }
         let jpeg = encode_jpeg_bgr(width as u32, height as u32, &bgr)?;
         let payload = pack_video(width as u16, height as u16, VIDEO_CODEC_JPEG, &jpeg);
+        Some(Frame {
+            kind: FrameKind::Video,
+            flags: 0,
+            payload,
+        })
+    }
+
+    fn try_h264_frame(&mut self, width: i32, height: i32, bgr: &[u8]) -> Option<Frame> {
+        if self.h264.is_none() {
+            self.h264 = SoftH264Encoder::open(width as u32, height as u32);
+        }
+        let encoder = self.h264.as_mut()?;
+        let annex_b = encoder.encode_bgr(width as u32, height as u32, bgr)?;
+        let payload = pack_video(width as u16, height as u16, VIDEO_CODEC_H264, &annex_b);
         Some(Frame {
             kind: FrameKind::Video,
             flags: 0,
