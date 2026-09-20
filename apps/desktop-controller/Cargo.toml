@@ -10,6 +10,7 @@ path = "src/main.rs"
 [dependencies]
 serde_json = "1"
 session-core = { path = "../../crates/session-core" }
+relay-client = { path = "../../crates/relay-client" }
 windows = { version = "0.61", features = [
   "Win32_Foundation",
   "Win32_Graphics_Gdi",

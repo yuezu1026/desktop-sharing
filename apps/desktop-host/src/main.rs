@@ -573,9 +573,60 @@ mod windows_host {
         if session_core::encode_relay_hello(&ticket, session_core::RelayRole::Host, &fingerprint).is_err() {
             return;
         }
+        let already = {
+            let mut guard = lock_model();
+            let Some(model) = guard.as_mut() else { return };
+            if model.relay_ticket.is_some() {
+                true
+            } else {
+                model.relay_ticket = Some(ticket.clone());
+                model.status_line = "中继票已就绪".to_string();
+                false
+            }
+        };
+        if already {
+            return;
+        }
+        refresh();
+        std::thread::spawn(move || {
+            run_host_relay(ticket, fingerprint);
+        });
+    }
+
+    fn run_host_relay(ticket: String, fingerprint: String) {
+        let address = std::env::var("RELAY_ADDR").unwrap_or_else(|_| "127.0.0.1:8443".to_string());
+        let Ok(mut session) = relay_client::RelaySession::connect(
+            &address,
+            &ticket,
+            session_core::RelayRole::Host,
+            &fingerprint,
+        ) else {
+            if let Some(model) = lock_model().as_mut() {
+                model.status_line = "中继未接通".to_string();
+            }
+            refresh();
+            return;
+        };
         if let Some(model) = lock_model().as_mut() {
-            model.relay_ticket = Some(ticket);
-            model.status_line = "中继票已就绪".to_string();
+            model.status_line = "中继已接通".to_string();
+        }
+        refresh();
+        loop {
+            if session.send_placeholder_video().is_err() {
+                break;
+            }
+            match session.try_recv_frame() {
+                Ok(Some(frame)) if frame.kind == session_core::FrameKind::Input => {
+                    // 权限式仅查看时由后续刀丢弃输入；这一刀只保持通路。
+                }
+                Ok(_) => {}
+                Err(_) => break,
+            }
+            std::thread::sleep(std::time::Duration::from_millis(100));
+        }
+        if let Some(model) = lock_model().as_mut() {
+            model.status_line = "中继已断开".to_string();
+            model.relay_ticket = None;
         }
         refresh();
     }

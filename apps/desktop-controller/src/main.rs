@@ -584,20 +584,94 @@ mod windows_controller {
         .to_string();
         let Ok(body) = post_json(&origin, "/v1/remote-sessions", &token, &payload) else { return };
         let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&body) else { return };
-        let Some(ticket) = parsed.get("ticket").and_then(|value| value.as_str()) else { return };
-        if session_core::ticket_looks_usable(ticket).is_err() {
+        let Some(ticket) = parsed.get("ticket").and_then(|value| value.as_str()).map(str::to_string) else { return };
+        let Some(remote_session_id) = parsed
+            .get("remoteSessionId")
+            .and_then(|value| value.as_str())
+            .map(str::to_string)
+        else {
+            return;
+        };
+        if session_core::ticket_looks_usable(&ticket).is_err() {
             return;
         }
-        if session_core::encode_relay_hello(ticket, session_core::RelayRole::Controller, &fingerprint).is_err() {
-            return;
-        }
+        let awaiting = parsed.get("state").and_then(|value| value.as_str()) == Some("awaiting_host_consent");
         if let Some(model) = lock_model().as_mut() {
             model.link_direct = false;
-            model.notice = if parsed.get("state").and_then(|value| value.as_str()) == Some("awaiting_host_consent") {
+            model.notice = if awaiting {
                 "等待被控端确认".to_string()
             } else {
                 "中继票已就绪".to_string()
             };
+        }
+        std::thread::spawn(move || {
+            run_controller_relay(origin, token, remote_session_id, ticket, fingerprint, awaiting);
+        });
+    }
+
+    fn run_controller_relay(
+        origin: String,
+        token: String,
+        remote_session_id: String,
+        ticket: String,
+        fingerprint: String,
+        awaiting: bool,
+    ) {
+        if awaiting {
+            for _attempt in 0..120 {
+                let Ok(body) = get_json(&origin, &format!("/v1/remote-sessions/{remote_session_id}"), &token) else {
+                    std::thread::sleep(std::time::Duration::from_millis(500));
+                    continue;
+                };
+                let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&body) else {
+                    std::thread::sleep(std::time::Duration::from_millis(500));
+                    continue;
+                };
+                if parsed.get("state").and_then(|value| value.as_str()) == Some("active") {
+                    if let Some(model) = lock_model().as_mut() {
+                        model.notice = "中继票已就绪".to_string();
+                    }
+                    break;
+                }
+                if parsed.get("state").and_then(|value| value.as_str()) == Some("rejected") {
+                    if let Some(model) = lock_model().as_mut() {
+                        model.notice = "被控端已拒绝".to_string();
+                    }
+                    return;
+                }
+                std::thread::sleep(std::time::Duration::from_millis(500));
+            }
+        }
+        let address = std::env::var("RELAY_ADDR").unwrap_or_else(|_| "127.0.0.1:8443".to_string());
+        let Ok(mut session) = relay_client::RelaySession::connect(
+            &address,
+            &ticket,
+            session_core::RelayRole::Controller,
+            &fingerprint,
+        ) else {
+            if let Some(model) = lock_model().as_mut() {
+                model.notice = "中继未接通".to_string();
+            }
+            return;
+        };
+        if let Some(model) = lock_model().as_mut() {
+            model.link_direct = false;
+            model.notice = "中继已接通".to_string();
+        }
+        loop {
+            match session.try_recv_frame() {
+                Ok(Some(frame)) if frame.kind == session_core::FrameKind::Video => {
+                    if let Some(model) = lock_model().as_mut() {
+                        model.notice = "已收到画面".to_string();
+                    }
+                }
+                Ok(Some(_)) => {}
+                Ok(None) => std::thread::sleep(std::time::Duration::from_millis(50)),
+                Err(_) => break,
+            }
+        }
+        if let Some(model) = lock_model().as_mut() {
+            model.notice = "中继已断开".to_string();
         }
     }
 

@@ -1,0 +1,9 @@
+[package]
+name = "relay-client"
+version = "0.1.0"
+edition = "2021"
+description = "桌面端连中继：TLS + hello + session-core 帧。证书校验可按本地自签跳过。"
+
+[dependencies]
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
+session-core = { path = "../session-core" }
