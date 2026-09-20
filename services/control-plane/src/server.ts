@@ -13,6 +13,7 @@ import { attachWebRelayBridge } from "./web-relay-bridge.js";
 type Json = Record<string, unknown>;
 
 const buyPagePath = join(dirname(fileURLToPath(import.meta.url)), "..", "buy", "index.html");
+const grantPagePath = join(dirname(fileURLToPath(import.meta.url)), "..", "grant", "index.html");
 const opsPagePath = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "apps", "ops", "index.html");
 const webControllerPagePath = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "apps", "web-controller", "index.html");
 const webControllerUiPath = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "apps", "web-controller", "session-ui.mjs");
@@ -28,6 +29,7 @@ const webControllerH264PainterPath = join(
   "h264-painter.mjs",
 );
 const webControllerInputPath = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "apps", "web-controller", "input.mjs");
+const webControllerGrantUiPath = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "apps", "web-controller", "grant-ui.mjs");
 
 export function createHttpServer(
   pool: Pool,
@@ -59,6 +61,16 @@ async function handle(
   try {
     if (method === "GET" && (url.pathname === "/buy" || url.pathname === "/buy/")) {
       const page = readFileSync(buyPagePath);
+      response.writeHead(200, {
+        "content-type": "text/html; charset=utf-8",
+        "cache-control": "no-store",
+        "content-length": String(page.length),
+      });
+      response.end(page);
+      return;
+    }
+    if (method === "GET" && (url.pathname === "/grant" || url.pathname === "/grant/")) {
+      const page = readFileSync(grantPagePath);
       response.writeHead(200, {
         "content-type": "text/html; charset=utf-8",
         "cache-control": "no-store",
@@ -158,6 +170,16 @@ async function handle(
     }
     if (method === "GET" && url.pathname === "/web/input.mjs") {
       const script = readFileSync(webControllerInputPath);
+      response.writeHead(200, {
+        "content-type": "text/javascript; charset=utf-8",
+        "cache-control": "no-store",
+        "content-length": String(script.length),
+      });
+      response.end(script);
+      return;
+    }
+    if (method === "GET" && url.pathname === "/web/grant-ui.mjs") {
+      const script = readFileSync(webControllerGrantUiPath);
       response.writeHead(200, {
         "content-type": "text/javascript; charset=utf-8",
         "cache-control": "no-store",

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>生成网页授权码</title>
+  <style>
+    body { margin: 0; font-family: "Segoe UI", "Microsoft YaHei", sans-serif; background: #f4f5f7; color: #1a1a1a; }
+    main { max-width: 480px; margin: 24px auto; padding: 0 16px; display: flex; flex-direction: column; gap: 12px; }
+    section { background: #fff; border: 1px solid #d8dbe0; border-radius: 8px; padding: 16px; }
+    h1 { font-size: 16px; margin: 0 0 8px; }
+    .muted { color: #5c6570; font-size: 13px; line-height: 1.6; }
+    label { display: block; margin-top: 8px; }
+    input { display: block; width: 100%; box-sizing: border-box; min-height: 44px; margin-top: 4px; }
+    button { min-height: 44px; padding: 0 12px; }
+    button.solid { background: #1f6feb; color: #fff; border: 0; border-radius: 6px; }
+    #codeBox { font-size: 22px; letter-spacing: 0.08em; word-break: break-all; }
+    #error { color: #b42318; }
+  </style>
+</head>
+<body>
+  <main>
+    <section>
+      <h1>生成网页授权码</h1>
+      <p class="muted">只给别人当网页控制端用。不登录网页本身；账记在你这边。授权码只用一次，约五分钟内有效。</p>
+      <p class="muted"><a href="/web/">打开网页控制端</a></p>
+    </section>
+    <section id="loginBox">
+      <form id="loginForm">
+        <label>手机号 <input id="phone" autocomplete="username" inputmode="numeric"></label>
+        <label>密码 <input id="password" type="password" autocomplete="current-password"></label>
+        <p><button type="submit">登录</button></p>
+      </form>
+    </section>
+    <section id="issueBox" hidden>
+      <form id="issueForm">
+        <label>再次输入密码 <input id="confirmPassword" type="password" autocomplete="current-password"></label>
+        <p><button type="button" id="sendSms">发送短信验证码</button></p>
+        <label>短信验证码 <input id="challengeCode" autocomplete="one-time-code" inputmode="numeric"></label>
+        <label><input id="confirmed" type="checkbox"> 我确认生成一次性网页授权码</label>
+        <p><button type="submit" class="solid">生成授权码</button></p>
+      </form>
+      <p class="muted" id="challengeHint"></p>
+    </section>
+    <section id="resultBox" hidden>
+      <p>授权码（只显示一次，请立即抄给对方）</p>
+      <p id="codeBox"></p>
+      <p class="muted" id="expiryLine"></p>
+      <p class="muted" id="maskedLine"></p>
+    </section>
+    <p id="error"></p>
+  </main>
+  <script type="module">
+    import { expiryHint, maskGrantCode } from "/web/grant-ui.mjs";
+
+    const sessionKey = "webGrantToken";
+    const errorLine = document.getElementById("error");
+    const loginBox = document.getElementById("loginBox");
+    const issueBox = document.getElementById("issueBox");
+    const resultBox = document.getElementById("resultBox");
+    const challengeHint = document.getElementById("challengeHint");
+    let challengeId = "";
+
+    function token() {
+      return sessionStorage.getItem(sessionKey) || "";
+    }
+
+    function showLoggedIn() {
+      loginBox.hidden = !!token();
+      issueBox.hidden = !token();
+    }
+
+    document.getElementById("loginForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      errorLine.textContent = "";
+      const response = await fetch("/v1/sessions", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          phone: document.getElementById("phone").value,
+          password: document.getElementById("password").value,
+        }),
+      });
+      const body = await response.json();
+      if (!response.ok || !body.token) {
+        errorLine.textContent = body.message || "登录失败";
+        return;
+      }
+      sessionStorage.setItem(sessionKey, body.token);
+      document.getElementById("password").value = "";
+      showLoggedIn();
+    });
+
+    document.getElementById("sendSms").addEventListener("click", async () => {
+      errorLine.textContent = "";
+      challengeHint.textContent = "";
+      const response = await fetch("/v1/challenges", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: "Bearer " + token(),
+        },
+        body: JSON.stringify({ purpose: "high_risk" }),
+      });
+      const body = await response.json();
+      if (!response.ok || !body.challengeId) {
+        errorLine.textContent = body.message || "验证码未发出";
+        return;
+      }
+      challengeId = body.challengeId;
+      challengeHint.textContent = body.devCode
+        ? "开发环境验证码：" + body.devCode
+        : "验证码已发到账号绑定的手机号";
+    });
+
+    document.getElementById("issueForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      errorLine.textContent = "";
+      resultBox.hidden = true;
+      const response = await fetch("/v1/web-grants", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: "Bearer " + token(),
+        },
+        body: JSON.stringify({
+          password: document.getElementById("confirmPassword").value,
+          challengeId,
+          challengeCode: document.getElementById("challengeCode").value,
+          confirmed: document.getElementById("confirmed").checked,
+        }),
+      });
+      const body = await response.json();
+      document.getElementById("confirmPassword").value = "";
+      document.getElementById("challengeCode").value = "";
+      if (!response.ok || !body.code) {
+        errorLine.textContent = body.message || "未能生成授权码";
+        return;
+      }
+      document.getElementById("codeBox").textContent = body.code;
+      document.getElementById("expiryLine").textContent = expiryHint(body.expiresAt);
+      document.getElementById("maskedLine").textContent = "备忘脱敏：" + maskGrantCode(body.code);
+      resultBox.hidden = false;
+      challengeId = "";
+      challengeHint.textContent = "";
+    });
+
+    showLoggedIn();
+  </script>
+</body>
+</html>
