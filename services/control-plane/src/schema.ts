@@ -152,6 +152,16 @@ ALTER TABLE remote_sessions ADD COLUMN IF NOT EXISTS input_revoked boolean NOT N
 ALTER TABLE remote_sessions DROP CONSTRAINT IF EXISTS remote_sessions_state_check;
 ALTER TABLE remote_sessions ADD CONSTRAINT remote_sessions_state_check
   CHECK (state IN ('awaiting_host_consent', 'active', 'relay_stopped', 'closed', 'rejected'));
+ALTER TABLE remote_sessions ADD COLUMN IF NOT EXISTS established_at timestamptz;
+ALTER TABLE remote_sessions ADD COLUMN IF NOT EXISTS punch_bucket text;
+ALTER TABLE remote_sessions ADD COLUMN IF NOT EXISTS hook_mark text;
+ALTER TABLE remote_sessions ADD COLUMN IF NOT EXISTS metadata_purged_at timestamptz;
+ALTER TABLE remote_sessions DROP CONSTRAINT IF EXISTS remote_sessions_punch_bucket_check;
+ALTER TABLE remote_sessions ADD CONSTRAINT remote_sessions_punch_bucket_check
+  CHECK (punch_bucket IS NULL OR punch_bucket IN ('home_home', 'one_hard_nat', 'both_hard_nat', 'udp_blocked'));
+ALTER TABLE remote_sessions DROP CONSTRAINT IF EXISTS remote_sessions_hook_mark_check;
+ALTER TABLE remote_sessions ADD CONSTRAINT remote_sessions_hook_mark_check
+  CHECK (hook_mark IS NULL OR hook_mark IN ('phone_host', 'pc_to_phone'));
 CREATE UNIQUE INDEX IF NOT EXISTS host_devices_device_code
   ON host_devices (device_code)
   WHERE device_code IS NOT NULL AND removed_at IS NULL;

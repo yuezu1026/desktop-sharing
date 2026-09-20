@@ -25,6 +25,7 @@ export type AppConfig = {
   yearlyPerMonthLabel: string;
   orderCallbackSecret: string | null;
   realNameCallbackSecret: string | null;
+  connectionStatsSecret: string | null;
 };
 
 const DEFAULT_DEVICE_QUOTA = 150;
@@ -70,6 +71,7 @@ export function loadConfig(env: NodeJS.ProcessEnv): AppConfig {
     yearlyPerMonthLabel: env.YEARLY_PER_MONTH_LABEL?.trim() || DEFAULT_YEARLY_PER_MONTH_LABEL,
     orderCallbackSecret: env.ORDER_CALLBACK_SECRET?.trim() || null,
     realNameCallbackSecret: env.REAL_NAME_CALLBACK_SECRET?.trim() || null,
+    connectionStatsSecret: env.CONNECTION_STATS_SECRET?.trim() || null,
   };
 }
 

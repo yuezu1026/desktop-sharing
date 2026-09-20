@@ -40,6 +40,20 @@ async function handle(
       response.end(page);
       return;
     }
+    if (method === "GET" && url.pathname === "/v1/connection-stats") {
+      const provided = request.headers["x-connection-stats-secret"];
+      const statsSecret = typeof provided === "string" ? provided : null;
+      if (!config.connectionStatsSecret) {
+        send(response, 503, { ok: false, code: "connection_stats_unconfigured", message: "连接统计尚未配置" });
+        return;
+      }
+      if (statsSecret !== config.connectionStatsSecret) {
+        send(response, 401, { ok: false, code: "connection_stats_invalid", message: "连接统计校验失败" });
+        return;
+      }
+      send(response, 200, await sessions.connectionStats());
+      return;
+    }
     if (method === "GET" && url.pathname === "/health") {
       await pool.query("SELECT 1");
       send(response, 200, { ok: true });
@@ -316,6 +330,7 @@ async function dispatch(
     return sessions.reportDirect(token, remoteAction[1], {
       event: text(body, "event") ?? "",
       punchResult: text(body, "punchResult"),
+      punchBucket: text(body, "punchBucket"),
       bitrateKbps: integer(body, "bitrateKbps"),
     });
   }

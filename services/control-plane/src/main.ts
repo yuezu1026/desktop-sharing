@@ -18,6 +18,7 @@ async function main(): Promise<void> {
   const timer = setInterval(() => {
     void service.runMaintenance();
     void orders.remindDueRenewals();
+    void sessions.purgeConnectionMetadata();
   }, MAINTENANCE_INTERVAL_MS);
   timer.unref();
 

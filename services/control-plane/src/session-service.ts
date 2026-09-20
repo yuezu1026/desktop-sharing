@@ -18,9 +18,21 @@ const REAL_NAME_USED_SHARE = 2;
 /** 同一控制端 7 天内不同被控设备达到此数才提示。数字来自已定规则。 */
 const REAL_NAME_DISTINCT_HOSTS = 3;
 const REAL_NAME_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+/** 周活跃只计建成后至少这么久的会话。已定口径，不从客户端传入。 */
+const ACTIVE_SESSION_MIN_SECONDS = 30;
+const PUNCH_BUCKETS = ["home_home", "one_hard_nat", "both_hard_nat", "udp_blocked"] as const;
 
 function fail(status: number, code: string, message: string, extra?: Record<string, unknown>): Failure {
   return { ok: false, status, code, message, extra };
+}
+
+function normalizePunchBucket(raw: string | null): string | null | Failure {
+  if (!raw || raw.trim() === "") return null;
+  const bucket = raw.trim();
+  if (bucket !== "home_home" && bucket !== "one_hard_nat" && bucket !== "both_hard_nat" && bucket !== "udp_blocked") {
+    return fail(400, "punch_bucket_invalid", "打洞分桶不正确");
+  }
+  return bucket;
 }
 
 /** 中继 ticket、额度账本和直连起止。直连不入账。通道数未拍板时不拦截。 */
@@ -78,8 +90,8 @@ export class SessionService {
       await client.query(
         `INSERT INTO remote_sessions
           (remote_session_id, account_id, host_device_id, host_account_id, controller_fingerprint,
-           host_fingerprint, state, cross_account, bitrate_kbps, created_at, controller_phone_mask)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+           host_fingerprint, state, cross_account, bitrate_kbps, created_at, controller_phone_mask, established_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
         [
           remoteSessionId,
           session.accountId,
@@ -92,6 +104,7 @@ export class SessionService {
           this.config.freeBitrateKbps,
           now,
           maskPhone(session.phone),
+          state === "active" ? now : null,
         ],
       );
       await this.audit(client, session.accountId, "remote_session.request", { remoteSessionId, crossAccount, needsHostConsent });
@@ -134,8 +147,8 @@ export class SessionService {
       if (row.state !== "awaiting_host_consent") return fail(409, "consent_not_pending", "这场会话不在等待确认");
       const now = this.now();
       await client.query(
-        "UPDATE remote_sessions SET state = 'active' WHERE remote_session_id = $1",
-        [remoteSessionId],
+        "UPDATE remote_sessions SET state = 'active', established_at = $2 WHERE remote_session_id = $1",
+        [remoteSessionId, now],
       );
       await this.audit(client, session.accountId, "remote_session.consent", { remoteSessionId });
       return this.openRelay(client, { ...session, accountId: row.account_id }, remoteSessionId, row.controller_fingerprint, now, true);
@@ -397,11 +410,13 @@ export class SessionService {
   async reportDirect(
     token: string | null,
     remoteSessionId: string,
-    input: { event: string; punchResult: string | null; bitrateKbps: number | null },
+    input: { event: string; punchResult: string | null; punchBucket: string | null; bitrateKbps: number | null },
   ): Promise<Record<string, unknown> | Failure> {
     if (!isUuid(remoteSessionId)) return fail(400, "session_invalid", "会话不正确");
     if (input.event !== "start" && input.event !== "stop") return fail(400, "direct_event_invalid", "直连事件只能是开始或结束");
     if (input.punchResult && input.punchResult.trim().length > 40) return fail(400, "punch_invalid", "打洞结果不正确");
+    const punchBucket = normalizePunchBucket(input.punchBucket);
+    if (punchBucket && typeof punchBucket !== "string") return punchBucket;
     if (input.bitrateKbps !== null && (input.bitrateKbps <= 0 || input.bitrateKbps > 100_000)) {
       return fail(400, "bitrate_invalid", "码率不正确");
     }
@@ -413,14 +428,89 @@ export class SessionService {
           SET direct_started_at = CASE WHEN $3 = 'start' THEN COALESCE(direct_started_at, $4) ELSE direct_started_at END,
               direct_stopped_at = CASE WHEN $3 = 'stop' THEN $4 ELSE direct_stopped_at END,
               punch_result = COALESCE($5, punch_result),
+              punch_bucket = COALESCE($7, punch_bucket),
               reported_bitrate_kbps = COALESCE($6, reported_bitrate_kbps)
         WHERE remote_session_id = $1
           AND (account_id = $2 OR host_account_id = $2)
           AND state IN ('active', 'relay_stopped')`,
-      [remoteSessionId, session.accountId, input.event, now, input.punchResult?.trim() ?? null, input.bitrateKbps],
+      [remoteSessionId, session.accountId, input.event, now, input.punchResult?.trim() ?? null, input.bitrateKbps, punchBucket],
     );
     if (!updated.rowCount) return fail(404, "session_missing", "会话不存在");
     return { ok: true, billed: false };
+  }
+
+  /** 周活跃与打洞分桶。手机被控、电脑控手机单独计，不进主口径。 */
+  async connectionStats(): Promise<Record<string, unknown>> {
+    const now = this.now();
+    const counted = await this.pool.query<{ hook_mark: string | null; total: number }>(
+      `SELECT hook_mark, COUNT(*)::int AS total
+         FROM remote_sessions
+        WHERE metadata_purged_at IS NULL
+          AND established_at IS NOT NULL
+          AND established_at >= $1::timestamptz - interval '7 days'
+          AND state IN ('active', 'relay_stopped', 'closed')
+          AND EXTRACT(EPOCH FROM (COALESCE(closed_at, $1::timestamptz) - established_at)) >= $2
+        GROUP BY hook_mark`,
+      [now, ACTIVE_SESSION_MIN_SECONDS],
+    );
+    let weeklyActiveSessions = 0;
+    let phoneHostSessions = 0;
+    let pcToPhoneSessions = 0;
+    for (const row of counted.rows) {
+      if (row.hook_mark === null) weeklyActiveSessions = row.total;
+      else if (row.hook_mark === "phone_host") phoneHostSessions = row.total;
+      else if (row.hook_mark === "pc_to_phone") pcToPhoneSessions = row.total;
+    }
+    const punches = await this.pool.query<{ punch_bucket: string; attempts: number; direct_count: number }>(
+      `SELECT punch_bucket,
+              COUNT(*)::int AS attempts,
+              COUNT(*) FILTER (WHERE direct_started_at IS NOT NULL)::int AS direct_count
+         FROM remote_sessions
+        WHERE metadata_purged_at IS NULL
+          AND punch_bucket IS NOT NULL
+        GROUP BY punch_bucket`,
+      [],
+    );
+    const byBucket = new Map(punches.rows.map((row) => [row.punch_bucket, row]));
+    return {
+      ok: true,
+      weeklyActiveSessions,
+      phoneHostSessions,
+      pcToPhoneSessions,
+      punchBuckets: PUNCH_BUCKETS.map((bucket) => {
+        const row = byBucket.get(bucket);
+        return {
+          bucket,
+          attempts: row?.attempts ?? 0,
+          direct: row?.direct_count ?? 0,
+        };
+      }),
+    };
+  }
+
+  /** 连接元数据保留 6 个日历月。账本行留下，画面和指纹清掉。 */
+  async purgeConnectionMetadata(): Promise<void> {
+    const now = this.now();
+    const expired = await this.pool.query<{ remote_session_id: string }>(
+      `UPDATE remote_sessions
+          SET controller_fingerprint = '',
+              host_fingerprint = '',
+              controller_phone_mask = NULL,
+              punch_result = NULL,
+              punch_bucket = NULL,
+              reported_bitrate_kbps = NULL,
+              direct_started_at = NULL,
+              direct_stopped_at = NULL,
+              metadata_purged_at = $1
+        WHERE metadata_purged_at IS NULL
+          AND closed_at IS NOT NULL
+          AND closed_at < $1::timestamptz - interval '6 months'
+        RETURNING remote_session_id`,
+      [now],
+    );
+    const sessionIds = expired.rows.map((row) => row.remote_session_id);
+    if (sessionIds.length === 0) return;
+    await this.pool.query("DELETE FROM relay_heartbeats WHERE remote_session_id = ANY($1::uuid[])", [sessionIds]);
   }
 
   async balance(token: string | null): Promise<Record<string, unknown> | Failure> {
