@@ -935,7 +935,7 @@ mod windows_controller {
         loop {
             if let Ok(link) = direct_receiver.try_recv() {
                 drop(session);
-                run_controller_direct(link, input_receiver);
+                run_controller_direct(link, input_receiver, origin.clone(), token.clone(), remote_session_id.clone());
                 return;
             }
             let mut send_failed = false;
@@ -976,6 +976,9 @@ mod windows_controller {
     fn run_controller_direct(
         mut link: direct_client::DirectLink,
         input_receiver: mpsc::Receiver<session_core::InputEvent>,
+        origin: String,
+        token: String,
+        remote_session_id: String,
     ) {
         if let Some(model) = lock_model().as_mut() {
             model.link_direct = true;
@@ -1009,6 +1012,12 @@ mod windows_controller {
                 Err(_) => break,
             }
         }
+        let _ = post_json(
+            &origin,
+            &format!("/v1/remote-sessions/{remote_session_id}/direct"),
+            &token,
+            r#"{"event":"stop"}"#,
+        );
         if let Ok(mut guard) = INPUT_TX.lock() {
             *guard = None;
         }

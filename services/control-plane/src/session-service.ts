@@ -197,10 +197,12 @@ export class SessionService {
       state: string;
       cross_account: boolean;
       bitrate_kbps: number;
+      input_revoked: boolean;
     }>(
-      `SELECT state, cross_account, bitrate_kbps
+      `SELECT state, cross_account, bitrate_kbps, input_revoked
          FROM remote_sessions
-        WHERE remote_session_id = $1 AND account_id = $2`,
+        WHERE remote_session_id = $1
+          AND (account_id = $2 OR host_account_id = $2)`,
       [remoteSessionId, session.accountId],
     );
     const row = found.rows[0];
@@ -212,6 +214,8 @@ export class SessionService {
       crossAccount: row.cross_account,
       bitrateKbps: row.bitrate_kbps,
       maxFps: this.config.freeMaxFps,
+      inputRevoked: row.input_revoked,
+      viewOnly: row.input_revoked ? "permission" : null,
     };
   }
 

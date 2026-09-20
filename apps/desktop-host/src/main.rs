@@ -54,6 +54,8 @@ mod windows_host {
     const ROTATE_PASSWORD: i32 = 102;
     const TOGGLE_ACCEPT: i32 = 103;
     const STOP_CONTROL: i32 = 104;
+    const REVOKE_INPUT: i32 = 105;
+    const RESTORE_INPUT: i32 = 106;
     const ALLOW_ONCE: i32 = 201;
     const REFUSE: i32 = 202;
     const TRAY_OPEN: i32 = 301;
@@ -79,6 +81,7 @@ mod windows_host {
         host_device_id: Option<String>,
         relay_ticket: Option<String>,
         remote_session_id: Option<String>,
+        input_allowed: bool,
     }
 
     // 窗口句柄只在界面线程使用。HWND 本身不是 Send，模型不会跨线程。
@@ -103,6 +106,7 @@ mod windows_host {
             host_device_id: None,
             relay_ticket: None,
             remote_session_id: None,
+            input_allowed: true,
         });
         unsafe { message_loop() }
     }
@@ -138,7 +142,7 @@ mod windows_host {
             CW_USEDEFAULT,
             CW_USEDEFAULT,
             760,
-            460,
+            520,
             None,
             None,
             Some(instance.into()),
@@ -171,6 +175,8 @@ mod windows_host {
                     ROTATE_PASSWORD => rotate_password(),
                     TOGGLE_ACCEPT => toggle_accept(),
                     STOP_CONTROL => stop_now(),
+                    REVOKE_INPUT => set_session_input(false),
+                    RESTORE_INPUT => set_session_input(true),
                     TRAY_OPEN => {
                         let _ = ShowWindow(window, SW_SHOW);
                         let _ = SetForegroundWindow(window);
@@ -252,6 +258,8 @@ mod windows_host {
         create_button(window, "换一个", 430, 168, 120, 32, ROTATE_PASSWORD, false);
         create_button(window, "允许被连接", 430, 230, 120, 32, TOGGLE_ACCEPT, false);
         create_button(window, "停止被控", 430, 300, 120, 32, STOP_CONTROL, false);
+        create_button(window, "仅查看（停键鼠）", 430, 340, 160, 32, REVOKE_INPUT, false);
+        create_button(window, "恢复键鼠", 430, 380, 120, 32, RESTORE_INPUT, false);
     }
 
     unsafe fn create_button(parent: HWND, label: &str, left: i32, top: i32, width: i32, height: i32, command_id: i32, primary: bool) {
@@ -284,19 +292,26 @@ mod windows_host {
                 model.temp_password.clone(),
                 model.accepting,
                 model.status_line.clone(),
+                model.input_allowed,
             )
         });
-        if let Some((code_text, password_text, accepting, status_line)) = snapshot {
+        if let Some((code_text, password_text, accepting, status_line, input_allowed)) = snapshot {
             let code = wide_chars(&format!("本机识别码    {code_text}"));
             let password = wide_chars(&format!("临时密码    {password_text}"));
             let accept = wide_chars(if accepting { "● 允许被连接" } else { "不允许被连接" });
             let status = wide_chars(&format!("当前状态    {status_line}"));
+            let input = wide_chars(if input_allowed {
+                "键鼠    对方可操作"
+            } else {
+                "键鼠    仅查看中（对方键鼠已停）"
+            });
             let safety = wide_chars("安全提示：只把识别码与密码告诉你信任的人。任何人以「客服/公检法需要看屏幕」为由索要，都是诈骗。");
             draw_code(device_context, &code, 24, 70, 390, 40);
             draw_line(device_context, &password, 24, 160, 390, 36);
             draw_line(device_context, &accept, 24, 230, 360, 28);
             draw_line(device_context, &status, 24, 300, 360, 28);
-            draw_line(device_context, &safety, 24, 360, 680, 64);
+            draw_line(device_context, &input, 24, 330, 390, 28);
+            draw_line(device_context, &safety, 24, 380, 680, 64);
         }
         let _ = EndPaint(window, &paint);
     }
@@ -390,11 +405,15 @@ mod windows_host {
         let accepting = lock_model().as_ref().map(|model| model.accepting).unwrap_or(false);
         let echo = wide_string(if accepting { "可被连接" } else { "不允许被连接" });
         let stop = wide_string("停止被控");
+        let revoke = wide_string("仅查看（停键鼠）");
+        let restore = wide_string("恢复键鼠");
         let copy = wide_string("复制本机识别码");
         let open = wide_string("打开主界面");
         let exit_label = wide_string("退出");
         let _ = AppendMenuW(menu, MF_GRAYED | MF_STRING, 0, PCWSTR(echo.as_ptr()));
         let _ = AppendMenuW(menu, MF_STRING, STOP_CONTROL as usize, PCWSTR(stop.as_ptr()));
+        let _ = AppendMenuW(menu, MF_STRING, REVOKE_INPUT as usize, PCWSTR(revoke.as_ptr()));
+        let _ = AppendMenuW(menu, MF_STRING, RESTORE_INPUT as usize, PCWSTR(restore.as_ptr()));
         let _ = AppendMenuW(menu, MF_STRING, COPY_CODE as usize, PCWSTR(copy.as_ptr()));
         let _ = AppendMenuW(menu, MF_STRING, TRAY_OPEN as usize, PCWSTR(open.as_ptr()));
         let _ = AppendMenuW(menu, MF_STRING, TRAY_EXIT as usize, PCWSTR(exit_label.as_ptr()));
@@ -461,17 +480,55 @@ mod windows_host {
             let Some(model) = guard.as_mut() else { return };
             model.accepting = false;
             model.incoming_id = None;
+            model.input_allowed = true;
             model.status_line = "不允许被连接".to_string();
             let confirm = model.confirm_window;
             model.confirm_window = HWND::default();
             (model.origin.clone(), model.token.clone(), model.host_device_id.clone(), confirm)
         };
         let (origin, token, device_id, confirm) = snapshot;
+        crate::inject::set_input_allowed(false);
         if let (Some(token), Some(device_id)) = (token, device_id) {
             let _ = post_json(&origin, &format!("/v1/host-devices/{device_id}/stop"), &token, "{}");
         }
         if !confirm.is_invalid() {
             unsafe { let _ = DestroyWindow(confirm); }
+        }
+    }
+
+    /// 权限式仅查看：画面不停，键鼠由被控端丢掉。服务端记 input_revoked，控制端轮询后不再发送。
+    fn set_session_input(allowed: bool) {
+        let snapshot = {
+            let mut guard = lock_model();
+            let Some(model) = guard.as_mut() else { return };
+            let Some(session_id) = model.remote_session_id.clone() else {
+                model.status_line = "当前没有会话".to_string();
+                return;
+            };
+            model.input_allowed = allowed;
+            if model.relay_ticket.is_some() {
+                model.status_line = if allowed {
+                    "已被连接".to_string()
+                } else {
+                    "仅查看中".to_string()
+                };
+            }
+            (model.origin.clone(), model.token.clone(), session_id)
+        };
+        crate::inject::set_input_allowed(allowed);
+        let (origin, token, session_id) = snapshot;
+        if let Some(token) = token {
+            let body = if allowed {
+                r#"{"allowed":true}"#
+            } else {
+                r#"{"allowed":false}"#
+            };
+            let _ = post_json(
+                &origin,
+                &format!("/v1/remote-sessions/{session_id}/input"),
+                &token,
+                body,
+            );
         }
     }
 
@@ -650,7 +707,15 @@ mod windows_host {
         'relay: loop {
             if let Ok(link) = direct_receiver.try_recv() {
                 drop(session);
-                run_host_direct(link, grabber, frame_width, frame_height);
+                run_host_direct(
+                    link,
+                    grabber,
+                    frame_width,
+                    frame_height,
+                    origin.clone(),
+                    token.clone(),
+                    remote_session_id.clone(),
+                );
                 return;
             }
             if let Some(frame) = grabber.grab_jpeg_frame() {
@@ -687,6 +752,9 @@ mod windows_host {
         mut grabber: crate::capture::ScreenGrabber,
         mut frame_width: i32,
         mut frame_height: i32,
+        origin: String,
+        token: String,
+        remote_session_id: String,
     ) {
         if let Some(model) = lock_model().as_mut() {
             model.status_line = "已升直连".to_string();
@@ -714,6 +782,7 @@ mod windows_host {
                     Ok(Some(_)) => {}
                     Ok(None) => break,
                     Err(_) => {
+                        report_direct_stop(&origin, &token, &remote_session_id);
                         crate::inject::set_input_allowed(false);
                         finish_host_relay();
                         return;
@@ -722,6 +791,7 @@ mod windows_host {
             }
             std::thread::sleep(std::time::Duration::from_millis(if saw_input { 5 } else { 30 }));
         }
+        report_direct_stop(&origin, &token, &remote_session_id);
         crate::inject::set_input_allowed(false);
         finish_host_relay();
     }
@@ -730,8 +800,22 @@ mod windows_host {
         if let Some(model) = lock_model().as_mut() {
             model.status_line = "会话已断开".to_string();
             model.relay_ticket = None;
+            model.input_allowed = true;
         }
         refresh();
+    }
+
+    fn report_direct_stop(origin: &str, token: &str, remote_session_id: &str) {
+        if origin.is_empty() || token.is_empty() || remote_session_id.is_empty() {
+            return;
+        }
+        let payload = r#"{"event":"stop"}"#;
+        let _ = post_json(
+            origin,
+            &format!("/v1/remote-sessions/{remote_session_id}/direct"),
+            token,
+            payload,
+        );
     }
 
     /// 后台打洞并握手。失败只记分桶，不弹窗，不停中继；成功则把直连句柄交回主循环。
