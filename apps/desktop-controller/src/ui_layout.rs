@@ -12,7 +12,11 @@ use crate::ui_theme::{COLOR_BRAND, COLOR_OK, COLOR_ON_SOLID, COLOR_SURFACE2, COL
 
 pub const TOOLBAR_HEIGHT: i32 = 48;
 pub const BADGE_HEIGHT: i32 = 28;
+pub const BADGE_TOP: i32 = 12;
+pub const LINK_BADGE_WIDTH: i32 = 80;
+pub const SUBSCRIPTION_BADGE_WIDTH: i32 = 128;
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct FrameRect {
     pub left: i32,
     pub top: i32,
@@ -82,6 +86,26 @@ pub fn restore_button() -> FrameRect {
     }
 }
 
+/// 连接方式角标：钉在客户区右上，与工具条显隐无关（MVP §4 / h1 note）。
+pub fn link_badge_rect(client_width: i32) -> FrameRect {
+    FrameRect {
+        left: (client_width - LINK_BADGE_WIDTH - 16).max(0),
+        top: BADGE_TOP,
+        width: LINK_BADGE_WIDTH,
+        height: BADGE_HEIGHT,
+    }
+}
+
+pub fn subscription_badge_rect(client_width: i32) -> FrameRect {
+    let link = link_badge_rect(client_width);
+    FrameRect {
+        left: (link.left - SUBSCRIPTION_BADGE_WIDTH - 12).max(0),
+        top: BADGE_TOP,
+        width: SUBSCRIPTION_BADGE_WIDTH,
+        height: BADGE_HEIGHT,
+    }
+}
+
 pub fn hit_frame(click_x: i32, click_y: i32, frame: &FrameRect) -> bool {
     click_x >= frame.left
         && click_x < frame.left + frame.width
@@ -130,12 +154,7 @@ pub unsafe fn draw_text(
 }
 
 pub unsafe fn paint_badge(device_context: HDC, client_width: i32, link_direct: bool) {
-    let badge = FrameRect {
-        left: client_width - 96,
-        top: 12,
-        width: 80,
-        height: BADGE_HEIGHT,
-    };
+    let badge = link_badge_rect(client_width);
     fill_frame(
         &badge,
         device_context,
@@ -155,12 +174,7 @@ pub unsafe fn paint_badge(device_context: HDC, client_width: i32, link_direct: b
 }
 
 pub unsafe fn paint_subscription_badge(device_context: HDC, client_width: i32, label_text: &str) {
-    let badge = FrameRect {
-        left: client_width - 236,
-        top: 12,
-        width: 128,
-        height: BADGE_HEIGHT,
-    };
+    let badge = subscription_badge_rect(client_width);
     fill_frame(&badge, device_context, COLOR_SURFACE2);
     let _ = SetTextColor(device_context, COLORREF(COLOR_TEXT));
     let label = wide_chars(label_text);
@@ -265,7 +279,10 @@ pub unsafe fn create_brand_icon(size: i32) -> windows::core::Result<HICON> {
 
 #[cfg(test)]
 mod tests {
-    use super::{hit_frame, letterbox, FrameRect};
+    use super::{
+        fullscreen_button, hit_frame, letterbox, link_badge_rect, subscription_badge_rect, FrameRect,
+        BADGE_TOP, TOOLBAR_HEIGHT,
+    };
 
     #[test]
     fn letterbox_宽屏容器左右留黑边() {
@@ -296,5 +313,22 @@ mod tests {
         assert!(hit_frame(10, 20, &frame));
         assert!(!hit_frame(40, 20, &frame));
         assert!(!hit_frame(10, 60, &frame));
+    }
+
+    #[test]
+    fn 藏工具条时链路角标仍在右上() {
+        // 角标几何不吃 TOOLBAR_HEIGHT，藏条后仍钉在客户区顶部。
+        let client_width = 1100;
+        let client_height = 680;
+        let badge = link_badge_rect(client_width);
+        assert_eq!(badge.top, BADGE_TOP);
+        assert_eq!(badge, link_badge_rect(client_width));
+        assert!(badge.left + badge.width <= client_width);
+        let bar_button = fullscreen_button(client_width, client_height);
+        assert!(badge.top + badge.height < client_height - TOOLBAR_HEIGHT);
+        assert!(badge.top + badge.height < bar_button.top);
+        let sub = subscription_badge_rect(client_width);
+        assert_eq!(sub.top, BADGE_TOP);
+        assert!(sub.left + sub.width <= badge.left);
     }
 }
