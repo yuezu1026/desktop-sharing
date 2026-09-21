@@ -45,10 +45,21 @@
       <button type="button" id="ban">封禁</button>
       <button type="button" id="unban">解封</button>
     </p>
+    <h2>例外加白</h2>
+    <p class="muted">用户侧自助加白是主路径；这里只做兜底。若本台最常点这个按钮，说明产品没做完。</p>
+    <label>被控设备 ID <input id="hostDeviceId"></label>
+    <label>控制端账号 ID <input id="controllerAccountId"></label>
+    <p>
+      <label>
+        <input id="fraudAck" type="checkbox">
+        已再次确认反诈说明
+      </label>
+    </p>
+    <p><button type="button" id="whitelist">例外加白</button></p>
     <p><button type="button" id="refund">退款跳到渠道后台</button></p>
   </section>
   <script type="module">
-    import { confirmTotpOutcome, loginOutcome } from "/ops/ops-ui.mjs";
+    import { confirmTotpOutcome, formatMeterForOps, loginOutcome, whitelistRequest } from "/ops/ops-ui.mjs";
 
     // 退款不在这页收款。计量只读账本，不另造一份汇总。
     const loginError = document.getElementById("loginError");
@@ -126,8 +137,10 @@
       const response = await callApi("/v1/ops/users?phone=" + encodeURIComponent(phone));
       accountId = response.body.accountId || "";
     });
-    document.getElementById("meter").addEventListener("click", () => {
-      if (accountId) callApi("/v1/ops/users/" + accountId + "/meter");
+    document.getElementById("meter").addEventListener("click", async () => {
+      if (!accountId) return;
+      const response = await callApi("/v1/ops/users/" + accountId + "/meter");
+      result.textContent = JSON.stringify(formatMeterForOps(response.body), null, 2);
     });
     document.getElementById("orders").addEventListener("click", async () => {
       if (!accountId) return;
@@ -158,6 +171,22 @@
       callApi("/v1/ops/users/" + accountId + "/ban", {
         method: "POST",
         body: JSON.stringify({ banned: false, reason: document.getElementById("reason").value }),
+      });
+    });
+    document.getElementById("whitelist").addEventListener("click", async () => {
+      const prepared = whitelistRequest({
+        hostDeviceId: document.getElementById("hostDeviceId").value,
+        controllerAccountId: document.getElementById("controllerAccountId").value,
+        reason: document.getElementById("reason").value,
+        fraudAcknowledged: document.getElementById("fraudAck").checked,
+      });
+      if (!prepared.ok) {
+        result.textContent = prepared.message;
+        return;
+      }
+      await callApi("/v1/ops/trusted-pairs", {
+        method: "POST",
+        body: JSON.stringify(prepared.body),
       });
     });
     document.getElementById("refund").addEventListener("click", async () => {
