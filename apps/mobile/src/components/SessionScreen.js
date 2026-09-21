@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { BackHandler, Platform, Pressable, SafeAreaView, ScrollView, Text, TextInput, View } from "react-native";
+import { BackHandler, Platform, Pressable, SafeAreaView, ScrollView, StatusBar, Text, TextInput, View } from "react-native";
 import {
   IMMERSIVE_HF,
   SESSION_HF,
@@ -99,6 +99,7 @@ export function SessionScreen(props) {
   if (chrome.immersive) {
     return (
       <View style={{ flex: 1, backgroundColor: "#000" }}>
+        <StatusBar hidden translucent backgroundColor="transparent" />
         <View style={{ flex: 1 }} {...panHandlers}>
           <SessionStage
             palette={palette}

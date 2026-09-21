@@ -7,7 +7,10 @@ import com.facebook.react.uimanager.ViewManager
 
 class SessionRelayPackage : ReactPackage {
   override fun createNativeModules(reactContext: ReactApplicationContext): List<NativeModule> {
-    return listOf(SessionRelayModule(reactContext))
+    return listOf(
+      SessionRelayModule(reactContext),
+      SystemChromeModule(reactContext),
+    )
   }
 
   override fun createViewManagers(reactContext: ReactApplicationContext): List<ViewManager<*, *>> {

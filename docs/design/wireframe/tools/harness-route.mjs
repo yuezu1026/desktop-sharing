@@ -97,8 +97,8 @@ export const ROUTES = [
   {
     id: "high",
     keys: ["high", "hifi", "高保真"],
-    read: [{ rel: "docs/design/high/README.md" }],
-    deny: ["docs/design/high/评审.md unless reviewing"],
+    read: [{ rel: "docs/design/high-fidelity/README.md" }],
+    deny: ["docs/design/high-fidelity/评审.md unless reviewing"],
   },
   {
     id: "code",

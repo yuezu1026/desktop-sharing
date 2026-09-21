@@ -21,7 +21,7 @@ assert.equal(resolveRelayAddress({ platformOS: "android" }), "10.0.2.2:443");
 assert.equal(resolveRelayAddress({ envAddress: "192.168.1.8:443" }), "192.168.1.8:443");
 assert.equal(
   resolveRelayAddress({ labAddress: LAB_RELAY_ADDRESS, platformOS: "android" }),
-  "127.0.0.1:443",
+  "127.0.0.1:8443",
 );
 
 console.log("mobile config ok");

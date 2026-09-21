@@ -49,9 +49,9 @@ const WHEN_TO_READ = {
     "v1 原始需求。⚠️ **多数结论已被 v2 取代**，只在追溯来源时读。",
   "docs/design/wireframe/README.md":
     "改线框稿前必读：**§6.1 术语表 / §6.2 画布台账 / §12 防漂移工具链**。🔴 **不要通读**（§11 历史轮次已外置归档，见 `docs/archive/`）。",
-  "docs/design/high/README.md":
+  "docs/design/high-fidelity/README.md":
     "看高保真视觉语言与关键屏时。不新增产品决策，数值仍以成本测算表 §0 为准。",
-  "docs/design/high/评审.md":
+  "docs/design/high-fidelity/评审.md":
     "改高保真或交给前端还原前读。结论是当前稿不能直接当还原规格。",
   "docs/plans/README.md":
     "排开发顺序时先读。MVP / S1–S4 只是已拍板 P0–P3 的开工顺序，不另起优先级。",

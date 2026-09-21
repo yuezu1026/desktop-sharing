@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+﻿import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Dimensions, PanResponder, Platform, requireNativeComponent, useColorScheme } from "react-native";
 import { resolveControlPlaneOrigin, resolveRelayAddress, LAB_CONTROL_PLANE_ORIGIN, LAB_RELAY_ADDRESS } from "./config.mjs";
 import {
@@ -21,6 +21,7 @@ import {
   sendSessionRelayFrame,
   subscribeSessionRelay,
 } from "./native/session-relay.mjs";
+import { setSystemBarsHidden } from "./native/system-chrome.mjs";
 import {
   applyBalance,
   applyNativeRelayEvent,
@@ -47,6 +48,7 @@ import {
   toggleFocusFollow,
   toggleMagnifier,
 } from "./session/handheld.mjs";
+import { sessionLayoutBox } from "./session/immersive-chrome.mjs";
 import { resolveColors } from "./theme.mjs";
 import { LoginScreen } from "./components/LoginScreen.js";
 import { DisclosureScreen } from "./components/DisclosureScreen.js";
@@ -204,13 +206,21 @@ export function App() {
   const sessionRef = useRef(session);
   sessionRef.current = session;
   const windowSize = Dimensions.get("window");
-  // 真机全宽铺画面；沉浸态尽量占满可视高度。
-  const pictureHeight = session.immersive
-    ? Math.max(320, Math.round(windowSize.height - 24))
-    : Math.round(windowSize.height * 0.48);
+  const screenSize = Dimensions.get("screen");
+  const layoutBox = sessionLayoutBox({
+    immersive: session.immersive,
+    windowWidth: windowSize.width,
+    windowHeight: windowSize.height,
+    screenWidth: screenSize.width,
+    screenHeight: screenSize.height,
+  });
+  useEffect(() => {
+    setSystemBarsHidden(layoutBox.hideSystemBars);
+    return () => setSystemBarsHidden(false);
+  }, [layoutBox.hideSystemBars]);
   const picture = layoutPicture({
-    containerWidth: Math.max(280, windowSize.width - 24),
-    containerHeight: pictureHeight,
+    containerWidth: layoutBox.containerWidth,
+    containerHeight: layoutBox.containerHeight,
     pictureWidth: session.pictureWidth,
     pictureHeight: session.pictureHeight,
     keyboardOpen: session.keyboardOpen,

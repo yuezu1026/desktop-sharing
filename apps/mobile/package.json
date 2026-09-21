@@ -9,6 +9,7 @@
     "test:theme": "node src/theme.test.mjs",
     "test:tokens": "node ../../docs/design/high-fidelity/tools/sync-tokens.mjs --check",
     "test:session": "node src/session/handheld-remote.test.mjs",
+    "test:immersive": "node src/session/immersive-chrome.test.mjs",
     "test:input": "node src/session/input.test.mjs"
   },
   "dependencies": {
