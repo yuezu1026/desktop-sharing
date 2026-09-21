@@ -300,6 +300,7 @@ export function layoutPicture(input) {
   if (!input.focusFollow || !input.keyboardOpen || !focus || focus.width <= 0 || focus.height <= 0) {
     return {
       viewHeight,
+      viewWidth: input.containerWidth,
       picture: base,
       pushed: keyboardHeight > 0,
     };
@@ -315,6 +316,7 @@ export function layoutPicture(input) {
   const focusWidth = Math.max(1, Math.floor(focus.width * (pictureWidth / input.pictureWidth)));
   return {
     viewHeight,
+    viewWidth: input.containerWidth,
     picture: {
       left: Math.floor((input.containerWidth - focusWidth) / 2) - focusLeft,
       top: -focusTop,
@@ -332,7 +334,7 @@ export function magnifierSample(pictureWidth, pictureHeight, pointerX, pointerY)
   const maxTop = Math.max(0, pictureHeight - sampleSide);
   const sampleLeft = Math.min(maxLeft, Math.max(0, pointerX - Math.floor(sampleSide / 2)));
   const sampleTop = Math.min(maxTop, Math.max(0, pointerY - Math.floor(sampleSide / 2)));
-  return { sampleLeft, sampleTop, sampleSide };
+  return { sampleLeft, sampleTop, sampleSide, pictureWidth, pictureHeight };
 }
 
 export function mapTouch(pointerMode, touch, frame, pictureWidth, pictureHeight) {

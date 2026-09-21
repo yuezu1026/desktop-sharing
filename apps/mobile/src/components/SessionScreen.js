@@ -107,6 +107,7 @@ export function SessionScreen(props) {
             picture={picture}
             panHandlers={{}}
             RemoteFrameView={RemoteFrameView}
+            loupe={loupe}
             fill
           />
           {/* 下缘热区：上滑唤出条 */}
@@ -259,9 +260,8 @@ export function SessionScreen(props) {
           picture={picture}
           panHandlers={panHandlers}
           RemoteFrameView={RemoteFrameView}
+          loupe={loupe}
         />
-
-        {loupe ? <Text style={{ color: palette.text2 }}>{"放大镜取样 " + loupe.sampleSide}</Text> : null}
 
         {banner ? (
           <View
