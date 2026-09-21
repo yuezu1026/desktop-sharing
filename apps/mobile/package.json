@@ -15,6 +15,7 @@
     "test:host": "node src/host/host-session.test.mjs",
     "test:host-identity": "node src/host/host-identity.test.mjs",
     "test:host-consent": "node src/host/host-consent.test.mjs",
+    "test:host-publish": "node src/host/host-publish.test.mjs",
     "test:input": "node src/session/input.test.mjs"
   },
   "dependencies": {

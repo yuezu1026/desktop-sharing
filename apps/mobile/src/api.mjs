@@ -98,3 +98,56 @@ export async function loadBalance(origin, token) {
   const body = await readJson(response);
   return { ok: response.ok, body };
 }
+
+/**
+ * @param {string} origin
+ * @param {string} token
+ * @param {{ displayName: string, platform: string, hardwareFingerprint: string }} payload
+ */
+export async function registerHostDevice(origin, token, payload) {
+  const response = await fetch(origin + "/v1/host-devices", {
+    method: "POST",
+    headers: headers(token),
+    body: JSON.stringify(payload),
+  });
+  const body = await readJson(response);
+  return { ok: response.ok, body };
+}
+
+/**
+ * @param {string} origin
+ * @param {string} token
+ * @param {string} hostDeviceId
+ * @param {{ deviceCode: string, tempPasswordHash: string }} payload
+ */
+export async function publishHostCredentials(origin, token, hostDeviceId, payload) {
+  const response = await fetch(
+    origin + "/v1/host-devices/" + encodeURIComponent(hostDeviceId) + "/credentials",
+    {
+      method: "POST",
+      headers: headers(token),
+      body: JSON.stringify(payload),
+    },
+  );
+  const body = await readJson(response);
+  return { ok: response.ok, body };
+}
+
+/**
+ * @param {string} origin
+ * @param {string} token
+ * @param {string} hostDeviceId
+ * @param {boolean} accepting
+ */
+export async function setHostAccepting(origin, token, hostDeviceId, accepting) {
+  const response = await fetch(
+    origin + "/v1/host-devices/" + encodeURIComponent(hostDeviceId) + "/accepting",
+    {
+      method: "POST",
+      headers: headers(token),
+      body: JSON.stringify({ accepting: accepting === true }),
+    },
+  );
+  const body = await readJson(response);
+  return { ok: response.ok, body };
+}

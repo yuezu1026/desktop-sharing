@@ -9,9 +9,12 @@ import {
   loadBalance,
   loadDisclosure,
   login,
+  publishHostCredentials,
   registerAccount,
+  registerHostDevice,
   requestChallenge,
   requestRemoteSession,
+  setHostAccepting,
 } from "./api.mjs";
 import { AUTH_MODES, LOGIN_HF } from "./auth/login-hf.mjs";
 import { filterDeviceRows } from "./devices/devices-hf.mjs";
@@ -69,7 +72,11 @@ import {
   setAcceptConnections,
   setCopyFeedback,
   setHostConsent,
+  setHostDeviceCode,
+  setHostDeviceId,
 } from "./host/host-session.mjs";
+import { generateDeviceCode } from "./host/host-identity.mjs";
+import { hashTempPassword, nextCredentialPublish } from "./host/host-publish.mjs";
 import {
   INPUT_KEY_DOWN,
   INPUT_KEY_UP,
@@ -140,6 +147,54 @@ export function App() {
     setHostSession((current) => ensureHostIdentity(current));
     return undefined;
   }, [shellTab]);
+
+  useEffect(() => {
+    if (shellTab !== "host" || !token || !origin) return undefined;
+    let cancelled = false;
+    (async () => {
+      let current = ensureHostIdentity(hostSession);
+      if (cancelled) return;
+      if (!current.hostDeviceId) {
+        const created = await registerHostDevice(origin, token, {
+          displayName: "本机",
+          platform: Platform.OS === "android" ? "android" : "ios",
+          hardwareFingerprint: fingerprint,
+        });
+        if (cancelled || !created.ok || !created.body?.hostDeviceId) return;
+        current = setHostDeviceId(current, created.body.hostDeviceId);
+        setHostSession(current);
+      }
+      let deviceCode = current.deviceCode;
+      const passwordHash = await hashTempPassword(current.tempPassword);
+      for (let attempt = 0; attempt < 4; attempt += 1) {
+        if (cancelled) return;
+        const published = await publishHostCredentials(origin, token, current.hostDeviceId, {
+          deviceCode,
+          tempPasswordHash: passwordHash,
+        });
+        const taken = published.body?.code === "device_code_taken";
+        const next = nextCredentialPublish({
+          taken,
+          deviceCode,
+          regenerate: () => generateDeviceCode(),
+        });
+        if (!next.retry) {
+          if (published.ok) {
+            current = setHostDeviceCode(current, deviceCode);
+            setHostSession(current);
+            await setHostAccepting(origin, token, current.hostDeviceId, current.acceptConnections);
+          }
+          return;
+        }
+        deviceCode = next.deviceCode;
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // 仅在进入本机页 / 登录态变化时上报；密码轮换另走按钮路径。
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shellTab, token, origin, fingerprint]);
 
   useEffect(() => {
     return subscribeSessionRelay((event) => {
@@ -591,9 +646,13 @@ export function App() {
         <HostScreen
           palette={palette}
           chrome={hostChrome(hostSession)}
-          onToggleAccept={() =>
-            setHostSession(setAcceptConnections(hostSession, !hostSession.acceptConnections))
-          }
+          onToggleAccept={() => {
+            const next = setAcceptConnections(hostSession, !hostSession.acceptConnections);
+            setHostSession(next);
+            if (token && origin && next.hostDeviceId) {
+              setHostAccepting(origin, token, next.hostDeviceId, next.acceptConnections);
+            }
+          }}
           onCopyCode={() => {
             copyHostText(hostSession.deviceCode);
             setHostSession(setCopyFeedback(hostSession, true));
@@ -601,7 +660,18 @@ export function App() {
               setHostSession((current) => setCopyFeedback(current, false));
             }, 1500);
           }}
-          onRotatePassword={() => setHostSession(rotateTempPassword(hostSession))}
+          onRotatePassword={() => {
+            const rotated = rotateTempPassword(hostSession);
+            setHostSession(rotated);
+            if (token && origin && rotated.hostDeviceId && rotated.deviceCode && rotated.tempPassword) {
+              hashTempPassword(rotated.tempPassword).then((tempPasswordHash) => {
+                publishHostCredentials(origin, token, rotated.hostDeviceId, {
+                  deviceCode: rotated.deviceCode,
+                  tempPasswordHash,
+                });
+              });
+            }
+          }}
           onOpenDevices={() => setShellTab("devices")}
         />
       );

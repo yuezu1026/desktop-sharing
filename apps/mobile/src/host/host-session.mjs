@@ -26,6 +26,7 @@ export function createHostSession() {
     peerLabel: "",
     copyFeedback: false,
     consent: null,
+    hostDeviceId: "",
     selfCheck: {
       screenCapture: "need",
       accessibility: "need",
@@ -79,6 +80,22 @@ export function setCopyFeedback(session, copyFeedback) {
  */
 export function setHostConsent(session, consent) {
   return { ...session, consent: consent || null };
+}
+
+/**
+ * @param {ReturnType<typeof createHostSession>} session
+ * @param {string} hostDeviceId
+ */
+export function setHostDeviceId(session, hostDeviceId) {
+  return { ...session, hostDeviceId: String(hostDeviceId || "") };
+}
+
+/**
+ * @param {ReturnType<typeof createHostSession>} session
+ * @param {string} deviceCode
+ */
+export function setHostDeviceCode(session, deviceCode) {
+  return { ...session, deviceCode: String(deviceCode || "") };
 }
 
 /**
