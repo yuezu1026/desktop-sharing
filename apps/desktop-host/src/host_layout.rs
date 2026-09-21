@@ -156,23 +156,31 @@ pub const CONFIRM_CARD: Rect = Rect {
     bottom: 430,
 };
 pub const CONFIRM_TITLE: Rect = Rect::from_xywh(40, 36, 540, 32);
-pub const CONFIRM_AVATAR: Rect = Rect::from_xywh(40, 84, 44, 44);
-pub const CONFIRM_WHO: Rect = Rect::from_xywh(100, 84, 340, 24);
-pub const CONFIRM_DEVICE_NOTE: Rect = Rect::from_xywh(100, 112, 340, 24);
-pub const CONFIRM_PILL: Rect = Rect::from_xywh(450, 92, 120, 28);
-pub const CONFIRM_CAN_LABEL: Rect = Rect::from_xywh(40, 156, 540, 22);
-pub const CONFIRM_CAN_FIRST: Rect = Rect::from_xywh(40, 186, 540, 22);
+/// h2 `.who`：浅底圆角身份行。
+pub const CONFIRM_WHO_PANEL: Rect = Rect {
+    left: 40,
+    top: 76,
+    right: 580,
+    bottom: 148,
+};
+pub const CONFIRM_AVATAR: Rect = Rect::from_xywh(52, 90, 40, 40);
+pub const CONFIRM_WHO: Rect = Rect::from_xywh(108, 90, 300, 22);
+pub const CONFIRM_DEVICE_NOTE: Rect = Rect::from_xywh(108, 116, 300, 22);
+pub const CONFIRM_PILL: Rect = Rect::from_xywh(430, 98, 120, 28);
+pub const CONFIRM_CAN_LABEL: Rect = Rect::from_xywh(40, 164, 540, 22);
+pub const CONFIRM_CAN_FIRST: Rect = Rect::from_xywh(40, 194, 540, 22);
 pub const CONFIRM_CAN_LINE_STEP: i32 = 24;
 pub const CONFIRM_FRAUD_PANEL: Rect = Rect {
     left: 40,
-    top: 270,
+    top: 280,
     right: 580,
     bottom: 420,
 };
-pub const CONFIRM_FRAUD_TITLE: Rect = Rect::from_xywh(56, 284, 500, 24);
-pub const CONFIRM_FRAUD_FIRST: Rect = Rect::from_xywh(56, 318, 500, 28);
+pub const CONFIRM_FRAUD_TITLE: Rect = Rect::from_xywh(56, 294, 500, 24);
+pub const CONFIRM_FRAUD_FIRST: Rect = Rect::from_xywh(56, 328, 500, 28);
 pub const CONFIRM_FRAUD_LINE_STEP: i32 = 30;
 
+/// h2：允许在左、拒绝在右，同尺寸；拒绝为实心主按钮。
 pub const CONFIRM_ALLOW: NativeButton = NativeButton {
     rect: Rect::from_xywh(40, 460, 160, DESKTOP_MIN_PX),
 };
@@ -234,6 +242,15 @@ mod tests {
         let sample_y = CONFIRM_ALLOW.rect.top + 10;
         assert!(CONFIRM_ALLOW.rect.contains(sample_x, sample_y));
         assert!(!CONFIRM_REFUSE.rect.contains(sample_x, sample_y));
+    }
+
+    #[test]
+    fn 确认页两钮等大且拒绝在右() {
+        assert_eq!(CONFIRM_ALLOW.rect.width(), CONFIRM_REFUSE.rect.width());
+        assert_eq!(CONFIRM_ALLOW.rect.height(), CONFIRM_REFUSE.rect.height());
+        assert!(CONFIRM_REFUSE.rect.left > CONFIRM_ALLOW.rect.right);
+        assert!(CONFIRM_WHO_PANEL.contains(CONFIRM_AVATAR.left + 2, CONFIRM_AVATAR.top + 2));
+        assert!(CONFIRM_WHO_PANEL.contains(CONFIRM_WHO.left + 2, CONFIRM_WHO.top + 2));
     }
 
     #[test]

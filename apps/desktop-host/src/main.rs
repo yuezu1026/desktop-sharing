@@ -104,8 +104,6 @@ mod windows_host {
     const TRAY_EXIT: i32 = 302;
     const TRAY_MESSAGE: u32 = 0x8001;
     const POLL_TIMER: usize = 1;
-    const KEY_RETURN: u16 = 0x0d;
-    const KEY_ESCAPE: u16 = 0x1b;
     const CLIPBOARD_UNICODE: u32 = 13;
     const PASSWORD_ALPHABET: &[u8] = b"abcdefghjkmnpqrstuvwxyz23456789";
 
@@ -301,8 +299,8 @@ mod windows_host {
                 LRESULT(0)
             }
             WM_KEYDOWN => {
-                let key = wparam.0 as u16;
-                if key == KEY_RETURN || key == KEY_ESCAPE {
+                if host_hf::confirm_key_action(wparam.0 as u16) == Some(host_hf::ConfirmKeyAction::Refuse)
+                {
                     refuse();
                 }
                 LRESULT(0)

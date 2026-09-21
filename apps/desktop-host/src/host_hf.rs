@@ -38,6 +38,22 @@ pub const CONFIRM_REFUSE: &str = "拒绝";
 pub const PILL_FIRST: &str = "首次连接";
 pub const PILL_AGAIN: &str = "再次连接";
 
+/// 确认页键盘：回车/Esc 一律拒绝，不得当成同意。
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ConfirmKeyAction {
+    Refuse,
+}
+
+pub fn confirm_key_action(virtual_key: u16) -> Option<ConfirmKeyAction> {
+    const VIRTUAL_KEY_RETURN: u16 = 0x0d;
+    const VIRTUAL_KEY_ESCAPE: u16 = 0x1b;
+    if virtual_key == VIRTUAL_KEY_RETURN || virtual_key == VIRTUAL_KEY_ESCAPE {
+        Some(ConfirmKeyAction::Refuse)
+    } else {
+        None
+    }
+}
+
 pub const BTN_COPY: &str = "复制";
 pub const BTN_ROTATE: &str = "换一个";
 pub const BTN_STOP: &str = "停止被控";
@@ -202,6 +218,14 @@ mod tests {
         assert_eq!(confirm_can_lines().len(), 3);
         assert_eq!(confirm_fraud_lines().len(), 3);
         assert!(find_forbidden_billing(&confirm_fraud_lines().join("")).is_empty());
+    }
+
+    #[test]
+    fn 确认页回车与Esc一律拒绝() {
+        assert_eq!(confirm_key_action(0x0d), Some(ConfirmKeyAction::Refuse));
+        assert_eq!(confirm_key_action(0x1b), Some(ConfirmKeyAction::Refuse));
+        assert_eq!(confirm_key_action(0x20), None);
+        assert_eq!(confirm_key_action(0x41), None);
     }
 
     #[test]

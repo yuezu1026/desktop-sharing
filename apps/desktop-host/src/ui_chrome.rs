@@ -18,7 +18,7 @@ use crate::host_layout::{self, Rect as LayoutRect};
 use crate::ui_d2d;
 use crate::ui_round::{fill_round_rect_aa, stroke_round_rect_aa};
 use crate::ui_theme::{
-    COLOR_BRAND, COLOR_LINE, COLOR_LINE2, COLOR_OK, COLOR_OK_SOFT, COLOR_ON_SOLID, COLOR_SURFACE,
+    COLOR_BG, COLOR_BRAND, COLOR_LINE, COLOR_LINE2, COLOR_OK, COLOR_OK_SOFT, COLOR_ON_SOLID, COLOR_SURFACE,
     COLOR_SURFACE2, COLOR_SURFACE3, COLOR_SWITCH_OFF, COLOR_TEXT, COLOR_TEXT2, COLOR_TEXT3,
 };
 
@@ -157,7 +157,8 @@ unsafe fn paint_confirm_shell_gdi(device_context: HDC, view: &HostConfirmView) {
     fill_panel(device_context, host_layout::CONFIRM_CARD, COLOR_SURFACE, COLOR_LINE);
     SetBkMode(device_context, TRANSPARENT);
 
-    draw_in(device_context, host_hf::CONFIRM_TITLE, host_layout::CONFIRM_TITLE, DrawStyle::Bold);
+    draw_in(device_context, host_hf::CONFIRM_TITLE, host_layout::CONFIRM_TITLE, DrawStyle::Title);
+    fill_round_rect_aa(device_context, host_layout::CONFIRM_WHO_PANEL, COLOR_BG, 12);
 
     let avatar = to_gdi(host_layout::CONFIRM_AVATAR);
     let avatar_brush = CreateSolidBrush(COLORREF(COLOR_BRAND));
@@ -320,6 +321,7 @@ unsafe fn draw_switch_row(device_context: HDC, row: LayoutRect, label: &str, val
 }
 
 enum DrawStyle {
+    Title,
     Label,
     Body,
     Bold,
@@ -328,6 +330,7 @@ enum DrawStyle {
 
 unsafe fn draw_in(device_context: HDC, text: &str, rect: LayoutRect, style: DrawStyle) {
     let (color, size, weight, format) = match style {
+        DrawStyle::Title => (COLOR_TEXT, 20, 600, DT_LEFT | DT_SINGLELINE),
         DrawStyle::Label => (COLOR_TEXT3, 12, 400, DT_LEFT | DT_SINGLELINE),
         DrawStyle::Body => (COLOR_TEXT, 15, 400, DT_LEFT | DT_WORDBREAK),
         DrawStyle::Bold => (COLOR_TEXT, 15, 600, DT_LEFT | DT_WORDBREAK),

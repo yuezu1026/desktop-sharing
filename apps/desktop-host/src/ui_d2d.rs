@@ -28,7 +28,7 @@ use windows::core::{Result as WinResult, w};
 use crate::host_hf::{self, HostConfirmView, HostMainView};
 use crate::host_layout::{self, Rect as LayoutRect};
 use crate::ui_theme::{
-    COLOR_BRAND, COLOR_LINE, COLOR_LINE2, COLOR_OK, COLOR_OK_SOFT, COLOR_ON_SOLID, COLOR_SURFACE,
+    COLOR_BG, COLOR_BRAND, COLOR_LINE, COLOR_LINE2, COLOR_OK, COLOR_OK_SOFT, COLOR_ON_SOLID, COLOR_SURFACE,
     COLOR_SURFACE2, COLOR_SURFACE3, COLOR_SWITCH_OFF, COLOR_TEXT, COLOR_TEXT2, COLOR_TEXT3,
 };
 
@@ -209,6 +209,7 @@ impl DcFrame {
             return Ok(());
         }
         let (colorref, face, size, weight, wrap) = match style {
+            TextStyle::Title => (COLOR_TEXT, Face::YaHei, 20.0, DWRITE_FONT_WEIGHT_SEMI_BOLD, false),
             TextStyle::Label => (COLOR_TEXT3, Face::YaHei, 12.0, DWRITE_FONT_WEIGHT_NORMAL, false),
             TextStyle::Body => (COLOR_TEXT, Face::YaHei, 15.0, DWRITE_FONT_WEIGHT_NORMAL, true),
             TextStyle::Bold => (COLOR_TEXT, Face::YaHei, 15.0, DWRITE_FONT_WEIGHT_SEMI_BOLD, true),
@@ -291,6 +292,7 @@ pub enum TextAlign {
 
 #[derive(Clone, Copy)]
 pub enum TextStyle {
+    Title,
     Label,
     Body,
     Bold,
@@ -563,9 +565,12 @@ pub unsafe fn paint_confirm_shell(device_context: HDC, view: &HostConfirmView) -
     frame.draw_text(
         host_hf::CONFIRM_TITLE,
         host_layout::CONFIRM_TITLE,
-        TextStyle::Bold,
+        TextStyle::Title,
         TextAlign::Left,
     )?;
+
+    // h2 `.who` 浅底身份块。
+    frame.fill_round_rect(host_layout::CONFIRM_WHO_PANEL, COLOR_BG, 12.0)?;
 
     frame.fill_ellipse(host_layout::CONFIRM_AVATAR, COLOR_BRAND)?;
     let avatar_letter = view
