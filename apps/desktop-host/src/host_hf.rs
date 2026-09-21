@@ -55,10 +55,20 @@ pub fn confirm_key_action(virtual_key: u16) -> Option<ConfirmKeyAction> {
 }
 
 pub const BTN_COPY: &str = "复制";
+pub const BTN_COPIED: &str = "已复制";
 pub const BTN_ROTATE: &str = "换一个";
 pub const BTN_STOP: &str = "停止被控";
 pub const BTN_VIEW_ONLY: &str = "仅查看（停键鼠）";
 pub const BTN_RESTORE_INPUT: &str = "恢复键鼠";
+
+/// 复制成功后的按钮文案；无反馈时用户会以为没点上。
+pub fn copy_button_label(feedback_active: bool) -> &'static str {
+    if feedback_active {
+        BTN_COPIED
+    } else {
+        BTN_COPY
+    }
+}
 
 pub const TRAY_ACCEPTING: &str = "可被连接";
 pub const TRAY_NOT_ACCEPTING: &str = "不允许被连接";
@@ -128,6 +138,8 @@ pub struct HostMainView {
     pub status_hint: String,
     /// W2-01 空闲等待页不展示会话三钮；仅会话进行中才为 true。
     pub show_session_actions: bool,
+    /// 复制识别码后的短时反馈。
+    pub copy_feedback: bool,
 }
 
 /// 确认页绘制快照。
@@ -149,6 +161,7 @@ pub fn build_main_view(
     accepting: bool,
     status_line: &str,
     input_allowed: bool,
+    copy_feedback: bool,
 ) -> HostMainView {
     let idle = status_line.contains("未被连接");
     let status_pill = if idle {
@@ -174,6 +187,7 @@ pub fn build_main_view(
         status_pill,
         status_hint,
         show_session_actions: session_actions_visible(status_line),
+        copy_feedback,
     }
 }
 
@@ -237,11 +251,21 @@ mod tests {
 
     #[test]
     fn 主界面快照空闲态() {
-        let view = build_main_view("123 456 789", "abcd1234", true, "未被连接", true);
+        let view = build_main_view("123 456 789", "abcd1234", true, "未被连接", true, false);
         assert_eq!(view.status_pill, STATUS_IDLE_PILL);
         assert_eq!(view.status_hint, STATUS_IDLE_HINT);
         assert!(!view.show_session_actions);
+        assert!(!view.copy_feedback);
         assert!(find_forbidden_billing(&view.status_hint).is_empty());
+    }
+
+    #[test]
+    fn 复制成功后按钮文案变为已复制() {
+        assert_eq!(copy_button_label(false), BTN_COPY);
+        assert_eq!(copy_button_label(true), BTN_COPIED);
+        let view = build_main_view("1", "p", true, "未被连接", true, true);
+        assert!(view.copy_feedback);
+        assert_eq!(copy_button_label(view.copy_feedback), "已复制");
     }
 
     #[test]
@@ -251,7 +275,7 @@ mod tests {
         assert!(!session_actions_visible("有人请求控制"));
         assert!(session_actions_visible("已被连接"));
         assert!(session_actions_visible("仅查看中"));
-        let connected = build_main_view("1", "p", true, "已被连接", true);
+        let connected = build_main_view("1", "p", true, "已被连接", true, false);
         assert!(connected.show_session_actions);
     }
 

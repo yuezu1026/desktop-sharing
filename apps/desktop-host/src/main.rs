@@ -82,7 +82,7 @@ mod windows_host {
     };
     use windows::Win32::UI::WindowsAndMessaging::{
         AppendMenuW, CreatePopupMenu, CreateWindowExW, DefWindowProcW, DestroyWindow, DispatchMessageW, GetCursorPos,
-        GetMessageW, LoadIconW, PostQuitMessage, RegisterClassW, SetForegroundWindow, SetTimer,
+        GetMessageW, KillTimer, LoadIconW, PostQuitMessage, RegisterClassW, SetForegroundWindow, SetTimer,
         ShowWindow, TrackPopupMenu, TranslateMessage, CW_USEDEFAULT, HICON, IDI_APPLICATION, MF_GRAYED, MF_STRING,
         MSG, SW_SHOW, TPM_RIGHTALIGN, WINDOW_EX_STYLE, WM_CLOSE, WM_COMMAND, WM_CREATE, WM_DESTROY, WM_KEYDOWN,
         WM_LBUTTONDOWN, WM_PAINT, WM_RBUTTONUP, WM_TIMER, WNDCLASSW, WS_CAPTION, WS_EX_TOPMOST, WS_MINIMIZEBOX,
@@ -104,6 +104,7 @@ mod windows_host {
     const TRAY_EXIT: i32 = 302;
     const TRAY_MESSAGE: u32 = 0x8001;
     const POLL_TIMER: usize = 1;
+    const COPY_FEEDBACK_TIMER: usize = 2;
     const CLIPBOARD_UNICODE: u32 = 13;
     const PASSWORD_ALPHABET: &[u8] = b"abcdefghjkmnpqrstuvwxyz23456789";
 
@@ -125,6 +126,7 @@ mod windows_host {
         encode_bitrate_kbps: Option<u32>,
         remote_session_id: Option<String>,
         input_allowed: bool,
+        copy_feedback: bool,
     }
 
     // 窗口句柄只在界面线程使用。HWND 本身不是 Send，模型不会跨线程。
@@ -153,6 +155,7 @@ mod windows_host {
             encode_bitrate_kbps: None,
             remote_session_id: None,
             input_allowed: true,
+            copy_feedback: false,
         });
         unsafe { message_loop() }
     }
@@ -264,9 +267,13 @@ mod windows_host {
                 LRESULT(0)
             }
             WM_TIMER => {
-                poll_incoming();
-                poll_host_attach();
-                refresh();
+                if wparam.0 == COPY_FEEDBACK_TIMER {
+                    clear_copy_feedback(window);
+                } else {
+                    poll_incoming();
+                    poll_host_attach();
+                    refresh();
+                }
                 LRESULT(0)
             }
             WM_PAINT => {
@@ -337,6 +344,7 @@ mod windows_host {
                 model.accepting,
                 &model.status_line,
                 model.input_allowed,
+                model.copy_feedback,
             )
         });
         if let Some(view) = view.as_ref() {
@@ -431,8 +439,31 @@ mod windows_host {
     }
 
     fn copy_code() {
-        let code = lock_model().as_ref().map(|model| display_code(&model.device_code)).unwrap_or_default();
+        let (code, window) = lock_model()
+            .as_ref()
+            .map(|model| (display_code(&model.device_code), model.main_window))
+            .unwrap_or_default();
         unsafe { set_clipboard(&code) };
+        if let Some(model) = lock_model().as_mut() {
+            model.copy_feedback = true;
+        }
+        if !window.is_invalid() {
+            unsafe {
+                let _ = KillTimer(Some(window), COPY_FEEDBACK_TIMER);
+                let _ = SetTimer(Some(window), COPY_FEEDBACK_TIMER, 1600, None);
+            }
+        }
+        refresh();
+    }
+
+    fn clear_copy_feedback(window: HWND) {
+        if let Some(model) = lock_model().as_mut() {
+            model.copy_feedback = false;
+        }
+        unsafe {
+            let _ = KillTimer(Some(window), COPY_FEEDBACK_TIMER);
+        }
+        refresh();
     }
 
     fn rotate_password() {

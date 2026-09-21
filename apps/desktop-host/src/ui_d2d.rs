@@ -424,10 +424,22 @@ fn paint_switch_row(frame: &DcFrame, row: LayoutRect, label: &str, value: &str, 
     Ok(())
 }
 
-fn paint_main_actions(frame: &DcFrame, show_session_actions: bool) -> WinResult<()> {
-    paint_outline_button(frame, host_layout::BTN_COPY.rect, host_hf::BTN_COPY)?;
+fn paint_main_actions(frame: &DcFrame, view: &HostMainView) -> WinResult<()> {
+    let copy_label = host_hf::copy_button_label(view.copy_feedback);
+    if view.copy_feedback {
+        frame.fill_round_rect(host_layout::BTN_COPY.rect, COLOR_OK_SOFT, BUTTON_RADIUS)?;
+        frame.stroke_round_rect(host_layout::BTN_COPY.rect, COLOR_OK, BUTTON_RADIUS, 1.0)?;
+        frame.draw_text(
+            copy_label,
+            host_layout::BTN_COPY.rect,
+            TextStyle::Pill { color: COLOR_OK },
+            TextAlign::Center,
+        )?;
+    } else {
+        paint_outline_button(frame, host_layout::BTN_COPY.rect, copy_label)?;
+    }
     paint_outline_button(frame, host_layout::BTN_ROTATE.rect, host_hf::BTN_ROTATE)?;
-    if !show_session_actions {
+    if !view.show_session_actions {
         return Ok(());
     }
     paint_outline_button(frame, host_layout::BTN_STOP.rect, host_hf::BTN_STOP)?;
@@ -548,7 +560,7 @@ pub unsafe fn paint_main_shell(device_context: HDC, view: &HostMainView) -> WinR
         TextAlign::Left,
     )?;
 
-    paint_main_actions(&frame, view.show_session_actions)?;
+    paint_main_actions(&frame, view)?;
     frame.end()
 }
 

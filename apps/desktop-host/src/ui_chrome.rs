@@ -122,13 +122,28 @@ unsafe fn paint_main_shell_gdi(device_context: HDC, view: &HostMainView) {
     draw_in(device_context, host_hf::FRAUD_TITLE, host_layout::FRAUD_TITLE, DrawStyle::Bold);
     draw_in(device_context, host_hf::FRAUD_BODY, host_layout::FRAUD_BODY, DrawStyle::Muted);
 
-    paint_main_actions(device_context, view.show_session_actions);
+    paint_main_actions(device_context, view);
 }
 
-unsafe fn paint_main_actions(device_context: HDC, show_session_actions: bool) {
-    paint_outline_button(device_context, host_layout::BTN_COPY.rect, host_hf::BTN_COPY);
+unsafe fn paint_main_actions(device_context: HDC, view: &HostMainView) {
+    let copy_label = host_hf::copy_button_label(view.copy_feedback);
+    if view.copy_feedback {
+        fill_round_rect_aa(device_context, host_layout::BTN_COPY.rect, COLOR_OK_SOFT, BUTTON_RADIUS);
+        stroke_round_rect_aa(device_context, host_layout::BTN_COPY.rect, COLOR_OK, BUTTON_RADIUS, 1.0);
+        let _ = SetTextColor(device_context, COLORREF(COLOR_OK));
+        with_font(device_context, "Microsoft YaHei UI", 13, 600, || {
+            draw_text(
+                device_context,
+                copy_label,
+                host_layout::BTN_COPY.rect,
+                DT_CENTER | DT_VCENTER | DT_SINGLELINE,
+            );
+        });
+    } else {
+        paint_outline_button(device_context, host_layout::BTN_COPY.rect, copy_label);
+    }
     paint_outline_button(device_context, host_layout::BTN_ROTATE.rect, host_hf::BTN_ROTATE);
-    if !show_session_actions {
+    if !view.show_session_actions {
         return;
     }
     paint_outline_button(device_context, host_layout::BTN_STOP.rect, host_hf::BTN_STOP);
