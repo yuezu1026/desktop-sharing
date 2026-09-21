@@ -26,6 +26,9 @@ mod ui_theme;
 mod ui_layout;
 
 #[cfg(windows)]
+mod session_hf;
+
+#[cfg(windows)]
 mod h264_decode;
 
 #[cfg(windows)]
@@ -56,8 +59,10 @@ mod windows_controller {
     };
     use crate::ui_layout::{
         create_brand_icon, draw_text, fill, fill_frame, fullscreen_button, hit_frame, letterbox, paint_badge,
-        paint_subscription_badge, restore_button, ways_button, FrameRect, TOOLBAR_HEIGHT,
+        paint_fact_bar, paint_subscription_badge, picture_band, restore_button, ways_button, FrameRect,
+        TOOLBAR_HEIGHT,
     };
+    use crate::session_hf;
 
     const PICTURE_WIDTH: i32 = 16;
     const PICTURE_HEIGHT: i32 = 9;
@@ -369,12 +374,10 @@ mod windows_controller {
         }
         let client_width = client.right - client.left;
         let client_height = client.bottom - client.top;
-        let picture_bottom = if toolbar_visible {
-            client_height - TOOLBAR_HEIGHT
-        } else {
-            client_height
-        };
-        let picture = letterbox(client_width, picture_bottom.max(0), picture_width, picture_height);
+        let (picture_top, picture_bottom) = picture_band(client_height, toolbar_visible);
+        let band_height = (picture_bottom - picture_top).max(0);
+        let mut picture = letterbox(client_width, band_height, picture_width, picture_height);
+        picture.top += picture_top;
         if picture.width <= 0 || picture.height <= 0 {
             return None;
         }
@@ -501,9 +504,11 @@ mod windows_controller {
                         )
                     })
                     .unwrap_or((true, false, String::new(), None, PICTURE_WIDTH, PICTURE_HEIGHT));
-            let picture_bottom = if toolbar_visible { client_height - TOOLBAR_HEIGHT } else { client_height };
             fill(&client, device_context, COLOR_BLACK);
-            let picture = letterbox(client_width, picture_bottom.max(0), picture_width, picture_height);
+            let (picture_top, picture_bottom) = picture_band(client_height, toolbar_visible);
+            let band_height = (picture_bottom - picture_top).max(0);
+            let mut picture = letterbox(client_width, band_height, picture_width, picture_height);
+            picture.top += picture_top;
             if let Some(pixels) = picture_bgr.as_ref() {
                 paint_picture(device_context, &picture, picture_width, picture_height, pixels);
             } else {
@@ -512,6 +517,9 @@ mod windows_controller {
                 let _ = SetTextColor(device_context, COLORREF(COLOR_ON_SOLID));
                 let waiting = wide_chars("等待画面");
                 draw_text(device_context, &waiting, picture.left, picture.top, picture.width, picture.height, true);
+            }
+            if toolbar_visible {
+                paint_fact_bar(device_context, client_width, link_direct);
             }
             paint_badge(device_context, client_width, link_direct);
             if !subscription_badge.is_empty() {
@@ -530,7 +538,7 @@ mod windows_controller {
                 let action = wide_chars(if fullscreen { "退出全屏" } else { "全屏" });
                 let button = fullscreen_button(client_width, client_height);
                 draw_text(device_context, &action, button.left, button.top, button.width, button.height, true);
-                let hint = wide_chars(if link_direct { "不消耗免费中继时长" } else { "在消耗免费中继时长" });
+                let hint = wide_chars(session_hf::fact_detail(link_direct));
                 draw_text(device_context, &hint, 140, picture_bottom, client_width - 160, TOOLBAR_HEIGHT, true);
             }
             paint_meter(device_context, client_width);

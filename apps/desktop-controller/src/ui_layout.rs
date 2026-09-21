@@ -8,9 +8,12 @@ use windows::Win32::Graphics::Gdi::{
 };
 use windows::Win32::UI::WindowsAndMessaging::{CreateIconIndirect, HICON, ICONINFO};
 
-use crate::ui_theme::{COLOR_BRAND, COLOR_OK, COLOR_ON_SOLID, COLOR_SURFACE2, COLOR_TEXT, COLOR_WARN};
+use crate::ui_theme::{
+    COLOR_BRAND, COLOR_OK, COLOR_ON_SOLID, COLOR_SURFACE, COLOR_SURFACE2, COLOR_TEXT, COLOR_TEXT2, COLOR_WARN,
+};
 
 pub const TOOLBAR_HEIGHT: i32 = 48;
+pub const FACT_HEIGHT: i32 = 40;
 pub const BADGE_HEIGHT: i32 = 28;
 pub const BADGE_TOP: i32 = 12;
 pub const LINK_BADGE_WIDTH: i32 = 80;
@@ -106,6 +109,25 @@ pub fn subscription_badge_rect(client_width: i32) -> FrameRect {
     }
 }
 
+/// 顶部事实行：仅 chrome（工具条）可见时绘制；藏条后只留角标。
+pub fn fact_bar_rect(client_width: i32) -> FrameRect {
+    FrameRect {
+        left: 0,
+        top: 0,
+        width: client_width.max(0),
+        height: FACT_HEIGHT,
+    }
+}
+
+/// 画面带：chrome 可见时上下让出事实行与工具条。
+pub fn picture_band(client_height: i32, chrome_visible: bool) -> (i32, i32) {
+    if chrome_visible {
+        (FACT_HEIGHT, (client_height - TOOLBAR_HEIGHT).max(FACT_HEIGHT))
+    } else {
+        (0, client_height.max(0))
+    }
+}
+
 pub fn hit_frame(click_x: i32, click_y: i32, frame: &FrameRect) -> bool {
     click_x >= frame.left
         && click_x < frame.left + frame.width
@@ -171,6 +193,19 @@ pub unsafe fn paint_badge(device_context: HDC, client_width: i32, link_direct: b
         badge.height,
         true,
     );
+}
+
+/// 顶部事实行（h1 `.fact`）：chrome 可见时绘制。
+pub unsafe fn paint_fact_bar(device_context: HDC, client_width: i32, link_direct: bool) {
+    let bar = fact_bar_rect(client_width);
+    fill_frame(&bar, device_context, COLOR_SURFACE);
+    let title = wide_chars(crate::session_hf::fact_title(link_direct));
+    let detail = wide_chars(crate::session_hf::fact_detail(link_direct));
+    let title_color = if link_direct { COLOR_OK } else { COLOR_WARN };
+    let _ = SetTextColor(device_context, COLORREF(title_color));
+    draw_text(device_context, &title, 16, bar.top + 6, 200, 28, false);
+    let _ = SetTextColor(device_context, COLORREF(COLOR_TEXT2));
+    draw_text(device_context, &detail, 220, bar.top + 6, 360, 28, false);
 }
 
 pub unsafe fn paint_subscription_badge(device_context: HDC, client_width: i32, label_text: &str) {
@@ -280,8 +315,8 @@ pub unsafe fn create_brand_icon(size: i32) -> windows::core::Result<HICON> {
 #[cfg(test)]
 mod tests {
     use super::{
-        fullscreen_button, hit_frame, letterbox, link_badge_rect, subscription_badge_rect, FrameRect,
-        BADGE_TOP, TOOLBAR_HEIGHT,
+        fact_bar_rect, fullscreen_button, hit_frame, letterbox, link_badge_rect, picture_band,
+        subscription_badge_rect, FrameRect, BADGE_TOP, FACT_HEIGHT, TOOLBAR_HEIGHT,
     };
 
     #[test]
@@ -330,5 +365,21 @@ mod tests {
         let sub = subscription_badge_rect(client_width);
         assert_eq!(sub.top, BADGE_TOP);
         assert!(sub.left + sub.width <= badge.left);
+    }
+
+    #[test]
+    fn 事实行仅chrome可见时占顶带() {
+        let client_width = 1100;
+        let client_height = 680;
+        let fact = fact_bar_rect(client_width);
+        assert_eq!(fact.top, 0);
+        assert_eq!(fact.height, FACT_HEIGHT);
+        assert_eq!(fact.width, client_width);
+        let (top_shown, bottom_shown) = picture_band(client_height, true);
+        assert_eq!(top_shown, FACT_HEIGHT);
+        assert_eq!(bottom_shown, client_height - TOOLBAR_HEIGHT);
+        let (top_hidden, bottom_hidden) = picture_band(client_height, false);
+        assert_eq!(top_hidden, 0);
+        assert_eq!(bottom_hidden, client_height);
     }
 }
