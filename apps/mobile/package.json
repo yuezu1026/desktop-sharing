@@ -12,6 +12,7 @@
     "test:immersive": "node src/session/immersive-chrome.test.mjs",
     "test:loupe": "node src/session/loupe-overlay.test.mjs",
     "test:trackpad": "node src/session/trackpad-gesture.test.mjs",
+    "test:host": "node src/host/host-session.test.mjs",
     "test:input": "node src/session/input.test.mjs"
   },
   "dependencies": {
