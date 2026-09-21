@@ -64,11 +64,17 @@ import {
   clampPicturePoint,
   encodeKey,
   encodePointer,
+  encodeWheel,
   moveCursorByDelta,
   packInputFrame,
   virtualKeyFromChar,
   virtualKeyFromKeyName,
 } from "./session/input.mjs";
+import {
+  POINTER_BUTTON_LEFT,
+  POINTER_BUTTON_RIGHT,
+  classifyTrackpadStroke,
+} from "./session/trackpad-gesture.mjs";
 
 const RemoteFrameView = Platform.OS === "android" ? requireNativeComponent("RemoteFrameView") : null;
 
@@ -228,18 +234,28 @@ export function App() {
     focusFollow: session.focusFollow,
     focusRect: null,
   });
+  const panGestureRef = useRef({
+    lastDx: 0,
+    lastDy: 0,
+    maxTouches: 1,
+    startedAt: 0,
+  });
   const panResponder = useMemo(
     () =>
       PanResponder.create({
         onStartShouldSetPanResponder: () => true,
         onMoveShouldSetPanResponder: () => true,
-        onPanResponderGrant: (event) => {
+        onPanResponderGrant: (event, gesture) => {
+          panGestureRef.current = {
+            lastDx: 0,
+            lastDy: 0,
+            maxTouches: Math.max(1, gesture.numberActiveTouches || 1),
+            startedAt: Date.now(),
+          };
           const current = sessionRef.current;
           if (!current.relayAttached || current.viewOnly) return;
+          if (current.pointerMode === "trackpad") return;
           const touch = event.nativeEvent;
-          if (current.pointerMode === "trackpad") {
-            return;
-          }
           const mapped = mapTouch(
             current.pointerMode,
             { x: touch.locationX, y: touch.locationY, deltaX: 0, deltaY: 0 },
@@ -249,25 +265,54 @@ export function App() {
           );
           if (mapped.kind !== "absolute") return;
           const point = clampPicturePoint(mapped.pictureX, mapped.pictureY, current.pictureWidth, current.pictureHeight);
-          sendSessionRelayFrame(bytesToBase64(packInputFrame(encodePointer(INPUT_POINTER_DOWN, point.x, point.y, 1))));
+          sendSessionRelayFrame(
+            bytesToBase64(
+              packInputFrame(encodePointer(INPUT_POINTER_DOWN, point.x, point.y, POINTER_BUTTON_LEFT)),
+            ),
+          );
           setSession((prev) => ({ ...prev, cursorX: point.x, cursorY: point.y }));
         },
         onPanResponderMove: (event, gesture) => {
           const current = sessionRef.current;
           if (!current.relayAttached || current.viewOnly) return;
+          const touchCount = Math.max(1, gesture.numberActiveTouches || 1);
+          const stroke = panGestureRef.current;
+          stroke.maxTouches = Math.max(stroke.maxTouches, touchCount);
+          const stepDx = gesture.dx - stroke.lastDx;
+          const stepDy = gesture.dy - stroke.lastDy;
+          stroke.lastDx = gesture.dx;
+          stroke.lastDy = gesture.dy;
+
           if (current.pointerMode === "trackpad") {
-            const moved = moveCursorByDelta(
-              current.cursorX || 0,
-              current.cursorY || 0,
-              gesture.dx,
-              gesture.dy,
-              current.pictureWidth,
-              current.pictureHeight,
-            );
-            sendSessionRelayFrame(bytesToBase64(packInputFrame(encodePointer(INPUT_POINTER_MOVE, moved.x, moved.y, 0))));
-            setSession((prev) => ({ ...prev, cursorX: moved.x, cursorY: moved.y }));
+            const action = classifyTrackpadStroke({
+              touchCount: stroke.maxTouches,
+              stepDx,
+              stepDy,
+              totalDx: gesture.dx,
+              totalDy: gesture.dy,
+              durationMs: Date.now() - stroke.startedAt,
+              phase: "move",
+            });
+            if (action.kind === "move") {
+              const moved = moveCursorByDelta(current, action.deltaX, action.deltaY);
+              sendSessionRelayFrame(
+                bytesToBase64(
+                  packInputFrame(encodePointer(INPUT_POINTER_MOVE, moved.cursorX, moved.cursorY, 0)),
+                ),
+              );
+              setSession((prev) => ({ ...prev, cursorX: moved.cursorX, cursorY: moved.cursorY }));
+            } else if (action.kind === "wheel") {
+              const point = clampPicturePoint(
+                current.cursorX || 0,
+                current.cursorY || 0,
+                current.pictureWidth,
+                current.pictureHeight,
+              );
+              sendSessionRelayFrame(bytesToBase64(packInputFrame(encodeWheel(point.x, point.y, action.delta))));
+            }
             return;
           }
+
           const touch = event.nativeEvent;
           const mapped = mapTouch(
             current.pointerMode,
@@ -278,21 +323,56 @@ export function App() {
           );
           if (mapped.kind !== "absolute") return;
           const point = clampPicturePoint(mapped.pictureX, mapped.pictureY, current.pictureWidth, current.pictureHeight);
-          sendSessionRelayFrame(bytesToBase64(packInputFrame(encodePointer(INPUT_POINTER_MOVE, point.x, point.y, 1))));
+          sendSessionRelayFrame(
+            bytesToBase64(
+              packInputFrame(encodePointer(INPUT_POINTER_MOVE, point.x, point.y, POINTER_BUTTON_LEFT)),
+            ),
+          );
           setSession((prev) => ({ ...prev, cursorX: point.x, cursorY: point.y }));
         },
-        onPanResponderRelease: (event) => {
+        onPanResponderRelease: (event, gesture) => {
           const current = sessionRef.current;
           if (!current.relayAttached || current.viewOnly) return;
+          const stroke = panGestureRef.current;
           if (current.pointerMode === "trackpad") {
+            const action = classifyTrackpadStroke({
+              touchCount: stroke.maxTouches,
+              stepDx: 0,
+              stepDy: 0,
+              totalDx: gesture.dx,
+              totalDy: gesture.dy,
+              durationMs: Date.now() - stroke.startedAt,
+              phase: "end",
+            });
             const point = clampPicturePoint(
               current.cursorX || 0,
               current.cursorY || 0,
               current.pictureWidth,
               current.pictureHeight,
             );
-            sendSessionRelayFrame(bytesToBase64(packInputFrame(encodePointer(INPUT_POINTER_DOWN, point.x, point.y, 1))));
-            sendSessionRelayFrame(bytesToBase64(packInputFrame(encodePointer(INPUT_POINTER_UP, point.x, point.y, 0))));
+            if (action.kind === "leftClick") {
+              sendSessionRelayFrame(
+                bytesToBase64(
+                  packInputFrame(encodePointer(INPUT_POINTER_DOWN, point.x, point.y, POINTER_BUTTON_LEFT)),
+                ),
+              );
+              sendSessionRelayFrame(
+                bytesToBase64(
+                  packInputFrame(encodePointer(INPUT_POINTER_UP, point.x, point.y, POINTER_BUTTON_LEFT)),
+                ),
+              );
+            } else if (action.kind === "rightClick") {
+              sendSessionRelayFrame(
+                bytesToBase64(
+                  packInputFrame(encodePointer(INPUT_POINTER_DOWN, point.x, point.y, POINTER_BUTTON_RIGHT)),
+                ),
+              );
+              sendSessionRelayFrame(
+                bytesToBase64(
+                  packInputFrame(encodePointer(INPUT_POINTER_UP, point.x, point.y, POINTER_BUTTON_RIGHT)),
+                ),
+              );
+            }
             return;
           }
           const touch = event.nativeEvent;
@@ -305,7 +385,11 @@ export function App() {
           );
           if (mapped.kind !== "absolute") return;
           const point = clampPicturePoint(mapped.pictureX, mapped.pictureY, current.pictureWidth, current.pictureHeight);
-          sendSessionRelayFrame(bytesToBase64(packInputFrame(encodePointer(INPUT_POINTER_UP, point.x, point.y, 0))));
+          sendSessionRelayFrame(
+            bytesToBase64(
+              packInputFrame(encodePointer(INPUT_POINTER_UP, point.x, point.y, POINTER_BUTTON_LEFT)),
+            ),
+          );
         },
       }),
     [picture],
