@@ -53,8 +53,14 @@ import { resolveColors } from "./theme.mjs";
 import { LoginScreen } from "./components/LoginScreen.js";
 import { DisclosureScreen } from "./components/DisclosureScreen.js";
 import { DevicesScreen } from "./components/DevicesScreen.js";
+import { HostConsentScreen } from "./components/HostConsentScreen.js";
 import { HostScreen, copyHostText } from "./components/HostScreen.js";
 import { SessionScreen } from "./components/SessionScreen.js";
+import {
+  allowHostConsent,
+  hostConsentChrome,
+  refuseHostConsent,
+} from "./host/host-consent.mjs";
 import {
   createHostSession,
   ensureHostIdentity,
@@ -62,6 +68,7 @@ import {
   rotateTempPassword,
   setAcceptConnections,
   setCopyFeedback,
+  setHostConsent,
 } from "./host/host-session.mjs";
 import {
   INPUT_KEY_DOWN,
@@ -557,6 +564,29 @@ export function App() {
 
   if (session.screen === "devices") {
     if (shellTab === "host") {
+      if (hostSession.consent && !hostSession.consent.decision) {
+        const consentChrome = hostConsentChrome(hostSession.consent);
+        return (
+          <HostConsentScreen
+            palette={palette}
+            chrome={consentChrome}
+            onAllow={() => {
+              allowHostConsent(hostSession.consent);
+              const label = hostSession.consent.displayName || hostSession.consent.accountMask;
+              setHostSession({ ...setHostConsent(hostSession, null), peerLabel: label });
+            }}
+            onAllowViewOnly={() => {
+              allowHostConsent(hostSession.consent, "viewOnly");
+              const label = hostSession.consent.displayName || hostSession.consent.accountMask;
+              setHostSession({ ...setHostConsent(hostSession, null), peerLabel: label });
+            }}
+            onRefuse={() => {
+              refuseHostConsent(hostSession.consent);
+              setHostSession(setHostConsent(hostSession, null));
+            }}
+          />
+        );
+      }
       return (
         <HostScreen
           palette={palette}

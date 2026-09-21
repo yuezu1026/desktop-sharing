@@ -25,6 +25,7 @@ export function createHostSession() {
     tempPassword: "",
     peerLabel: "",
     copyFeedback: false,
+    consent: null,
     selfCheck: {
       screenCapture: "need",
       accessibility: "need",
@@ -70,6 +71,14 @@ export function rotateTempPassword(session, nextPassword) {
  */
 export function setCopyFeedback(session, copyFeedback) {
   return { ...session, copyFeedback: copyFeedback === true };
+}
+
+/**
+ * @param {ReturnType<typeof createHostSession>} session
+ * @param {object | null} consent
+ */
+export function setHostConsent(session, consent) {
+  return { ...session, consent: consent || null };
 }
 
 /**

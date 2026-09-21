@@ -14,6 +14,7 @@
     "test:trackpad": "node src/session/trackpad-gesture.test.mjs",
     "test:host": "node src/host/host-session.test.mjs",
     "test:host-identity": "node src/host/host-identity.test.mjs",
+    "test:host-consent": "node src/host/host-consent.test.mjs",
     "test:input": "node src/session/input.test.mjs"
   },
   "dependencies": {

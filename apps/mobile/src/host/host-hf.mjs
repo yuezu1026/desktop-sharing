@@ -28,6 +28,29 @@ export const HOST_HF = {
   notification: "通知权限",
 };
 
+/** 收到连接请求（W7-07）。拒绝必须是唯一实心主按钮。 */
+export const HOST_CONFIRM_HF = {
+  title: "有人请求控制这台手机",
+  subtitle: "识别码与临时密码已通过校验，接下来需要你亲自确认。",
+  whoLabel: "谁在连",
+  canLabel: "允许后对方可以",
+  canSee: "看到本机屏幕",
+  canInput: "操作本机（Android 11+ 需无障碍服务已授权）",
+  canFiles: "在你允许时传文件",
+  fraudTitle: "只允许你认识的人",
+  fraudLines: [
+    "你正在允许对方控制本设备。",
+    "对方能看到并操作你屏幕上的一切。",
+    "自称客服 / 公检法 / 银行要求打开屏幕的，都是诈骗。",
+  ],
+  allow: "允许本次",
+  allowViewOnly: "只允许本次观看（不能操作）",
+  refuse: "拒绝",
+  pillFirst: "首次连接",
+  pillAgain: "再次连接",
+  footnote: "手机每次都要确认，不能默认勾选总是允许。",
+};
+
 /**
  * @param {{
  *   screenCapture: "ok" | "need" | "unset",
