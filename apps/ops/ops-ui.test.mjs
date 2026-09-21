@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import {
+  approveCompensationRequest,
+  compensationOutcome,
   confirmTotpOutcome,
   formatMeterForOps,
   loginOutcome,
@@ -55,5 +57,14 @@ assert.deepEqual(
     },
   },
 );
+
+assert.equal(compensationOutcome({ ok: true, status: "opened" }, true).kind, "opened");
+assert.equal(compensationOutcome({ ok: true, status: "pending", approvalId: "a1" }, true).kind, "pending");
+assert.ok(compensationOutcome({ ok: true, status: "pending", approvalId: "a1" }, true).hint.includes("复核"));
+assert.equal(approveCompensationRequest({ approvalId: "   " }).ok, false);
+assert.deepEqual(approveCompensationRequest({ approvalId: "a1" }), {
+  ok: true,
+  approvalId: "a1",
+});
 
 console.log("ops-ui ok");

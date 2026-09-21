@@ -41,6 +41,8 @@
     <label>补偿原因 <input id="reason"></label>
     <label>补偿字节 <input id="bytes" inputmode="numeric"></label>
     <p><button type="button" id="compensate">调时长补偿</button></p>
+    <label>复核单号 <input id="approvalId"></label>
+    <p><button type="button" id="approveCompensation">批准补偿复核</button></p>
     <p>
       <button type="button" id="ban">封禁</button>
       <button type="button" id="unban">解封</button>
@@ -59,7 +61,14 @@
     <p><button type="button" id="refund">退款跳到渠道后台</button></p>
   </section>
   <script type="module">
-    import { confirmTotpOutcome, formatMeterForOps, loginOutcome, whitelistRequest } from "/ops/ops-ui.mjs";
+    import {
+      approveCompensationRequest,
+      compensationOutcome,
+      confirmTotpOutcome,
+      formatMeterForOps,
+      loginOutcome,
+      whitelistRequest,
+    } from "/ops/ops-ui.mjs";
 
     // 退款不在这页收款。计量只读账本，不另造一份汇总。
     const loginError = document.getElementById("loginError");
@@ -148,15 +157,33 @@
       const first = response.body.orders && response.body.orders[0];
       orderId = first ? first.orderId : "";
     });
-    document.getElementById("compensate").addEventListener("click", () => {
+    document.getElementById("compensate").addEventListener("click", async () => {
       if (!accountId) return;
-      callApi("/v1/ops/compensations", {
+      const response = await callApi("/v1/ops/compensations", {
         method: "POST",
         body: JSON.stringify({
           accountId,
           bytes: Number(document.getElementById("bytes").value),
           reason: document.getElementById("reason").value,
         }),
+      });
+      const outcome = compensationOutcome(response.body, response.ok);
+      if (outcome.approvalId) {
+        document.getElementById("approvalId").value = outcome.approvalId;
+      }
+      result.textContent = outcome.hint + "\n" + JSON.stringify(response.body, null, 2);
+    });
+    document.getElementById("approveCompensation").addEventListener("click", async () => {
+      const prepared = approveCompensationRequest({
+        approvalId: document.getElementById("approvalId").value,
+      });
+      if (!prepared.ok) {
+        result.textContent = prepared.message;
+        return;
+      }
+      await callApi("/v1/ops/compensations/" + prepared.approvalId + "/approve", {
+        method: "POST",
+        body: JSON.stringify({}),
       });
     });
     document.getElementById("ban").addEventListener("click", () => {

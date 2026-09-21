@@ -96,3 +96,33 @@ export function whitelistRequest(input) {
     },
   };
 }
+
+/**
+ * @param {{ ok?: boolean, status?: string, approvalId?: string, message?: string } | null} body
+ * @param {boolean} ok
+ */
+export function compensationOutcome(body, ok) {
+  if (!ok || !body?.ok) {
+    return { kind: "error", hint: body?.message || "补偿失败", approvalId: "" };
+  }
+  if (body.status === "pending" && body.approvalId) {
+    return {
+      kind: "pending",
+      approvalId: body.approvalId,
+      hint: "超过阈值，已进入复核。需另一名客服打开复核单批准后才到账。",
+    };
+  }
+  if (body.status === "opened") {
+    return { kind: "opened", hint: "补偿已入账", approvalId: "" };
+  }
+  return { kind: "error", hint: body.message || "补偿结果未知", approvalId: "" };
+}
+
+/**
+ * @param {{ approvalId?: string }} input
+ */
+export function approveCompensationRequest(input) {
+  const approvalId = typeof input.approvalId === "string" ? input.approvalId.trim() : "";
+  if (!approvalId) return { ok: false, message: "需要复核单号" };
+  return { ok: true, approvalId };
+}
