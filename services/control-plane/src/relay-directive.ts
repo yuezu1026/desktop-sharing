@@ -19,6 +19,20 @@ export type HeartbeatDecisionInput = {
   stopNotice: string | null;
 };
 
+/** 成本测算表 §0 P5 码率档位 → 界面档位文案（W1-05c 必须写到具体档）。 */
+const QUALITY_TIERS: ReadonlyArray<{ kbps: number; label: string }> = [
+  { kbps: 2_000, label: "720p/30" },
+  { kbps: 4_000, label: "1080p/30" },
+  { kbps: 8_000, label: "1080p/60" },
+  { kbps: 12_000, label: "2K/60" },
+  { kbps: 20_000, label: "4K/60" },
+];
+
+export function qualityLabel(kbps: number): string {
+  const hit = QUALITY_TIERS.find((tier) => tier.kbps === kbps);
+  return hit ? hit.label : formatRate(kbps);
+}
+
 export function decideRelayHeartbeat(input: HeartbeatDecisionInput): HeartbeatDecision {
   if (input.remainingBytes <= 0) {
     return {
@@ -42,7 +56,7 @@ export function decideRelayHeartbeat(input: HeartbeatDecisionInput): HeartbeatDe
   if (input.acceptDegrade && usedRatio >= 0.8 && input.bitrateKbps > degradeTarget) {
     return {
       directive: "degraded",
-      notice: `画质已降低到 ${formatRate(degradeTarget)}`,
+      notice: `画质已降低：${qualityLabel(input.bitrateKbps)} → ${qualityLabel(degradeTarget)}`,
       bitrateKbps: degradeTarget,
     };
   }

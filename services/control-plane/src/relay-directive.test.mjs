@@ -30,12 +30,13 @@ assert.equal(suggest.directive, "suggest_direct");
 const paidDegrade = atUsedRatio(0.85, 8000, true);
 assert.equal(paidDegrade.directive, "degraded");
 assert.equal(paidDegrade.bitrateKbps, 4000);
-assert.match(paidDegrade.notice, /画质已降低到 4 Mbps/);
+// W1-05c / MVP §5：必须写明降到哪一档，不能只报 Mbps。
+assert.equal(paidDegrade.notice, "画质已降低：1080p/60 → 1080p/30");
 
 const freeDegrade = atUsedRatio(0.85, 4000, true);
 assert.equal(freeDegrade.directive, "degraded");
 assert.equal(freeDegrade.bitrateKbps, 2000);
-assert.match(freeDegrade.notice, /画质已降低到 2 Mbps/);
+assert.equal(freeDegrade.notice, "画质已降低：1080p/30 → 720p/30");
 
 const refused = atUsedRatio(0.85, 8000, false);
 assert.equal(refused.directive, "warn");
