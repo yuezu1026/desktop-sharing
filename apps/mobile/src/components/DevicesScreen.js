@@ -24,6 +24,7 @@ const bottomBarPad = Platform.OS === "android" ? space["5"] : space["3"];
  *     connectable: boolean,
  *   }>,
  *   onConnect: (row: object) => void,
+ *   onOpenHost?: () => void,
  * }} props
  */
 export function DevicesScreen(props) {
@@ -161,6 +162,9 @@ export function DevicesScreen(props) {
           gap: space["4"],
         }}
       >
+        <Pressable onPress={props.onOpenHost} hitSlop={8}>
+          <Text style={{ color: palette.text3, fontSize: 13 }}>本机</Text>
+        </Pressable>
         <Text style={{ color: palette.text, fontSize: 13, fontWeight: "700" }}>{DEVICES_HF.tabDevices}</Text>
         <Text style={{ color: palette.text3, fontSize: 13 }}>{DEVICES_HF.tabRecent}</Text>
         <View style={{ flex: 1 }} />

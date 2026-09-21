@@ -53,7 +53,13 @@ import { resolveColors } from "./theme.mjs";
 import { LoginScreen } from "./components/LoginScreen.js";
 import { DisclosureScreen } from "./components/DisclosureScreen.js";
 import { DevicesScreen } from "./components/DevicesScreen.js";
+import { HostScreen } from "./components/HostScreen.js";
 import { SessionScreen } from "./components/SessionScreen.js";
+import {
+  createHostSession,
+  hostChrome,
+  setAcceptConnections,
+} from "./host/host-session.mjs";
 import {
   INPUT_KEY_DOWN,
   INPUT_KEY_UP,
@@ -94,6 +100,8 @@ export function App() {
   const colorScheme = useColorScheme();
   const palette = useMemo(() => resolveColors(colorScheme), [colorScheme]);
   const [session, setSession] = useState(createSession());
+  const [hostSession, setHostSession] = useState(createHostSession);
+  const [shellTab, setShellTab] = useState("devices");
   const [token, setToken] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
@@ -539,6 +547,18 @@ export function App() {
   }
 
   if (session.screen === "devices") {
+    if (shellTab === "host") {
+      return (
+        <HostScreen
+          palette={palette}
+          chrome={hostChrome(hostSession)}
+          onToggleAccept={() =>
+            setHostSession(setAcceptConnections(hostSession, !hostSession.acceptConnections))
+          }
+          onOpenDevices={() => setShellTab("devices")}
+        />
+      );
+    }
     const list = deviceRows(devices);
     return (
       <DevicesScreen
@@ -549,6 +569,7 @@ export function App() {
         onSearchChange={setDeviceSearch}
         rows={filterDeviceRows(list.rows, deviceSearch)}
         onConnect={onConnect}
+        onOpenHost={() => setShellTab("host")}
       />
     );
   }
