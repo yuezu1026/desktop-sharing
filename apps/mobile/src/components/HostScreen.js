@@ -1,5 +1,5 @@
 import React from "react";
-import { Platform, Pressable, SafeAreaView, ScrollView, Text, View } from "react-native";
+import { NativeModules, Platform, Pressable, SafeAreaView, ScrollView, Text, View } from "react-native";
 import { HOST_HF } from "../host/host-hf.mjs";
 import { hit, radius, space } from "../theme.mjs";
 import { HitButton } from "./HitButton.js";
@@ -7,16 +7,24 @@ import { HitButton } from "./HitButton.js";
 const bottomBarPad = Platform.OS === "android" ? space["5"] : space["3"];
 
 /**
+ * @param {string} text
+ */
+export function copyHostText(text) {
+  const value = String(text || "");
+  if (!value) return false;
+  const clip = NativeModules.Clipboard || NativeModules.RNCClipboard;
+  if (clip && typeof clip.setString === "function") {
+    clip.setString(value);
+    return true;
+  }
+  return false;
+}
+
+/**
  * 安卓被控端主界面，对齐 W7-02 / h6。
- * @param {{
- *   palette: Record<string, string>,
- *   chrome: ReturnType<import("../host/host-session.mjs").hostChrome>,
- *   onToggleAccept: () => void,
- *   onOpenDevices: () => void,
- * }} props
  */
 export function HostScreen(props) {
-  const { palette, chrome, onToggleAccept, onOpenDevices } = props;
+  const { palette, chrome, onToggleAccept, onCopyCode, onRotatePassword, onOpenDevices } = props;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: palette.bg }}>
@@ -51,9 +59,12 @@ export function HostScreen(props) {
           }}
         >
           <Text style={{ color: palette.text3, fontSize: 12 }}>{chrome.deviceCodeLabel}</Text>
-          <Text style={{ color: palette.text, fontSize: 20, fontWeight: "700", letterSpacing: 2 }}>
-            {chrome.deviceCode || "— — —"}
-          </Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: space["2"] }}>
+            <Text style={{ color: palette.text, fontSize: 20, fontWeight: "700", letterSpacing: 2, flex: 1 }}>
+              {chrome.deviceCodeDisplay || "— — —"}
+            </Text>
+            <HitButton palette={palette} label={chrome.copyLabel} onPress={onCopyCode} />
+          </View>
         </View>
 
         <View
@@ -67,9 +78,12 @@ export function HostScreen(props) {
           }}
         >
           <Text style={{ color: palette.text3, fontSize: 12 }}>{chrome.tempPasswordLabel}</Text>
-          <Text style={{ color: palette.text, fontSize: 17, fontWeight: "700", letterSpacing: 2 }}>
-            {chrome.tempPassword || "— —"}
-          </Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: space["2"] }}>
+            <Text style={{ color: palette.text, fontSize: 17, fontWeight: "700", letterSpacing: 2, flex: 1 }}>
+              {chrome.tempPassword || "— —"}
+            </Text>
+            <HitButton palette={palette} label={chrome.rotatePasswordLabel} onPress={onRotatePassword} />
+          </View>
           <Text style={{ color: palette.text3, fontSize: 12 }}>{chrome.tempPasswordHint}</Text>
         </View>
 

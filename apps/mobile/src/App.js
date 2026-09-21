@@ -53,12 +53,15 @@ import { resolveColors } from "./theme.mjs";
 import { LoginScreen } from "./components/LoginScreen.js";
 import { DisclosureScreen } from "./components/DisclosureScreen.js";
 import { DevicesScreen } from "./components/DevicesScreen.js";
-import { HostScreen } from "./components/HostScreen.js";
+import { HostScreen, copyHostText } from "./components/HostScreen.js";
 import { SessionScreen } from "./components/SessionScreen.js";
 import {
   createHostSession,
+  ensureHostIdentity,
   hostChrome,
+  rotateTempPassword,
   setAcceptConnections,
+  setCopyFeedback,
 } from "./host/host-session.mjs";
 import {
   INPUT_KEY_DOWN,
@@ -124,6 +127,12 @@ export function App() {
     labAddress: LAB_RELAY_ADDRESS,
     platformOS: Platform.OS,
   });
+
+  useEffect(() => {
+    if (shellTab !== "host") return undefined;
+    setHostSession((current) => ensureHostIdentity(current));
+    return undefined;
+  }, [shellTab]);
 
   useEffect(() => {
     return subscribeSessionRelay((event) => {
@@ -555,6 +564,14 @@ export function App() {
           onToggleAccept={() =>
             setHostSession(setAcceptConnections(hostSession, !hostSession.acceptConnections))
           }
+          onCopyCode={() => {
+            copyHostText(hostSession.deviceCode);
+            setHostSession(setCopyFeedback(hostSession, true));
+            setTimeout(() => {
+              setHostSession((current) => setCopyFeedback(current, false));
+            }, 1500);
+          }}
+          onRotatePassword={() => setHostSession(rotateTempPassword(hostSession))}
           onOpenDevices={() => setShellTab("devices")}
         />
       );

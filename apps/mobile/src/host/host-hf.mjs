@@ -8,6 +8,7 @@ export const HOST_HF = {
   tempPasswordLabel: "临时密码",
   tempPasswordHint: "每次连接后自动更换；也可设为固定密码（不推荐）。",
   copy: "复制",
+  copied: "已复制",
   rotatePassword: "换一个",
   idleStatus: "未被连接",
   connectedHint: "被连接时此处换成连接方",
